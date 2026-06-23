@@ -1,0 +1,92 @@
+@if(isset(Auth::user()->id) && Auth::user()->status == 1)
+  <script type="text/javascript">
+    window.location = "{{ url('dashboard') }}";
+  </script>
+@elseif((isset(Auth::user()->id) && Auth::user()->status == 2) || !isset(Auth::user()->id))
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>PATS - TS | Sign In Admin</title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  @include('shared.css_links.css_links')
+</head>
+<body class="hold-transition login-page" style="background: url('{{ asset('public/images/pats_bg.gif') }}'); background-repeat: no-repeat; background-size: cover; ">
+<div class="login-box">
+  <!-- /.login-logo -->
+  <div class="card" style="box-shadow: 1px 1px 50px black;">
+    <br>
+    <div class="login-logo">
+      <a href="{{ route('login') }}">
+        <img src="{{ asset('public/images/pats-logo-ts.PNG') }}" style="max-width: 250px;" title="Product Automated Traceability System - TS">
+      </a>
+      <br>
+      <!-- <a href="{{ route('login') }}"><b>Product Automated Traceability System - CN</b></a> <br> -->
+    </div>
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Login as admin</p>
+
+      <form action="{{ route('sign_in') }}" method="post" id="formSignIn">
+        @csrf
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" name="username" placeholder="Username" id="txtSignInUsername">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="password" class="form-control" name="password" placeholder="Password" id="txtSignInPass">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- /.col -->
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-block" id="btnSignIn"><i class="fa fa-check" id="iBtnSignInIcon"></i> Sign In</button>
+          </div>
+          <!-- /.col -->
+        </div>
+      </form>
+    </div>
+    <!-- /.login-card-body -->
+  </div>
+</div>
+<!-- /.login-box -->
+
+@include('shared.js_links.js_links')
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    $("#formSignIn").submit(function(event){
+      event.preventDefault();
+      $.ajax({
+        url: 'sign_in_admin',
+        method: 'post',
+        dataType: 'json',
+        data: $("#formSignIn").serialize(),
+        beforeSend: function(){
+            
+        },
+        success: function(JsonObject){
+            if(JsonObject['result'] == 1){
+              window.location = "{{ route('dashboard') }}";
+              // alert(JSON.stringify(JsonObject));
+            }else if(JsonObject['result'] == 0){
+              toastr.error(JsonObject['error']);
+            }
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>
+@endif

@@ -1,0 +1,388 @@
+   public function registerEvents(): array
+    {
+        $prodn_runcard_details = $this->prodn_runcard;
+        $prodn_runcard_tsppts_details = $this->prodn_runcard_tsppts;
+        $material_name = $this->material_name;
+        $sakidashi_issuance_item_data = $this->sakidashi_issuance_item;
+        $dlabel_data = $this->dlabel;
+        $dlabel_boxes_data = $this->dlabel_boxes;
+        $materialprocess_data = $this->materialprocess;
+        $operator_details = $this->operator_details;
+        $defect_escalation_details = $this->defect_escalation;
+        $shipment_date_select = $this->shipment_date_test ?? '';
+        // $prodn_runcard_with_defect = $this->prodn_runcard_with_defect;
+        // echo json_encode($prodn_runcard_details);
+        // exit;
+        $arial_font12_bold = array(
+            'font' => array(
+                'name'      =>  'Arial',
+                'size'      =>  13,
+                'bold'      =>  true,
+                // 'color'      =>  'red',
+                // 'italic'      =>  true
+            )
+        );
+
+        $arial_font16_bold = array(
+            'font' => array(
+                'name'      =>  'Arial',
+                'size'      =>  16,
+                'bold'      =>  true,
+                // 'italic'      =>  true
+            )
+        );
+
+        $arial_font12 = array(
+            'font' => array(
+                'name'      =>  'Arial',
+                'size'      =>  12,
+                // 'bold'      =>  true,
+                // 'italic'      =>  true
+            )
+        );
+
+        $hv_center = array(
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrap' => TRUE
+            ]
+        );
+
+        $hlv_center = array(
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrap' => TRUE
+            ]
+        );
+
+        $hrv_center = array(
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_RIGHT,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ]
+        );
+        $styleBorderBottomThin= [
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+        $styleBorderAll = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        $hlv_top = array(
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+                // 'vertical' => Alignment::VERTICAL_TOP,
+                'wrap' => TRUE
+            ]
+        );
+
+        $hcv_top = array(
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_TOP,
+                'wrap' => TRUE
+            ]
+        );
+
+
+
+        return [
+            AfterSheet::class => function(AfterSheet $event) use(
+                $arial_font12_bold,
+                $hv_center,
+                $hlv_center,
+                $hrv_center,
+                $styleBorderBottomThin,
+                $styleBorderAll,
+                $hlv_top,
+                $hcv_top,
+                $arial_font16_bold,
+                $arial_font12,
+                $prodn_runcard_details,
+                $prodn_runcard_tsppts_details,
+                $material_name,
+                $sakidashi_issuance_item_data,
+                $dlabel_data,
+                $dlabel_boxes_data,
+                $materialprocess_data,
+                $operator_details,
+                $defect_escalation_details,
+                $shipment_date_select
+            ) {
+
+
+
+                // dd($shipment_date_select);
+                $event->sheet->getColumnDimension('A')->setWidth(18);
+                $event->sheet->getColumnDimension('B')->setWidth(18);
+                $event->sheet->getColumnDimension('C')->setWidth(18);
+                $event->sheet->getColumnDimension('D')->setWidth(18);
+                $event->sheet->getColumnDimension('E')->setWidth(18);
+                $event->sheet->getColumnDimension('F')->setWidth(18);
+                $event->sheet->getColumnDimension('G')->setWidth(18);
+                $event->sheet->getColumnDimension('H')->setWidth(18);
+                $event->sheet->getColumnDimension('I')->setWidth(18);
+                $event->sheet->getColumnDimension('J')->setWidth(18);
+                $event->sheet->getColumnDimension('K')->setWidth(18);
+                $event->sheet->getColumnDimension('L')->setWidth(18);
+                $event->sheet->getColumnDimension('M')->setWidth(18);
+                $event->sheet->getColumnDimension('N')->setWidth(18);
+                $event->sheet->getColumnDimension('O')->setWidth(18);
+                $event->sheet->getColumnDimension('P')->setWidth(18);
+                $event->sheet->getColumnDimension('Q')->setWidth(18);
+                $event->sheet->getColumnDimension('R')->setWidth(18);
+                $event->sheet->getColumnDimension('S')->setWidth(18);
+                $event->sheet->getColumnDimension('T')->setWidth(18);
+                $event->sheet->getColumnDimension('U')->setWidth(18);
+                $event->sheet->getColumnDimension('V')->setWidth(18);
+                $event->sheet->getColumnDimension('W')->setWidth(18);
+                $event->sheet->getColumnDimension('X')->setWidth(18);
+                $event->sheet->getColumnDimension('Y')->setWidth(18);
+                $event->sheet->getColumnDimension('Z')->setWidth(18);
+
+
+                $event->sheet->getDelegate()->mergeCells('A1:C1');
+                $event->sheet->getDelegate()->mergeCells('B2:C2');
+                $event->sheet->getDelegate()->mergeCells('B3:C3');
+                $event->sheet->getDelegate()->mergeCells('B4:C4');
+                $event->sheet->getDelegate()->mergeCells('B5:C5');
+                $lastcol = 'Z';
+
+                $event->sheet->getStyle('A1')->getFont()->setBold(true)->setSize(17);
+                $event->sheet->getStyle('B1:B6')->getFont()->setBold(true)->setSize(11);
+                $event->sheet->getStyle('A7:'.$lastcol.'7')->getFont()->setBold(true)->setSize(11);
+                $event->sheet->getDelegate()->getStyle('B1:B6')->applyFromArray($hlv_center);
+                $event->sheet->getDelegate()->getStyle('A7:'.$lastcol.'7')->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('A7:'.$lastcol.'7')->getAlignment()->setWrapText(true);
+
+                $event->sheet->setCellValue('A1',"Product Lot Traceability Report");
+                $event->sheet->setCellValue('A2',"PO Number");
+                $event->sheet->setCellValue('B2',$prodn_runcard_tsppts_details[0]->po_no);
+                $event->sheet->getDelegate()->getStyle('B2')->getNumberFormat()->setFormatCode('000000000000000');
+                $event->sheet->setCellValue('A3',"Series Name");
+                $event->sheet->setCellValue('B3',$prodn_runcard_tsppts_details[0]->device_name);
+                $event->sheet->setCellValue('A4',"Pin Population");
+                $event->sheet->setCellValue('B4',$materialprocess_data[0]->pin_popu);
+                // $event->sheet->setCellValue('A5',"WW#");
+                $event->sheet->setCellValue('A5',"Customer");
+                // $event->sheet->setCellValue('D6',$materialprocess_data[0]->type);
+
+                if($materialprocess_data[0]->type == 2 ){
+                    $event->sheet->setCellValue('B5',"MICRON");
+
+                }else{
+                    $event->sheet->setCellValue('B5',"");
+
+                }
+
+                $event->sheet->setCellValue('F1',"Revision History");
+                $event->sheet->setCellValue('F2',"Rev #");
+                $event->sheet->setCellValue('F3',"00");
+                $event->sheet->setCellValue('F4',"01");
+                $event->sheet->setCellValue('F5',"02");
+
+                $event->sheet->setCellValue('G2',"Date");
+                $event->sheet->setCellValue('H2',"Description");
+
+                $event->sheet->setCellValue('A7',"Input Date");
+                $event->sheet->setCellValue('B7',"#CT Pair No");
+                $event->sheet->setCellValue('C7',"CT Lot #");
+                $event->sheet->setCellValue('D7',"CT Reel QTY");
+                $event->sheet->setCellValue('E7',"SOCKET QTY");
+
+                $start_col = 8;
+                $test_col = 8;
+                $test_col1 = 8;
+                $column_start = 'F';
+                $start_column = 'F';
+                $start_column_start = 'F';
+                $try_array = array();
+                for ($i=0; $i<count($material_name); $i++) {
+                    $event->sheet->setCellValue($column_start.'7', $material_name[$i]->material_name);
+                    $column_start++;
+
+                }
+                // $test_col1++;
+
+                $column_start1 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Lot #");
+                $column_start++;
+
+                $column_start2 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Box #");
+                $column_start++;
+
+                $column_start3 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Lot Qty");
+                $column_start++;
+
+                $column_start4 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Shipment Qty");
+                $column_start++;
+
+                $column_start5 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Shipment Date"); //shipment_date
+                $column_start++;
+
+                $column_start6 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Operator/s");
+                $column_start++;
+
+                $column_start7 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Work Week");
+                $column_start++;
+
+                $column_start8 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Remarks");
+                $column_start++;
+
+                $column_start9 = $column_start;
+                $event->sheet->setCellValue($column_start.'7',"Runcard_no");
+                $column_start++;
+                // $column_start8 = $column_start;
+                // $event->sheet->setCellValue($column_start.'7',"CT Material from defect");
+
+                for ($i=0; $i <count($prodn_runcard_tsppts_details); $i++) {
+
+                    $input_date = $prodn_runcard_tsppts_details[$i]->created_at;
+                    $date_input = substr($input_date,0,10);
+                    // $box_no = substr($prodn_runcard_tsppts_details[$i]->lot_no,-2);
+                    $lot_no = $prodn_runcard_tsppts_details[$i]->lot_no;
+
+                        // if(count($dlabel_data) != 0){
+                    for ($y=0; $y <count($prodn_runcard_tsppts_details[$i]->prod_runcard_station_details); $y++) {
+                            for ($c=0; $c <count($dlabel_data); $c++) {
+                                for ($d=0; $d <count($dlabel_boxes_data); $d++) { //nmodify
+
+                                    // if($prodn_runcard_tsppts_details[$m]->runcard_no == $dlabel_boxes_data[$d]->lot_no && $dlabel_boxes_data[$d]->d_label_id == $dlabel_data[$c]->id && $dlabel_date[$c]->shipment_date == $shipment_date_select  ){
+                                    if($prodn_runcard_tsppts_details[$i]->runcard_no == $dlabel_boxes_data[$d]->lot_no && $dlabel_boxes_data[$d]->d_label_id == $dlabel_data[$c]->id){
+
+                                            $raw_box_no = $dlabel_boxes_data[$d]->package_no;
+                                            $box_no = explode("/",$dlabel_boxes_data[$d]->package_no);
+
+                                            $event->sheet->setCellValue($column_start4.$start_col, $dlabel_data[$c]->po_qty ?? '');
+                                            $event->sheet->setCellValue($column_start5.$start_col, $dlabel_data[$c]->shipment_date ?? '');
+
+                                            $event->sheet->setCellValue('A'.$start_col, $date_input);
+                                            $event->sheet->setCellValue($column_start1.$start_col, $lot_no);
+                                            $event->sheet->setCellValue($column_start2.$start_col, $box_no[0]);
+                                            $event->sheet->setCellValue($column_start3.$start_col, $prodn_runcard_tsppts_details[$i]->prod_runcard_station_details[$y]->qty_output);
+
+                                            $start_column_start = 'F';
+                                            // $this->get_materials($material_name,$start_column_start,$start_col,$prodn_runcard_details,$prodn_runcard_tsppts_details[$i]->prod_runcard_station_details[$y]->runcard_no);
+                                            // echo $eto;
+                                            // exit();
+                                            for ($m=0; $m<count($material_name); $m++) {
+                                                for ($u=0; $u <count($prodn_runcard_details); $u++) {
+                                                    for ($t=0; $t < count($prodn_runcard_details[$u]->prod_runcard_station_many_details) ; $t++) {
+                                                        if(strtoupper($prodn_runcard_tsppts_details[$i]->prod_runcard_station_details[$y]->runcard_no) === strtoupper($prodn_runcard_details[$u]->runcard_no)){
+                                                                if(strtoupper($prodn_runcard_details[$u]->defect_rework_number) == 'N/A' || $prodn_runcard_details[$u]->defect_rework_number == null){
+                                                                    // * OPERATOR NAME & WORKWEEK
+                                                                    $event->sheet->setCellValue($column_start7.$start_col, $prodn_runcard_details[$u]->work_week);
+                                                                    $event->sheet->setCellValue($column_start8.$start_col, $prodn_runcard_details[$u]->remarks);
+
+                                                                        $event->sheet->setCellValue($column_start6.$start_col, $this->operator_name($operator_details[$prodn_runcard_details[$u]->id], $sakidashi_issuance_item_data));
+
+                                                                        $event->sheet->setCellValue($column_start9.$start_col, $prodn_runcard_tsppts_details[$i]->prod_runcard_station_details[$y]->runcard_no);
+                                                                        // dd($prodn_runcard_details[$u]->remarks);
+
+                                                                        // $event->sheet->setCellValue($column_start8.$start_col, "without defect");
+                                                                        for ($n=0; $n < count($prodn_runcard_details[$u]->prod_runcard_station_many_details[$t]->prod_runcard_station_material_details); $n++) {
+
+                                                                            if($material_name[$m]->material_name == $prodn_runcard_details[$u]->prod_runcard_station_many_details[$t]->prod_runcard_station_material_details[$n]->material_name){
+                                                                                $event->sheet->setCellValue($start_column_start.$start_col, strtoupper($prodn_runcard_details[$u]->prod_runcard_station_many_details[$t]->prod_runcard_station_material_details[$n]->lot_no));
+                                                                            }
+
+                                                                            if (str_contains($prodn_runcard_details[$u]->prod_runcard_station_many_details[$t]->prod_runcard_station_material_details[$n]->material_name,'CT')){
+                                                                                $lot_number = $prodn_runcard_details[$u]->prod_runcard_station_many_details[$t]->prod_runcard_station_material_details[$n]->lot_no;
+                                                                                $event->sheet->setCellValue('C'.$start_col, StrToUpper($lot_number));
+
+                                                                                $event->sheet->setCellValue('B'.$start_col, $this->get_ct_pair_no($sakidashi_issuance_item_data,$lot_number));
+                                                                                $event->sheet->setCellValue('D'.$start_col, $this->get_pin_papulasyon($sakidashi_issuance_item_data,$lot_number));
+                                                                                $event->sheet->setCellValue('E'.$start_col, $this->get_socket_qty($sakidashi_issuance_item_data,$lot_number,$materialprocess_data[0]->pin_popu));
+
+                                                                            }
+                                                                        }
+                                                                }
+                                                                else{
+                                                                        $event->sheet->setCellValue($start_column_start.$start_col, $this->get_prod_runcard_with_defect($prodn_runcard_details[$u]->po_no, $prodn_runcard_details[$u]->defect_rework_number,$material_name[$m]->material_name));
+                                                                        $ct_details = $this->get_ct_with_defect($prodn_runcard_details[$u]->po_no,$prodn_runcard_details[$u]->defect_rework_number,$material_name,$sakidashi_issuance_item_data,$materialprocess_data[0]->pin_popu,$operator_details[$prodn_runcard_details[$u]->id]);
+
+                                                                        if(isset($ct_details['lot_number'])){
+                                                                            $event->sheet->setCellValue('C'.$start_col, $ct_details['lot_number']);
+                                                                        }
+
+                                                                        if(isset($ct_details['pair_no'])){
+                                                                            $event->sheet->setCellValue('B'.$start_col, $ct_details['pair_no']);
+                                                                        }
+
+                                                                        if(isset($ct_details['ct_reel_qty'])){
+                                                                            $event->sheet->setCellValue('D'.$start_col, $ct_details['ct_reel_qty']);
+                                                                        }
+
+                                                                        if(isset($ct_details['socket_qty'])){
+                                                                            $event->sheet->setCellValue('E'.$start_col, $ct_details['socket_qty']);
+                                                                        }
+
+                                                                            // $event->sheet->setCellValue('E'.$start_col, $ct_details['socket_qty']);
+                                                                        //     $event->sheet->setCellValue($column_start9.$start_col, $this->get_defect_runcard_no($prodn_runcard_details[$u]->po_no, $prodn_runcard_details[$u]->defect_rework_number,$material_name[$m]->material_name));
+
+                                                                        // $event->sheet->setCellValue('C'.$start_col, $ct_details);
+                                                                        $event->sheet->setCellValue($column_start9.$start_col, $prodn_runcard_tsppts_details[$i]->prod_runcard_station_details[$y]->runcard_no);
+
+                                                                        // $event->sheet->setCellValue($column_start9.$start_col, $ct_details['runcard_no']);
+
+                                                                        // $event->sheet->setCellValue($column_start8.$start_col, "with defect");
+
+                                                                    $event->sheet->setCellValue($column_start6.$start_col, $this->operator_name($operator_details[$prodn_runcard_details[$u]->id], $sakidashi_issuance_item_data));
+                                                                    $event->sheet->setCellValue($column_start7.$start_col, $prodn_runcard_details[$u]->work_week);
+                                                                    $event->sheet->setCellValue($column_start8.$start_col, $prodn_runcard_details[$u]->remarks);
+
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+
+                                                $start_column_start++;
+
+                                            }
+
+                                            $start_col++;
+                                    }
+
+                                }
+                            }
+
+                    }
+                    // }
+
+
+                }
+
+                $end_col = $start_col - 1;
+                $event->sheet->getDelegate()->getStyle('A7'.':'.$column_start8.'7')->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('A8'.':'.$column_start8.'8')->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('A9'.':'.$column_start8.$end_col)->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('A9'.':'.'E'.$end_col)->applyFromArray($hv_center);
+
+                $event->sheet->getDelegate()->getStyle('A8'.':'.$column_start8.$end_col)->getAlignment()->setWrapText(true);
+                $event->sheet->getDelegate()->getStyle('A7'.':'.$column_start8.$end_col)->applyFromArray($styleBorderAll);
+                $event->sheet->getDelegate()->getStyle($column_start1.'9'.':'.$column_start8.$end_col)->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle($column_start4.'9'.':'.$column_start8.$end_col)->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('N8'.':'.$column_start5.$end_col)->applyFromArray($hv_center);
+                $event->sheet->getDelegate()->getStyle('P8'.':'.$column_start5.$end_col)->applyFromArray($hv_center);
+
+            },
+        ];
+    }
