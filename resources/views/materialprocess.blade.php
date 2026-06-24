@@ -211,7 +211,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title"><i class="fa fa-plus"></i> Add Device</h4>
+          <h4 class="modal-title"><i class="fa fa-plus"></i> Add Device 2</h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -284,7 +284,7 @@
  -->
                 <div class="form-group">
                   <label>Copy Material Process Flow from other Device Name</label>
-                    <select class="form-control" name="copy_material_flow" id="addDeviceCopyMaterialFlow">
+                    <select class="form-control select2" name="copy_material_flow" id="addDeviceCopyMaterialFlow">
                       <option value="0">No</option>
                     </select>
                 </div>

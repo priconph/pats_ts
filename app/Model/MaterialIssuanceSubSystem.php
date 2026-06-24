@@ -21,8 +21,7 @@ class MaterialIssuanceSubSystem extends Model
     }
 
     public function device_info(){
-    	// return $this->hasOne(Device::class, 'barcode', 'device_code');
-    	return $this->hasOne(Device::class, 'po_no', 'po_no');
+    	return $this->hasOne(Device::class, 'barcode', 'device_code');
     }
 
     public function material_issuance_info(){

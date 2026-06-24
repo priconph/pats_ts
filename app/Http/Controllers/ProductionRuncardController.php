@@ -2,45 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\CommonController;
-use App\Model\BPilotRun;
-use App\Model\DefectEscalationV2Rev;
+use Auth;
+use QrCode;
+use App\User;
+use DataTables;
+use Carbon\Carbon;
 use App\Model\Device;
-use App\Model\DeviceProcessFlowMaterial;
 use App\Model\Machine;
-use App\Model\MaterialIssuance;
-use App\Model\MaterialIssuanceDetails;
-use App\Model\MaterialIssuanceSubSystem;//tbl_wbs_material_kitting
-use App\Model\MaterialProcess;
+use App\Model\Station;
+use App\Model\BPilotRun;
 use App\Model\oqcLotApp;
 use App\Model\PartsPrep;
+use App\Model\SubStation;
 use App\Model\ProcessFlow;
-use App\Model\ProdRuncardMaterialList;
+use App\Model\SampleTable;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Model\WBSKitIssuance;
+use App\Model\MaterialProcess;
+use App\Model\RapidActiveDocs;
+use App\Model\MaterialIssuance;
 use App\Model\ProductionRuncard;
-use App\Model\ProductionRuncardMaterial;
+use App\Model\StationSubStation;
+use Illuminate\Support\Facades\DB;
+use App\Model\WBSSakidashiIssuance;
+use App\Model\DefectEscalationV2Rev;
+use Illuminate\Support\Facades\Cache;
+use App\Model\MaterialIssuanceDetails;
+use App\Model\ProdRuncardMaterialList;
 use App\Model\ProductionRuncardStation;
+use App\Model\WBSSakidashiIssuanceItem;
+use App\Model\DeviceProcessFlowMaterial;
+
+// use App\Model\DefectEscalation;
+use App\Model\ProductionRuncardMaterial;
+
+use Illuminate\Support\Facades\Validator;
+use App\Model\ProductionRuncardStationMOD;
 use App\Model\ProductionRuncardStationMachine;
 use App\Model\ProductionRuncardStationMaterial;
-use App\Model\ProductionRuncardStationMOD;
 use App\Model\ProductionRuncardStationOperator;
-use App\Model\RapidActiveDocs;
-use App\Model\SampleTable;
-use App\Model\Station;
-use App\Model\StationSubStation;
-use App\Model\SubStation;
-use App\Model\WBSKitIssuance;
-use App\Model\WBSSakidashiIssuance;
-use App\Model\WBSSakidashiIssuanceItem;
-use App\User;
-use Auth;
-use Carbon\Carbon;
-use DataTables;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use QrCode;
+use App\Model\MaterialIssuanceSubSystem;//tbl_wbs_material_kitting
 
 class ProductionRuncardController extends Controller
 {
@@ -763,13 +765,15 @@ class ProductionRuncardController extends Controller
 
                 $disabled = 'disabled';
                 // if(Auth::user()->position == 1 || Auth::user()->position == 4 || Auth::user()->position == 12){
-                if(Auth::user()->position == 1 || Auth::user()->position == 2 || Auth::user()->position == 12){
+                if(Auth::user()->position == 1 || Auth::user()->position == 2 || Auth::user()->position == 12 ){
                     $disabled = '';
                 }
 
                 if ($prod_runcardstation->process_flow->step == 1){
                     $disabled = '';
                 }
+
+
 
 
                 $result='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Edit" class="btn_material_action btn_edit_prod_runcard_station btn btn-info btn-sm py-0" mat-proc-id="' . $prod_runcardstation->mat_proc_id . '"><i class="fa fa-edit"></i></button>';
@@ -792,8 +796,14 @@ class ProductionRuncardController extends Controller
                  * -mdr
                  */
                 if($request->page_source != 'prod_runcard_manual_live'){
+                    // return Auth::user();
                     if($prod_runcardstation->qty_ng != 0){
-                        $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        if(Auth::user()->username == 'bgafp'){
+                            $disabled ='';
+                            $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        }else{
+                            $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        }
                     }
                 }
 
@@ -3515,7 +3525,7 @@ class ProductionRuncardController extends Controller
     }
     public function get_prod_runcard_by_po_per_runcard(Request $request){
         date_default_timezone_set('Asia/Manila');
-        // return 'workingfunction';
+
         $prod_runcards = ProductionRuncard::with([
             'wbs_kitting',
 
@@ -3939,7 +3949,6 @@ class ProductionRuncardController extends Controller
 
     public function get_wbs_material_kitting(Request $request){
         date_default_timezone_set('Asia/Manila');
-
         $material_kitting = MaterialIssuanceSubSystem::with([
                                             'device_info',
                                             'documents_details',
@@ -3961,17 +3970,10 @@ class ProductionRuncardController extends Controller
             $doc_a_drawing_query = collect($doc_details_query)->where('doc_type', 'A Drawing')->flatten(1);
             $doc_g_drawing_query = collect($doc_details_query)->where('doc_type', 'G Drawing')->flatten(1);
 
-            $matrix = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $request->po_number,
-                'name'=> $material_kitting->device_name,
-                'get_or_first'=> '',
-            ]);
-            // $matrix = Device::where('name', $material_kitting->device_name)->get();
+            $matrix = Device::where('name', $material_kitting->device_name)->get();
 
         }
-        if(blank($request->po_number)){ 
-             return response()->json(['material_kitting' => null, 'doc_a_drawing_query' => [], 'doc_g_drawing_query' => [], 'matrix' => [1]]);
-        }
+
 
         return response()->json(['material_kitting' => $material_kitting, 'doc_a_drawing_query' => $doc_a_drawing_query, 'doc_g_drawing_query' => $doc_g_drawing_query, 'matrix' => $matrix]);
         // return response()->json(['material_kitting' => $material_kitting, 'doc_a_drawing_query' => $doc_a_drawing_query, 'doc_g_drawing_query' => $doc_g_drawing_query]);
@@ -4153,13 +4155,7 @@ class ProductionRuncardController extends Controller
         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
         $lot_no_machine_code = '0';
 
-        // $device_info = Device::where('name', $request->device_name)->first();
-        $device_info = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $request->txt_po_number,
-                'name'=> $request->device_name,
-                'get_or_first'=> 'first',
-        ]);
-
+        $device_info = Device::where('name', $request->device_name)->first();
 
         if($device_info != null){
             if($device_info->lot_no_machine_code != null){
@@ -4652,7 +4648,6 @@ class ProductionRuncardController extends Controller
                                         $query->where('item_desc', $item_desc);
                                     },
                                 ])
-                                ->where('po_no', $request->po_number) //getMatrixByPoNo
                                 ->where('name', $request->device_name)
                                 ->first();
 
@@ -4701,12 +4696,7 @@ class ProductionRuncardController extends Controller
                     $material_process = [];
 
                     if($validator->passes()){
-                        $device = CommonController::getInstance()->getMatrixByPoNo([
-                                'po_no'=> $request->po_number,
-                                'name'=> $request->device_name,
-                                'get_or_first'=> 'first',
-                        ]);
-                        //  $device = Device::where('name', $request->device_name)->first();
+                         $device = Device::where('name', $request->device_name)->first();
 
                          if($device != null){
                             $material_process = MaterialProcess::with([
@@ -4757,12 +4747,7 @@ class ProductionRuncardController extends Controller
                                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                         $lot_no_machine_code = '0';
 
-                                        // $device_info = Device::where('name', $request->device_name)->first();
-                                        $device = CommonController::getInstance()->getMatrixByPoNo([
-                                                'po_no'=> $request->po_number,
-                                                'name'=> $request->device_name,
-                                                'get_or_first'=> 'first',
-                                        ]);
+                                        $device_info = Device::where('name', $request->device_name)->first();
 
                                         if($device_info != null){
                                             if($device_info->lot_no_machine_code != null){
@@ -4984,10 +4969,8 @@ class ProductionRuncardController extends Controller
                                             $query->where('item_desc', $item_desc);
                                         },
                                     ])
-                                    ->where('po_no',$request->po_number) //getMatrixByPoNo
                                     ->where('name', $request->device_name)
                                     ->first();
-
 
                             if($mat_proc_materials != null){
                                 $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
@@ -5181,9 +5164,9 @@ class ProductionRuncardController extends Controller
                                             // $query->where('item_desc', $item_desc);
                                         },
                                     ])
-                                    ->where('po_no',$request->po_number) //getMatrixByPoNo
                                     ->where('name', $request->device_name)
                                     ->first();
+
                     if($mat_proc_device != null){
                         if(count($mat_proc_device->material_process) > 0){
                             $material_certified = true;
@@ -5250,7 +5233,6 @@ class ProductionRuncardController extends Controller
                                                 // $query->where('item_desc', $item_desc);
                                             },
                                         ])
-                                        ->where('po_no',$request->po_number) //getMatrixByPoNo
                                         ->where('name', $request->device_name)
                                         ->first();
 
@@ -5402,7 +5384,6 @@ class ProductionRuncardController extends Controller
                                 $query->where('manpower_id', $user->id);
                             },
                         ])
-                        ->where('po_no',$request->po_number) //getMatrixByPoNo
                         ->where('name', $request->device_name)
                         ->first();
 
@@ -14172,7 +14153,7 @@ class ProductionRuncardController extends Controller
 
     }
 
-     public function edit_prod_runcard_station_with_defect(Request $request){
+    public function edit_prod_runcard_station_with_defect(Request $request){
         // return 'save';
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
@@ -14574,16 +14555,30 @@ class ProductionRuncardController extends Controller
                                                         // DefectEscalationV2
                                                     }
 
-                                                    // DefectEscalationV2Rev::insert([
-                                                    //     'prod_runcard_id' => $request->txt_prod_runcard_id_query,
-                                                    //     'prod_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-                                                    //     // 'reported_by' => $user[0]->id,
-                                                    //     'status' => 0,
-                                                    //     'created_by' => Auth::user()->id,
-                                                    //     // 'last_updated_by' => Auth::user()->id,
-                                                    //     'created_at' => date('Y-m-d H:i:s'),
-                                                    //     // 'updated_at' => date('Y-m-d H:i:s'),
-                                                    // ]);
+                                                   DefectEscalationV2Rev::insert([
+                                                        'po_number'                    => $request->po_number_with_defect,
+                                                        'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                        'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                        'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                        'prod_runcard_station_id'      => $prod_runcard_station_id,
+                                                        // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                        'defect_classification'        => $current_class,
+                                                        'defect_qty'                   => $request->mod_qty[$index],
+                                                        'mod_type'                     => $request->type_of_ng[$index],
+                                                        'mod_id'                       => $mod[$index],
+                                                        'de_occurence'                 => $de_occurence,
+                                                        'de_group'                     => 1,
+                                                        'defect_status'                => 0,
+                                                        'de_user'                      => $user[0]->id,
+                                                        'de_position'                  => $user[0]->position,
+                                                        'created_by'                   => Auth::user()->id,
+                                                        'created_at'                   => now(),
+                                                        'de_shift'                     => $shift,
+                                                        'de_date'                      => date('Y-m-d'),
+                                                        'de_time'                      => date('h:i:s A'),
+                                                        'line'                         => $lineWithDefect,
+                                                        'line_id'                      => $request->line_with_defect_id,
+                                                    ]);
 
                                                 }
                                                 else{
@@ -16150,7 +16145,10 @@ class ProductionRuncardController extends Controller
 
                 // Update Runcard
                 if(isset($request->txt_prod_runcard_id_query)){
+                    // return 'if';
                     $data = $request->all();
+
+                    // return $data;
 
                     $rules = [
                         'txt_employee_number_scanner' => 'required',
@@ -16163,11 +16161,14 @@ class ProductionRuncardController extends Controller
 
                     ];
 
+                    // return $request->judgement;
+
                     /**
                      * Condition for radio buttons
                      * -JD
                      */
                     if($request->judgement == 3 || $request->judgement == null ){
+                        // return '1';
                         $rules['input'] = '';
                         $rules['output'] = '';
                         $rules['qty_ng'] = '';
@@ -16181,6 +16182,7 @@ class ProductionRuncardController extends Controller
                         $rules['mpc_operator_id'] = ''; // JD 05-08-2023
                     }
                     else{
+                        // return '2';
                         $rules['input'] = 'required';
                         $rules['output'] = 'required';
                         $rules['qty_ng'] = 'required';
@@ -16335,7 +16337,9 @@ class ProductionRuncardController extends Controller
                 }
                 // Add Runcard
                 else{
+                    // return 'elsesss';
                     $data = $request->all();
+                    // return $request->judgement;
 
                     $rules = [
                         'txt_employee_number_scanner' => 'required',
@@ -16412,11 +16416,13 @@ class ProductionRuncardController extends Controller
                         // 'txt_pair_no.required' => 'Pair No. field is required.',
                     ];
 
+                    // return $request->judgement;
+
                     if(isset($request->judgement)){
                         $messages['input.required'] = 'Input is required';
                         $messages['output.required'] = 'Output is required';
                         $messages['qty_ng.required'] = 'NG is required';
-                        $messages['disposition.required'] = 'Disposition is required';
+                        // $messages['disposition.required'] = 'Disposition is required';
                         $messages['mod.required'] = 'Mode of Defect is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
@@ -16438,10 +16444,13 @@ class ProductionRuncardController extends Controller
                     DB::beginTransaction();
                     try {
                         if($validator->passes()){
+                            // return 'passes';
 
                             $user_info = User::where('employee_id', $request->txt_employee_number_scanner)
                                 ->where('status', 1)
                                 ->first();
+
+                                // return $user_info;
 
                             if($user_info != null){
                                 /* 03112025 by Nessa */
@@ -16464,6 +16473,8 @@ class ProductionRuncardController extends Controller
 
                                 $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
 
+                                // return $device_info;
+
                                 if($device_info != null){
                                     if($device_info->lot_no_machine_code != null){
                                         $lot_no_machine_code = $device_info->lot_no_machine_code;
@@ -16473,20 +16484,27 @@ class ProductionRuncardController extends Controller
                                 // Generate Runcard No
                                 $prod_runcards = ProductionRuncard::where('runcard_no', 'LIKE', $runcard_no . "%")->orderBy('id', 'desc')->limit(1)->get();
 
+                                // return $prod_runcards;
+
                                 $final_runcard_no = "";
                                 $explode_runcard_no = "";
 
                                 if($prod_runcards->count() > 0){
+                                    // return 'if';
                                     /* 03112025 by Nessa */
                                     $es_po = substr($prod_runcards[0]->runcard_no, 0, 2);
 
                                     $explode_runcard_no = explode('-', $prod_runcards[0]->runcard_no);
+                                    // return $explode_runcard_no;
 
                                     $explode_runcard_no[1] = str_pad($explode_runcard_no[1] + 1,3,"0", STR_PAD_LEFT);
 
                                     $final_runcard_no = implode('-', $explode_runcard_no);
+
+                                    // return $final_runcard_no;
                                 }
                                 else{
+                                    // return 'eles';
                                     /* 03112025 by Nessa */
                                     $es_po = substr($request->txt_po_number, 0, 2);
                                     if ($es_po == 'ES'){
@@ -16499,6 +16517,8 @@ class ProductionRuncardController extends Controller
 
                                     // $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
                                 }
+
+                                // return $final_runcard_no;
 
                                 $prod_runcard_id = ProductionRuncard::insertGetId([
                                     'po_no'=> $request->txt_po_number,
@@ -16574,13 +16594,13 @@ class ProductionRuncardController extends Controller
                                         }
                                     }
                                 }
-                        // DB::rollback();
-                        // return response()->json(['auth' => 1, 'result' => 0, 'error' => "haha", "device" => $device, "processFlow" => $processFlow, "prod_runcard_station_id" => $prod_runcard_station_id]);
+                                // return 'if';
 
                                 DB::commit();
                                 return response()->json(['auth' => 1, 'result' => 1, 'PFlow' => $PFlow, 'error' => null, 'prod_runcard_id' => $prod_runcard_id]); // Success
                             }
                             else{
+                                // return 'else';
                                 return response()->json(['auth' => 1, 'result' => 2, 'error' => null]); // Invalid Operator
                             }
                         }
@@ -17035,7 +17055,7 @@ class ProductionRuncardController extends Controller
                                 // insert data for process flow
                                 // return $request->device_name;
                                 $device = Device::where("name", $request->device_name)->get();
-                                // return $device;
+                                return $device;
 
                                 $PFlow = ProcessFlow::where("device_id", $device[0]->id)->get();
 
@@ -17064,7 +17084,7 @@ class ProductionRuncardController extends Controller
                         // DB::rollback();
                         // return response()->json(['auth' => 1, 'result' => 0, 'error' => "haha", "device" => $device, "processFlow" => $processFlow, "prod_runcard_station_id" => $prod_runcard_station_id]);
 
-                                DB::commit();
+                                // DB::commit();
                                 return response()->json(['auth' => 1, 'result' => 1, 'PFlow' => $PFlow, 'error' => null, 'prod_runcard_id' => $prod_runcard_id]); // Success
                             }
                             else{

@@ -2,24 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Model\APilotRun;
-use App\Model\DefectEscalationV2Rev;
-use App\Model\Device;
 use Auth;
+use QrCode;
 use DataTables;
+use App\Model\APilotRun;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Model\DefectEscalationV2Rev;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use QrCode;
 
 class CommonController extends Controller
 {
     //
     private static $instance = null;
-
-
 
 	public static function getInstance() {
 		if(!self::$instance instanceof self)
@@ -38,40 +35,6 @@ class CommonController extends Controller
 	{
 		trigger_error('Deserializing is not allowed.',E_USER_ERROR);
 	}
-    public function getMatrixByPoNo($params){
-        try {
-            if($params['get_or_first'] === 'first'){
-                 if($params['name'] != ''){
-                    return $matrix = Device::where('name',$params['name'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->first();
-                }
-                if($params['barcode'] != ''){
-                    return $matrix = Device::where('barcode',$params['barcode'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->first();
-                }
-
-            }else{
-                 if($params['name'] != ''){
-                    return $matrix = Device::where('name',$params['name'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->get();
-                }
-                if($params['barcode'] != ''){
-                    return $matrix = Device::where('barcode',$params['barcode'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->get();
-                }
-            }
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
 
     public function generate_qrcode(Request $request){
         try{
@@ -201,7 +164,7 @@ class CommonController extends Controller
             'critical_notif' => $critical_notif,
             'non_crit_notif' => $non_crit_notif
         ]);
-
-
+       
+        
     }
 }

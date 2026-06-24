@@ -5402,6 +5402,121 @@
         });
       }
 
+    function GetMaterialKitting(){
+      $.ajax({
+        url: "get_wbs_material_kitting",
+        method: 'get',
+        dataType: 'json',
+        data: {
+          po_number: currentPoNo
+        },
+        beforeSend: function(){
+          boxing = "";
+          assessment = "";
+          aDrawing = "";
+          aDrawingRev = "";
+          gDrawing = "";
+          gDrawingRev = "";
+        },
+        success: function(data){
+          if(data['material_kitting'] != null){
+            $("#txt_po_number_lbl").val(data['material_kitting']['po_no']);
+            $("#txt_device_name_lbl").val(data['material_kitting']['device_name']);
+            $("#txt_device_code_lbl").val(data['material_kitting']['device_code']);
+            $("#txt_po_qty_lbl").val(data['material_kitting']['po_qty']);
+
+            /* 03172023*/
+            $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
+
+            boxing = data['matrix'][0]['ship_boxing'];
+
+            // alert(data['matrix'][0]['ship_boxing'])
+            // if(data['material_kitting']['matrix'] != null){
+            //   $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
+            //   //boxing = data['material_kitting']['device_info']['boxing'];
+
+
+            //   // alert(boxing);
+            // }
+            // else{
+            //   boxing = "";
+            //   // $("#txt_lot_qty").val("");
+            // }
+
+            if(data['material_kitting']['assessment'] != null){
+              assessment = data['material_kitting']['device_info']['assessment'];
+            }
+            else{
+              assessment = "";
+            }
+
+            $("#txt_ct_supplier").val('YEC');
+
+            // TEMP REMOVE Due to Request of operatr to fix it in "YEC"
+            // if(data['material_kitting']['material_issuance_details'].length > 0){
+            //     $("#txt_ct_supplier").val(data['material_kitting']['material_issuance_details'][0]['supplier']);
+            // }
+            // else{
+            //     $("#txt_ct_supplier").val('');
+            // }
+            // ..TEMP REMOVE Due to Request of operatr to fix it in "YEC"
+
+            // if(data['material_kitting']['documents_details'].length > 0){
+            //   for(let index = 0; index < data['material_kitting']['documents_details'].length; index++){
+            //     if(data['material_kitting']['documents_details'][index]['doc_no'].charAt(0).toUpperCase() == "A"){
+            //       aDrawing = data['material_kitting']['documents_details'][index]['doc_no'];
+            //       aDrawingRev = data['material_kitting']['documents_details'][index]['rev_no'];
+            //     }
+            //     else if(data['material_kitting']['documents_details'][index]['doc_no'].charAt(0).toUpperCase() == "G"){
+            //       gDrawing = data['material_kitting']['documents_details'][index]['doc_no'];
+            //       gDrawingRev = data['material_kitting']['documents_details'][index]['rev_no'];
+            //     }
+            //   }
+
+            //   $("#txt_a_drawing_no").val(aDrawing);
+            //   $("#txt_a_drawing_rev").val(aDrawingRev);
+            //   $("#txt_g_drawing_no").val(gDrawing);
+            //   $("#txt_g_drawing_rev").val(gDrawingRev);
+            // }
+            if(data['doc_a_drawing_query'].length > 0){
+              aDrawing = data['doc_a_drawing_query'][0].doc_no;
+              aDrawingRev = data['doc_a_drawing_query'][0].rev_no;
+            }
+            else{
+              aDrawing = "";
+              aDrawingRev = "";
+            }
+            $("#txt_a_drawing_no").val(aDrawing);
+            $("#txt_a_drawing_rev").val(aDrawingRev);
+
+            if(data['doc_g_drawing_query'].length > 0){
+              gDrawing = data['doc_g_drawing_query'][0].doc_no;
+              gDrawingRev = data['doc_g_drawing_query'][0].rev_no;
+            }
+            else{
+              gDrawing = "";
+              gDrawingRev = "";
+            }
+            $("#txt_g_drawing_no").val(gDrawing);
+            $("#txt_g_drawing_rev").val(gDrawingRev);
+
+            // materialKitTransferSlip = data['material_kitting']['issuance_no'];
+            // $("#txt_material_transfer_slip_lbl").val(materialKitTransferSlip);
+            // dt_materials.draw();
+
+            // $("#txt_lot_qty").val(boxing);
+          }
+          else{
+            $("#txt_po_number_lbl").val('');
+            $("#txt_device_name_lbl").val('');
+            $("#txt_device_code_lbl").val('');
+            $("#txt_po_qty_lbl").val('');
+            $("#txt_lot_qty").val("");
+          }
+        }
+      });
+    }
+
     function GetSakidashiIssuance(){
       $.ajax({
         url: "get_wbs_sakidashi_issuance",

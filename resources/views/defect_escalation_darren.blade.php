@@ -126,17 +126,17 @@ z-index: 2001;
                         <input type="text" class="form-control" id="txt_po_number_lbl" value="{{ $po ?? '' }}" readonly>
                     </div>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>Device Name</label>
                     <input type="text" class="form-control" id="txt_device_name_lbl" value="{{ $device ?? '' }}" readonly>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>Device Code</label>
                     <input type="text" class="form-control" id="txt_device_code_lbl" value="{{ $code ?? '' }}" readonly>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>PO Qty</label>
                     <input type="text" class="form-control" id="txt_po_qty_lbl" value="{{ $qty ?? '' }}" readonly>
@@ -271,7 +271,7 @@ z-index: 2001;
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-50">
                                             <span class="input-group-text w-100" id="basic-addon1">Defect Type</span>
-                                        </div>                 
+                                        </div>
                                         <select name="mod_type" id="txtModType" class="form-control">
                                             <option disabled selected value="">-- Select Defect Type --</option>
                                             <option value="1">Material NG</option>
@@ -280,7 +280,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>   --}}
-        
+
                             <div class="row">
                                 <div class="col-sm-3">
                                     <div class="input-group input-group-sm mb-3">
@@ -291,7 +291,7 @@ z-index: 2001;
                                             <input type="text" class="form-control" name="defect_ctrl_number" id="txtDefectCtrlNumber" placeholder="Auto generated" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -309,7 +309,7 @@ z-index: 2001;
                                         </div>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-3">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group input-group-prepend w-25">
@@ -322,7 +322,7 @@ z-index: 2001;
                                         <input hidden type="text" name="line_t" id="txtLineT" class="form-control" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -331,7 +331,7 @@ z-index: 2001;
                                         <input type="text" name="date" id="txtDate" class="form-control" value="{{ date('Y-m-d') }}" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -341,13 +341,13 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="header" style="border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                 <label class="fw-bold">
                                     DEFECT ESCALATION
                                 </label>
                             </div>
-        
+
                             <div class="row mt-2">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-sm mb-3">
@@ -359,7 +359,7 @@ z-index: 2001;
                                         </select>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend">
@@ -386,7 +386,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Product Name -->
                                 <div class="col-sm-4">
@@ -397,7 +397,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="product_name" id="txtProductName" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <!-- PO Number -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -407,7 +407,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="po_number" id="txtPONumber" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Runcard Number -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -422,7 +422,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <!-- Lot # -->
                                 <div class="col-sm-4">
@@ -433,7 +433,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="lot_no" id="txtLotNo" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Pair # -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -443,7 +443,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="pair_no" id="txtPairNo" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Die/Mold # -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -454,7 +454,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Station Select -->
                                 <div class="col-sm-6">
@@ -474,7 +474,7 @@ z-index: 2001;
                                         </select>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Other Station Text Input (hidden by default) -->
                                 <div class="col-sm-6" id="otherStationContainer" style="display: none;">
                                     <div class="input-group input-group-sm mb-3">
@@ -485,7 +485,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <div class="col-sm-8">
                                     <div class="form-group">
@@ -518,7 +518,7 @@ z-index: 2001;
                                         </table>
                                     </div>
                                 </div>
-        
+
                                 <div class="container col-sm-4 border border-secondary rounded p-2">
                                     <div class="form-group">
                                         <label>Legend:</label>
@@ -536,18 +536,18 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                         <label class="fw-bold">
                                             A. PROBLEM ENCOUNTERED (Indicate the problem encountered by ticking the below of box defect lists)
                                         </label>
-        
+
                                     </div>
                                 </div>
                             </div>
-        
+
                             <!-- No. of Occurrence -->
                             <div class="row mb-3 mt-3">
                                 <div class="col-sm-12">
@@ -605,7 +605,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Mode of Defect -->
                                 <div class="col-sm-6 modeOfDefectClass" hidden>
@@ -616,7 +616,7 @@ z-index: 2001;
                                         <select class="form-control select2 select2bs4 selDefects" id="txtDefects" name="defect[]" multiple></select>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Critical -->
                                 <div class="col-sm-6 criticalDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -627,7 +627,7 @@ z-index: 2001;
                                     </div>
                                 </div>
 
-                            
+
                             </div>
 
                             <div class="row">
@@ -642,7 +642,7 @@ z-index: 2001;
                                         <input type="text" name="defect_qty" id="txtDefectQty" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Setup -->
                                 {{-- <div class="col-sm-6 setupDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -652,7 +652,7 @@ z-index: 2001;
                                         <input type="text" name="setup_qty" id="txtSetupQty" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Auto Inserter -->
                                 <div class="col-sm-6 autoInserterDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -662,7 +662,7 @@ z-index: 2001;
                                         <input type="text" name="auto_inserter_others" id="txtautoInserterOthers" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- NG Samples -->
                                 <div class="col-sm-6 ngSamplesDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -679,13 +679,13 @@ z-index: 2001;
                                     <div id="bToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <span id="bHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                         <label class="fw-bold">
-                                                B. LEVEL 1: PROBLEM VERIFICATION 
+                                                B. LEVEL 1: PROBLEM VERIFICATION
                                                 <small>(Verification shall be done by Production, Engineering & Line QC)</small>
-                                            </label>                     
+                                            </label>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row bHeaderVerificationHeader" style="display: none;">
                                 <div class="col-sm-12">
                                     <div id="bToggleVerificationContentHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
@@ -693,9 +693,9 @@ z-index: 2001;
                                             <span id="bHeaderVerificationContentIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                             B.1. VERIFICATION RESULT
                                         </label>
-        
+
                                     </div>
-        
+
                                     <div class="content bHeaderVerificationContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                         <div class="row mb-3">
                                             <!-- Production -->
@@ -735,7 +735,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="p_verification_remarks" id="txtPVerificationRemarks" autocomplete="off">
                                                 </div>
                                             </div>
-                                        
+
                                             <!-- Engineering -->
                                             <div class="col-sm-4">
                                                 <div class="d-flex justify-content-center mb-3">
@@ -775,7 +775,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="e_verification_remarks" id="txtEVerificationRemarks" autocomplete="off">
                                                 </div>
                                             </div>
-                                        
+
                                             <!-- QC -->
                                             <div class="col-sm-4">
                                                 <div class="d-flex justify-content-center mb-3">
@@ -819,7 +819,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <!--DISPOSITION -->
                             <div class="row bHeaderDispositionHeader" style="display: none;">
                                 <div class="col-sm-12">
@@ -829,9 +829,9 @@ z-index: 2001;
                                                 <span id="bHeaderDispositionContentIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 B.2. DISPOSITION
                                             </label>
-            
+
                                         </div>
-        
+
                                         <div class="content bHeaderDispositionContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                             <div class="row mb-3">
                                                 <!-- Production -->
@@ -985,20 +985,20 @@ z-index: 2001;
                                         </div>
                                 </div>
                             </div>
-        
+
                             <div class="row cHeaderClass" hidden>
                             {{-- <div class="row cHeaderClass"> --}}
                                 <div class="col-sm-12">
                                     <div id="cToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <label class="fw-bold">
-                                                <span id="cHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>      
+                                                <span id="cHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 C. IMMEDIATE ACTION
                                                 <small>(shall be made within 24 hours)</small>
                                             </label>
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="content cHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                 <div class="row mb-3">
                                     <div class="col-sm-12">
@@ -1061,21 +1061,21 @@ z-index: 2001;
                                         </div>
                                     </div>
                                 </div>
-                            </div>  
-        
+                            </div>
+
                             <div class="row dHeaderClass" hidden>
                             {{-- <div class="row dHeaderClass"> --}}
                                     <div class="col-sm-12">
                                         <div id="dToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <label class="fw-bold">
-                                                <span id="dHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>      
+                                                <span id="dHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 D. CONTAINMENT ACTION
                                                 <small>(IF NG)</small>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
-            
+
                                 <div class="content dHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                     <div class="row mb-3">
                                         <div class="col-sm-12">
@@ -1139,7 +1139,7 @@ z-index: 2001;
                                             </div>
                                         </div>
                                     </div>
-                                </div>  
+                                </div>
                             </div>
 
                         <!-- BACK TAB -->
@@ -1152,9 +1152,9 @@ z-index: 2001;
                                             <span id="reworkHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                             IF REWORK, OPERATOR TO FILL IN
                                         </label>
-        
+
                                     </div>
-                              
+
                                   <!-- Collapsible Content -->
                                   <div class="reworkHeaderContent p-4 border rounded bg-white shadow-sm" style="display:none;">
                                     <div class="row g-4">
@@ -1194,7 +1194,7 @@ z-index: 2001;
                                                 </div>
                                             </div>
                                         </div>
-                              
+
                                       <div class="col-md-6">
                                         <table class="table table-sm table-bordered text-center align-middle">
                                           <thead class="table-primary">
@@ -1216,7 +1216,7 @@ z-index: 2001;
                                               <h6 class="fw-bold text-primary mb-3">
                                                 <i class="bi bi-wrench-adjustable-circle me-2"></i> Rework Activities
                                               </h6>
-                                          
+
                                               <div class="row">
                                                 <div class="col-md-6">
                                                   <div class="form-check">
@@ -1240,7 +1240,7 @@ z-index: 2001;
                                                     <label class="form-check-label">GLUING OF CT</label>
                                                   </div>
                                                 </div>
-                                          
+
                                                 <div class="col-md-6">
                                                   <div class="form-check">
                                                     <input type="checkbox" class="form-check-input" name="rework_activity[]" value="6">
@@ -1258,7 +1258,7 @@ z-index: 2001;
                                                     <input type="checkbox" class="form-check-input" name="rework_activity[]" value="9">
                                                     <label class="form-check-label">CLEANING</label>
                                                   </div>
-                                          
+
                                                   <div class="form-check mb-1">
                                                     <input type="checkbox" class="form-check-input" id="txtOthers" name="rework_activity[]" value="10">
                                                     <label class="form-check-label" for="txtOthers">OTHERS</label>
@@ -1269,35 +1269,35 @@ z-index: 2001;
                                                 </div>
                                               </div>
                                             </div>
-                                          
+
                                             <!-- Replaced Parts -->
                                             <div class="col-md-4">
                                                 <div class="d-flex align-items-center mb-3">
                                                     <h6 class="fw-bold text-primary mb-0 me-2 d-flex align-items-center">
                                                       <i class="bi bi-box-seam me-2"></i> Replaced Parts
                                                     </h6>
-                                                  
+
                                                     <div class="d-flex align-items-center gap-1">
-                                                      <button type="button" 
+                                                      <button type="button"
                                                               class="btn btn-outline-primary btn-sm rounded-circle addReplaceParts"
                                                               style="width:25px; height:25px; padding:0; margin-left:5px;">
                                                         <i class="bi bi-plus">+</i>
                                                       </button>
-                                                      <button type="button" 
+                                                      <button type="button"
                                                               class="btn btn-outline-danger btn-sm rounded-circle removeReplaceParts"
                                                               style="width:25px; height:25px; padding:0; margin-left:5px;">
                                                         <i class="bi bi-x">X</i>
                                                       </button>
                                                     </div>
                                                 </div>
-                                            
+
                                                 <div id="replacedPartsContainer">
                                                     <div class="replaced-part-row mb-2 border rounded p-2">
                                                         <div class="input-group input-group-sm mb-2">
                                                         <span class="input-group-text w-50">Part Name</span>
                                                         <input type="text" class="form-control" name="r_part_name[]" autocomplete="off">
                                                         </div>
-                                                
+
                                                         <div class="input-group input-group-sm">
                                                             <span class="input-group-text w-50">Lot No</span>
                                                             <input type="text" class="form-control" name="r_lot_no[]" autocomplete="off">
@@ -1305,29 +1305,29 @@ z-index: 2001;
                                                     </div>
                                                 </div>
                                             </div>
-                              
+
                                         <!-- MPC + Activity + Parts -->
                                         <div class="col-md-4 text-start">
                                             <h6 class="fw-bold text-primary mb-3">
                                             <i class="bi bi-gear me-2"></i> MPC Check Using
                                             </h6>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="1" id="mpc1">
                                             <label class="form-check-label" for="mpc1">TERMINAL GAUGE</label>
                                             </div>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="2" id="mpc2">
                                             <label class="form-check-label" for="mpc2">DUMMY #LO</label>
                                             </div>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="3" id="mpc3">
                                             <label class="form-check-label" for="mpc3">DUMMY #MO</label>
                                             </div>
                                         </div>
-                              
+
                                       <div class="col-md-4">
                                         <h6 class="fw-bold text-primary mb-3"><i class="bi bi-arrow-repeat me-2"></i> Activity After Rework</h6>
                                         <div class="form-check"><input type="radio" class="form-check-input" name="activity_after_rework" value="1"><label class="form-check-label">PRINTING</label></div>
@@ -1335,7 +1335,7 @@ z-index: 2001;
                                         <div class="form-check"><input type="radio" class="form-check-input" name="activity_after_rework" value="3"><label class="form-check-label">CURING</label></div>
                                       </div>
 
-                              
+
                                     </div><!-- row -->
                                   </div><!-- content -->
                                 </div>
@@ -1350,7 +1350,7 @@ z-index: 2001;
                                             G. FINAL DISPOSITION - LINE RESUMPTION
                                         </label>
                                     </div>
-                                
+
                                     <!-- Collapsible Content -->
                                     <div class="content gHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                         <div class="row g-4">
@@ -1590,7 +1590,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="result_confirmation" id="txtResultConfirmation">
                                                 </div>
                                             </div>
-                                            
+
 
                                             <div class="col-sm-4">
                                                 <div class="input-group input-group-sm mb-3">
@@ -1667,7 +1667,7 @@ z-index: 2001;
                                                     </div>
                                                 </div>
                                             </div>
-                                    
+
 
                                     </div><!-- content -->
 
@@ -1878,7 +1878,7 @@ z-index: 2001;
         </div>
     </div>
     <!-- /.Modal -->
-    
+
 
 <!-- /.content-wrapper -->
 @endsection
@@ -1907,7 +1907,7 @@ z-index: 2001;
 
 
 $(document).ready(function() {
-    
+
     $('.select2').select2();
 
     //Initialize Select2 ElementsW
@@ -1920,7 +1920,7 @@ $(document).ready(function() {
     let deviceCode = '';
     let poQty = '';
     let isViewingDefect = false;
-    
+
     let scanContext ='';
     let reworkerContext ='';
     let verification2Context ='';
@@ -2024,7 +2024,7 @@ $(document).ready(function() {
                                 $('#txt_device_name_lbl').val(data['data']['device_name']);
                                 $('#txt_device_code_lbl').val(data['data']['device_code']);
                                 $('#txt_po_qty_lbl').val(data['data']['po_qty']);
-                                
+
                                 defectEscalationDataTable.ajax.reload();
                                 getDefectCount(poNumber);
                                 // Close the modal
@@ -2046,7 +2046,7 @@ $(document).ready(function() {
         });
     });
 
-    
+
 
     $(document).on('click', '.btn_view_defect_details, .btn_edit_defect_details', function () {
         isViewingDefect = true;
@@ -2122,7 +2122,7 @@ $(document).ready(function() {
             if(verificationStatus == 'VERIFIED' && occurence == 2 || occurence == 3 || isDefectType1){
                 $('.bHeaderClass').attr('hidden', false);
             }
-            
+
         }
 
         $.ajax({
@@ -2134,7 +2134,7 @@ $(document).ready(function() {
                 if (response.status !== 'success') {
                     return alert('Defect not found.');
                 }
-                
+
                 const data = response.data;
                 const userId = data.de_user;
                 const userName = data.operator_info.name;
@@ -2162,7 +2162,7 @@ $(document).ready(function() {
                     $('#txtRuncardStationId').val(data.prod_runcard_station_id);
                     $('#txtStationModId').val(data.prod_runcard_station_mod_id);
                     $('#txtLine').val(data.line_id).trigger('change').prop('disabled', isViewing);
-                    
+
                     // User select
                     if ($('#txtSelectUser option[value="' + userId + '"]').length === 0) {
                         $('#txtSelectUser').append(new Option(userName, userId, true, true));
@@ -2172,7 +2172,7 @@ $(document).ready(function() {
                         'pointer-events': 'none',
                         'background-color': '#e9ecef'  // optional: Bootstrap-like disabled look
                     });
-                    
+
                     $('#txtDefectCtrlNumber').val(defectCtrlNumber).prop('readonly', true); // control number
                     $('#txtDate').val(data.de_date).prop('readonly', true); // date
                     $('#txtTime').val(data.de_time).prop('readonly', true); // time
@@ -2192,7 +2192,7 @@ $(document).ready(function() {
                         $('#otherStationContainer').hide();
                         $('#txtOtherStation').val('').prop('readonly', true);
                     }
-                    
+
 
                     // Shift radio
                     $("#shiftA").prop('checked', data.de_shift == 1).prop('disabled', isViewing && data.de_shift !== 1);
@@ -2215,15 +2215,15 @@ $(document).ready(function() {
 
                     classifications.forEach(function(id) {
                         let isSelected = selectedClasses.includes(id.toString());
-                        
+
                         // Target each checkbox by ID (e.g., #txtDefectClassification1Id)
                         $("#txtDefectClassification" + id + "Id")
                             .prop('checked', isSelected)
-                            .prop('disabled', isViewing && !isSelected); 
+                            .prop('disabled', isViewing && !isSelected);
                     });
 
                     // if(testClassification.includes('2')){
-                        
+
                     // }
                     // $("#txtDefectClassification1Id").prop('checked', data.defect_classification == 1).prop('disabled', isViewing && data.defect_classification != 1);
                     // $("#txtDefectClassification2Id").prop('checked', data.defect_classification == 2).prop('disabled', isViewing && data.defect_classification != 2);
@@ -2233,21 +2233,21 @@ $(document).ready(function() {
 
 
 
-                    
+
                     $('#txtDetailedDescription').val(data.detailed_description).prop('readonly', isViewing);
 
-                    let primaryClass = testClassification[0]; 
+                    let primaryClass = testClassification[0];
 
                     if (primaryClass) {
                         let labelText = $('input[name="d_classification"][value="' + primaryClass + '"]').next('label').text();
-                        
+
                         // Update Label and Qty
                         $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
                         $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
 
                         // Update Visibility
                         $('.modeOfDefectClass, .criticalDefectClass').removeAttr('hidden');
-                        
+
                         if (primaryClass == 1) {
                             $('.otherDefectClass').attr('hidden', true);
                         } else {
@@ -2524,7 +2524,7 @@ $(document).ready(function() {
                                     item?.de_pic_ids,
                                     item?.de_due_date,
                                 ])
-                                
+
                             );
 
 
@@ -2548,7 +2548,7 @@ $(document).ready(function() {
                                     $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
                                     $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
                                 }
-                            
+
                                 if( data.problem_verificaiton_details.engr_verification_user != null){
                                     $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
                                     $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
@@ -2578,7 +2578,7 @@ $(document).ready(function() {
                                     $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
                                     $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
                                 }
-                                
+
                                 if( data.problem_verificaiton_details.d_engr_user != null){
                                     $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
                                     $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
@@ -2835,7 +2835,7 @@ $(document).ready(function() {
                                         </div>
                                     `);
                                 });
-                                
+
                             }
 
                             if (finalDispositionDetails?.f_disposition != null) {
@@ -2945,7 +2945,7 @@ $(document).ready(function() {
                                     });
 
                                     // Remove ID to avoid duplicates
-                                    $select.removeAttr('id'); 
+                                    $select.removeAttr('id');
 
                                     // Initialize Select2
                                     if ($.fn.select2) {
@@ -2975,8 +2975,8 @@ $(document).ready(function() {
                                 $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
                                 $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
                                 $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
-                                    
-                                    
+
+
                                 if( verificationAndConfirmationResults.qc_inspector != null){
                                     $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
                                     $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
@@ -3022,7 +3022,7 @@ $(document).ready(function() {
                                     $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
                                     $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
                                 }
-                            
+
                                 if( data.problem_verificaiton_details.engr_verification_user != null){
                                     $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
                                     $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
@@ -3052,7 +3052,7 @@ $(document).ready(function() {
                                     $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
                                     $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
                                 }
-                                
+
                                 if( data.problem_verificaiton_details.d_engr_user != null){
                                     $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
                                     $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
@@ -3309,7 +3309,7 @@ $(document).ready(function() {
                                         </div>
                                     `);
                                 });
-                                
+
                             }
 
                             if (finalDispositionDetails?.f_disposition != null) {
@@ -3419,7 +3419,7 @@ $(document).ready(function() {
                                     });
 
                                     // Remove ID to avoid duplicates
-                                    $select.removeAttr('id'); 
+                                    $select.removeAttr('id');
 
                                     // Initialize Select2
                                     if ($.fn.select2) {
@@ -3449,8 +3449,8 @@ $(document).ready(function() {
                                 $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
                                 $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
                                 $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
-                                    
-                                    
+
+
                                 if( verificationAndConfirmationResults.qc_inspector != null){
                                     $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
                                     $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
@@ -3488,21 +3488,21 @@ $(document).ready(function() {
     });
 
     $(".btnScanVerificationId").click(function () {
-        scanContext = $(this).data("type"); 
+        scanContext = $(this).data("type");
         $('#modalScanProductionId').modal('show');
         $("#txtSearchProdId").val('');
         $("#scanProdIdBody").text('Please Scan ID...');
     });
 
     $(".btnScanVerification2Id").click(function () {
-        verification2Context = $(this).data("type"); 
+        verification2Context = $(this).data("type");
         $('#modalScanVerification2Id').modal('show');
         $("#txtSearchVerification2").val('');
         $("#scanVerification2IdBody").text('Please Scan ID...');
     });
 
     $(".btnScanReworker").click(function () {
-        reworkerContext = $(this).data("type"); 
+        reworkerContext = $(this).data("type");
         $('#modalScanReworkerId').modal('show');
         $("#txtReworkerId").val('');
         $("#scanReworkerIdBody").text('Please Scan ID...');
@@ -3571,15 +3571,15 @@ $(document).ready(function() {
                         },
                         success: function(response) {
                             if (response.status === 'success') {
-                            
+
                                 if (reworkerContext === 'R1') {
                                     $('#txtReworkerOperator1').val(response.user.name);
-                                    $('#txtReworkerOperatorId1').val(response.user.id);                
+                                    $('#txtReworkerOperatorId1').val(response.user.id);
                                 }else{
                                     $('#txtReworkerOperator2').val(response.user.name);
-                                    $('#txtReworkerOperatorId2').val(response.user.id); 
+                                    $('#txtReworkerOperatorId2').val(response.user.id);
                                 }
-                                
+
                                 $('#modalScanReworkerId').modal('hide');
                             } else {
                                     alert(response.message + '. Please try again or contact the administrator.');
@@ -3590,13 +3590,13 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
 
     $(".btnScanFinalDisposition").click(function () {
-        finalDispositionContext = $(this).data("type"); 
+        finalDispositionContext = $(this).data("type");
         $('#modalScanFinalDispositionId').modal('show');
         $("#txtSearchFinalDispositionUserId").val('');
         $("#scanFInalDispositionIdBody").text('Please Scan ID...');
@@ -3628,23 +3628,23 @@ $(document).ready(function() {
                             if (response.status === 'success') {
 
                                 // console.log('test');
-                               
+
                                 if (finalDispositionContext === 'FEM') {
                                     $('#txtDEngrManagerUser').val(response.user.name);
-                                    $('#txtDEngrManagerUserId').val(response.user.id);  
-                                    $('#txtDEngrManagerDateId').val(formattedDateTime);     
+                                    $('#txtDEngrManagerUserId').val(response.user.id);
+                                    $('#txtDEngrManagerDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'FPE'){
                                     $('#txtDPEngrUser').val(response.user.name);
                                     $('#txtDPEngrUserId').val(response.user.id);
-                                    $('#txtDPEngrDateId').val(formattedDateTime);  
+                                    $('#txtDPEngrDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'FQCM'){
                                     $('#txtDQCManagerUser').val(response.user.name);
                                     $('#txtDQCManagerUserId').val(response.user.id);
-                                    $('#txtQcManagerDateId').val(formattedDateTime);  
+                                    $('#txtQcManagerDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'DQS'){
                                     $('#txtDQcUser').val(response.user.name);
                                     $('#txtDQcUserId').val(response.user.id);
-                                    $('#txtDQcDateId').val(formattedDateTime);  
+                                    $('#txtDQcDateId').val(formattedDateTime);
                                 }
 
                                 $('#modalScanFinalDispositionId').modal('hide');
@@ -3657,7 +3657,7 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
@@ -3688,27 +3688,27 @@ $(document).ready(function() {
                             if (response.status === 'success') {
 
                                 // console.log('test');
-                               
+
                                 if (verification2Context === 'P2') {
                                     $('#txtPLevelTwoUser').val(response.user.name);
-                                    $('#txtPLevelTwoUserId').val(response.user.id);  
-                                    $('#txtPLevelTwoDate').val(formattedDateTime);     
+                                    $('#txtPLevelTwoUserId').val(response.user.id);
+                                    $('#txtPLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'E2'){
                                     $('#txtELevelTwoUser').val(response.user.name);
                                     $('#txtELevelTwoUserId').val(response.user.id);
-                                    $('#txtELevelTwoDate').val(formattedDateTime);  
+                                    $('#txtELevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'Q2'){
                                     $('#txtQcLevelTwoUser').val(response.user.name);
                                     $('#txtQcLevelTwoUserId').val(response.user.id);
-                                    $('#txtQcLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtQcLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'PPC'){
                                     $('#txtPpcLevelTwoUser').val(response.user.name);
                                     $('#txtPpcLevelTwoUserId').val(response.user.id);
-                                    $('#txtPpcLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtPpcLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'TA'){
                                     $('#txtTaLevelTwoUser').val(response.user.name);
                                     $('#txtTaLevelTwoUserId').val(response.user.id);
-                                    $('#txtTaLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtTaLevelTwoDate').val(formattedDateTime);
                                 }
 
                                 $('#modalScanVerification2Id').modal('hide');
@@ -3721,19 +3721,19 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
-    
+
 
     $('#modalScanProductionId').on('shown.bs.modal', function (e) {
         $('#txtSearchProdId').focus();
         $(document).on('keypress',function(e){
             // e.preventDefault();
             scannedId = $('#txtSearchProdId').val();
-            
-            if( e.keyCode == 13){ 
+
+            if( e.keyCode == 13){
                 if(scannedId != ''){
                     // console.log('scanContext', scanContext);
                     // console.log(scannedId);
@@ -3798,7 +3798,7 @@ $(document).ready(function() {
                                 }else if(scanContext === 'QP'){
                                     alert(response.message + '. Please try again or contact the administrator.');
                                 }
-                                
+
                                 // alert('Employee not found.');
                             }
                         },
@@ -3808,7 +3808,7 @@ $(document).ready(function() {
                         }
                     });
                     // $(this).val('');
-                    
+
                 } else {
                     alert('Please scan.');
                 }
@@ -3818,7 +3818,7 @@ $(document).ready(function() {
 
 
     $(".btnScanVC").click(function () {
-        qcContext = $(this).data("type"); 
+        qcContext = $(this).data("type");
         $('#modalScanVerificationAndConfirmation').modal('show');
         $("#txtSearchForVerificationAndConfirmationId").val('');
         $("#scanVerificationAndConfirmationIqcBody").text('Please Scan ID...');
@@ -3829,8 +3829,8 @@ $(document).ready(function() {
         $(document).on('keypress',function(e){
             // e.preventDefault();
             scannedId = $('#txtSearchForVerificationAndConfirmationId').val();
-            
-            if( e.keyCode == 13){ 
+
+            if( e.keyCode == 13){
                 if(scannedId != ''){
                     // console.log('qcContext', qcContext);
                     // console.log(scannedId);
@@ -3883,7 +3883,7 @@ $(document).ready(function() {
                         }
                     });
                     // $(this).val('');
-                    
+
                 } else {
                     alert('Please scan.');
                 }
@@ -3929,11 +3929,11 @@ $(document).ready(function() {
 
         $('#txtPONumber').val($('#txt_po_number_lbl').val());
         $('#txtProductName').val($('#txt_device_name_lbl').val());
-        
+
     });
 
     $('#txtLine').on('change', function () {
-        var text = $(this).find("option:selected").text();  
+        var text = $(this).find("option:selected").text();
         $('#txtLineT').val(text);
     });
 
@@ -4052,7 +4052,7 @@ $(document).ready(function() {
             $row.find('input[type="date"]').val('');
         }
     });
-        
+
 
 
         $('#txtRuncardNumber').on('change', function () {
@@ -4106,17 +4106,17 @@ $(document).ready(function() {
     document.querySelectorAll('input[name="d_classification"]').forEach(radio => {
         radio.addEventListener('change', function () {
             const selectedClassification = document.querySelector('input[name="d_classification"]:checked');
-
             let selectedText = $(this).next('label').text(); // get label text of selected radio
-            $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(selectedText + ' Qty');
 
+            $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(selectedText + ' Qty');
             if (selectedClassification) {
                 const defectClassification = selectedClassification.value;
-                if(defectClassification == 1){    
+                getModOfDefect($("#txtDefects"), defectClassification)
+                if(defectClassification == 1){
                     $('.modeOfDefectClass').removeAttr('hidden');
                     $('.criticalDefectClass').removeAttr('hidden');
                     $('.otherDefectClass').attr('hidden', true);
-                    
+
                 }
                 else if(defectClassification == 2){
                     $('.modeOfDefectClass').removeAttr('hidden');
@@ -4141,7 +4141,6 @@ $(document).ready(function() {
                     $('.otherDefectClass').removeAttr('hidden');
                 }
 
-                getModOfDefect($("#txtDefects"), defectClassification)
             }
         });
     });
@@ -4150,7 +4149,7 @@ $(document).ready(function() {
     $('#txtSelectUser').change(function(){
         var userId = $(this).val();
         var userPosition = $('#txtSelectUser option:selected').data('position');
-        
+
         if(userPosition == 4){
             $('#txtOperator').prop('checked', true);
             $('#txtOperator').prop('disabled', false);
@@ -4170,7 +4169,7 @@ $(document).ready(function() {
             $('#txtOperator').prop('disabled', true);
             $('#txtMaterialHandler').prop('disabled', true);
             $('#txtTechnician').prop('disabled', true);
-            
+
         }else if(userPosition == 11){
             $('#txtTechnician').prop('checked', true);
             $('#txtTechnician').prop('disabled', false);
@@ -4181,7 +4180,7 @@ $(document).ready(function() {
             $('#txtOperator').prop('checked', false);
             $('#txtMaterialHandler').prop('checked', false);
             $('#txtQCInspector').prop('checked', false);
-            $('#txtTechnician').prop('checked', false); 
+            $('#txtTechnician').prop('checked', false);
 
             $('#txtOperator').prop('disabled', false);
             $('#txtMaterialHandler').prop('disabled', false);
@@ -4275,7 +4274,7 @@ $(document).ready(function() {
         getDefectEscalationCtrlNoToPrint(defectId, defectCtrlNo);
     });
 
-    
+
     $("#btnPrintDefectBarcode").click(function(){
         popup = window.open();
         let content = '';
@@ -4404,32 +4403,32 @@ $(document).ready(function() {
         $('#bHeaderIcon').html('&#x25BA;');
         $('.bHeaderVerificationHeader').hide();
         $('.bHeaderDispositionHeader').hide();
-        
+
         $('.bHeaderVerificationContent').slideUp(200);
-        $('#bHeaderVerificationContentIcon').html('&#x25BA;'); 
-        
+        $('#bHeaderVerificationContentIcon').html('&#x25BA;');
+
         $('.bHeaderDispositionContent').slideUp(200);
-        $('#bHeaderDispositionContentIcon').html('&#x25BA;'); 
+        $('#bHeaderDispositionContentIcon').html('&#x25BA;');
 
 
 
 
-        $('#cHeaderIcon').html('&#x25BA;'); 
+        $('#cHeaderIcon').html('&#x25BA;');
         $('.cHeaderContent').slideUp(200);
         $('.dHeaderContent').slideUp(200);
-        $('#dHeaderIcon').html('&#x25BA;'); 
+        $('#dHeaderIcon').html('&#x25BA;');
         $('.eHeaderContent').slideUp(200);
-        $('#eHeaderIcon').html('&#x25BA;'); 
+        $('#eHeaderIcon').html('&#x25BA;');
         $('.fHeaderContent').slideUp(200);
-        $('#fHeaderIcon').html('&#x25BA;'); 
+        $('#fHeaderIcon').html('&#x25BA;');
         $('.gHeaderContent').slideUp(200);
-        $('#gHeaderIcon').html('&#x25BA;'); 
+        $('#gHeaderIcon').html('&#x25BA;');
         $('.hHeaderContent').slideUp(200);
-        $('#hHeaderIcon').html('&#x25BA;'); 
+        $('#hHeaderIcon').html('&#x25BA;');
         $('.iHeaderContent').slideUp(200);
-        $('#iHeaderIcon').html('&#x25BA;'); 
+        $('#iHeaderIcon').html('&#x25BA;');
         $('.jHeaderContent').slideUp(200);
-        $('#jHeaderIcon').html('&#x25BA;'); 
+        $('#jHeaderIcon').html('&#x25BA;');
     });
 
 });

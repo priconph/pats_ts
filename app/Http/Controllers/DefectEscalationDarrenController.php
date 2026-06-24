@@ -489,7 +489,7 @@ class DefectEscalationDarrenController extends Controller{
             //     // 2. Loop through each string and split them manually
             //     foreach ($rawModIds as $idString) {
             //         $ids = explode(',', $idString); // Split "6,10" into ["6", "10"]
-                    
+
             //         foreach ($ids as $id) {
             //             $trimmedId = trim($id);
             //             if ($trimmedId !== '') {
@@ -724,7 +724,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $user_man;
 
                 DefectImmediateActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'at_man_action_details'         => $request->action_details_man,
                         'at_machine_action_details'     => $request->action_details_machine,
@@ -747,7 +747,7 @@ class DefectEscalationDarrenController extends Controller{
                 );
 
                 DefectContainmentActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'wip_total_qty' => $request->wip_total_qty,
                         'wip_ok_qty'    => $request->wip_ok_qty,
@@ -1068,7 +1068,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $user_man;
 
                 DefectImmediateActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'at_man_action_details'         => $request->action_details_man,
                         'at_machine_action_details'     => $request->action_details_machine,
@@ -1116,7 +1116,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                   DefectContainmentActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'wip_total_qty' => $request->wip_total_qty,
                         'wip_ok_qty'    => $request->wip_ok_qty,
@@ -1182,7 +1182,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $defectEscalation->defect_status;
 
                 DefectReworkDetails::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'reworker_user_id1'         => $request->reworker_operator_id1,
                         'reworker_user_id2'         => $request->reworker_operator_id2,
@@ -1229,7 +1229,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DefectFinalDispositionDetails::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'f_disposition'                 => $request->f_dispostion_result,
                         'engr_manager_id'               => $request->d_engr_manager_id,
@@ -1274,7 +1274,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DefectVerifyCauseAndEscapeeCause::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'rc_ec'                         => $request->root_cause_escapee,
                         'updated_by'                    => Auth::id(),
@@ -1313,7 +1313,7 @@ class DefectEscalationDarrenController extends Controller{
                 $capa_due_date = is_array($request->capa_due_date) ? implode(",", $request->capa_due_date) : $request->capa_due_date;
 
                 DefectCapa::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'de_capa'            => $capa_action,
                         'de_pic'             => $capa_user,
@@ -1348,7 +1348,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DEVerificationAndConfirmationResult::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'action_stated'                  => $request->action_stated,
                         'prodblem_reoccur'               => $request->problem_reoccur,
@@ -1817,12 +1817,12 @@ class DefectEscalationDarrenController extends Controller{
                 ->pluck('mod_id');
 
             $tally = [];
-            
+
             // 3. Split and Tally IDs for THIS Shift/Line only
             foreach ($rawModIds as $idString) {
                 if (empty($idString)) continue;
 
-                $ids = explode(',', $idString); 
+                $ids = explode(',', $idString);
                 foreach ($ids as $id) {
                     $trimmedId = trim($id);
                     if ($trimmedId !== '') {
@@ -1834,11 +1834,11 @@ class DefectEscalationDarrenController extends Controller{
             // 4. Map IDs to Names for this specific Group
             if (!empty($tally)) {
                 $names = ModeOfDefect::whereIn('id', array_keys($tally))->pluck('name', 'id');
-                
+
                 $formattedDefects = [];
                 foreach ($tally as $id => $qty) {
                     $name = isset($names[$id]) ? $names[$id] : "Unknown (#$id)";
-                    
+
                     $formattedDefects[] = [
                         'mod_details_count' => $name.'-'.$qty,
                     ];

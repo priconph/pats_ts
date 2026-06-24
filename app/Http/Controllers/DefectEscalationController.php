@@ -379,14 +379,7 @@ class DefectEscalationController extends Controller
     public function fn_view_setup_stations(Request $request){
         // date_default_timezone_set('Asia/Manila');
         $prod_runcard_id_query = $request->prod_runcard_id_query;
-        $prod_runcard = ProductionRuncard::where('id',$request->prod_runcard_id_query)->first('po_no'); //
-        $devices = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $prod_runcard->po_no,
-                'name'=> '',
-                'barcode'=> $request->device_code,
-                'get_or_first'=> '',
-        ]);
-        // $devices = Device::where('barcode',$request->device_code)->get();
+        $devices = Device::where('barcode',$request->device_code)->get();
 
         if(!$devices->count()){
             $devices = array();
@@ -938,15 +931,8 @@ class DefectEscalationController extends Controller
 
 
         if($validator->passes()){
-            // request->txt_prod_runcard_id_query
-            $prod_runcard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->first('po_no'); //
-            $device = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $prod_runcard->po_no,
-                'name'=> '',
-                'barcode'=> $request->txt_device_code,
-                'get_or_first'=> '',
-            ]);
-            // $device = Device::where('barcode', $request->txt_device_code)->first();
+
+            $device = Device::where('barcode', $request->txt_device_code)->first();
 
 
             if($device != null){
@@ -1024,6 +1010,48 @@ class DefectEscalationController extends Controller
                             //insert
                             DB::beginTransaction();
                             try {
+                                // Generate Reel Lot No
+                                // $arr_packing_months = [1,2,3,4,5,6,7,8,9,'X','Y','Z'];
+                                // $final_reel_lot_no = "";
+
+                                // $last_no_of_the_year = date('Y')[3];
+                                // $packing_month = $arr_packing_months[(integer)date('m') - 1];
+                                // $packing_date = date('d');
+                                // $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
+                                // $lot_no_machine_code = '0';
+
+                                // $device_info = Device::where('name', $request->device_name)->first();
+
+                                // if($device_info != null){
+                                //     if($device_info->lot_no_machine_code != null){
+                                //         $lot_no_machine_code = $device_info->lot_no_machine_code;
+                                //     }
+                                // }
+
+                                // $final_reel_lot_no = $last_no_of_the_year . $packing_month . $packing_date . '-'. $serial_no . $lot_no_machine_code;
+                                // $explode_reel_lot_no = explode('-', $final_reel_lot_no)[0];
+
+                                // $prod_runcard_reel_lots = [];
+                                // $prod_runcard_reel_lots = ProductionRuncard::with([
+                                //                                 'wbs_kitting_has_many' => function($query) use ($request){
+                                //                                     $query->where('device_name', $request->device_name);
+                                //                                 }
+                                //                             ])
+                                //                             ->where('reel_lot_no', 'LIKE', $explode_reel_lot_no . "%")->orderBy('id', 'desc')
+                                //                             ->first();
+
+                                // if($prod_runcard_reel_lots != null){
+                                //     if($prod_runcard_reel_lots->wbs_kitting_has_many != null){
+                                //         if($prod_runcard_reel_lots != null){
+                                //             $exploded_prod_runcard_reel_lot_no = explode('-', $prod_runcard_reel_lots->reel_lot_no);
+
+                                //             $serial_no = (integer)($exploded_prod_runcard_reel_lot_no[1][0] . $exploded_prod_runcard_reel_lot_no[1][1]) + 1;
+                                //             $serial_no = str_pad($serial_no, 2, "0", STR_PAD_LEFT);
+
+                                //             $final_reel_lot_no = $exploded_prod_runcard_reel_lot_no[0] . '-' . $serial_no . $lot_no_machine_code;
+                                //         }
+                                //     }
+                                // }
 
                                 $arr_packing_months = [1,2,3,4,5,6,7,8,9,'X','Y','Z'];
                                 $final_reel_lot_no = "";
@@ -1032,13 +1060,13 @@ class DefectEscalationController extends Controller
                                 $packing_month = $arr_packing_months[(integer)date('m') - 1];
                                 $packing_date = date('d');
                                 $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
-                                $lot_no_machine_code = '0'; 
-                              
-                                // $device_info = Device::where('name', $request->device_name)->first();
+                                $lot_no_machine_code = '0';
 
-                                if($device != null){
-                                    if($device->lot_no_machine_code != null){
-                                        $lot_no_machine_code = $device->lot_no_machine_code;
+                                $device_info = Device::where('name', $request->device_name)->first();
+
+                                if($device_info != null){
+                                    if($device_info->lot_no_machine_code != null){
+                                        $lot_no_machine_code = $device_info->lot_no_machine_code;
                                     }
                                 }
 
@@ -1503,6 +1531,8 @@ class DefectEscalationController extends Controller
         if($prod_runcard_stations->isEmpty()){
             $prod_runcard_stations = array();
         }
+
+        $device = Device::where('barcode', $request->device_code)->first();
 
         $material_process =  MaterialProcess::with([
                 'manpowers_details' => function($query){
