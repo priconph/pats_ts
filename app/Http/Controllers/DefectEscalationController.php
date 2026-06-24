@@ -3172,7 +3172,13 @@ class DefectEscalationController extends Controller
         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
         $lot_no_machine_code = '0';
 
-        $device_info = Device::where('name', $request->device_name)->first();
+        $device_info = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $request->txt_po_number,
+            'name'=> $request->device_name,
+            'barcode'=> '',
+            'get_or_first'=> 'first',
+        ]);
+        // $device_info = Device::where('name', $request->device_name)->first();
 
         if($device_info != null){
             if($device_info->lot_no_machine_code != null){
@@ -3666,7 +3672,10 @@ class DefectEscalationController extends Controller
                                     },
                                 ])
                                 ->where('name', $request->device_name)
+                                ->where('po_no', $request->po_number) //getMatrixByPoNo
                                 ->first();
+
+
 
                 if($mat_proc_device != null){
                     if(count($mat_proc_device->material_process) > 0){

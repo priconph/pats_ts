@@ -25,42 +25,42 @@
 
 
 <!-- Custom JS -->
-<script src="{{ asset('public/js/my_js/UserLevel.js') }}"></script>
-<script src="{{ asset('public/js/my_js/User.js?0987654') }}"></script>
-<script src="{{ asset('public/js/my_js/Machine.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Material.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ModeOfDefect.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Device.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Station.js') }}"></script>
-<script src="{{ asset('public/js/my_js/SubStation.js') }}"></script>
-<script src="{{ asset('public/js/my_js/StationSubStation.js') }}"></script>
-<script src="{{ asset('public/js/my_js/MaterialProcess.js') }}"></script>
-<script src="{{ asset('public/js/my_js/PackingOperator.js') }}"></script>
-<script src="{{ asset('public/js/my_js/PackingInspector.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ShippingOperator.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ShippingInspector.js') }}"></script>
-<!-- <script src="{{ asset('public/js/my_js/CNLine.js') }}"></script> -->
-<script src="{{ asset('public/js/my_js/AssemblyLine.js') }}"></script>
-<script src="{{ asset('public/js/my_js/OQCLotApp.js') }}"></script>
-<script src="{{ asset('public/js/my_js/OQCVIR.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ProductionRuncard.js') }}"></script>
-<script src="{{ asset('public/js/my_js/WBSMaterialKitting.js') }}"></script>
-<script src="{{ asset('public/js/my_js/WBSSakidashi.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Common.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ProdPrelimInspection.js') }}"></script>
-<script src="{{ asset('public/js/my_js/OQCPrelimInspection.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Kitting.js') }}"></script>
+<script src="{{ asset('public/js/my_js/UserLevel.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/User.js?0987654') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Machine.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Material.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ModeOfDefect.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Device.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Station.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/SubStation.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/StationSubStation.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/MaterialProcess.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/PackingOperator.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/PackingInspector.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ShippingOperator.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ShippingInspector.js') }}?<?=time()?>"></script>
+<!-- <script src="{{ asset('public/js/my_js/CNLine.js') }}?<?=time()?>"></script> -->
+<script src="{{ asset('public/js/my_js/AssemblyLine.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/OQCLotApp.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/OQCVIR.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ProductionRuncard.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/WBSMaterialKitting.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/WBSSakidashi.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Common.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ProdPrelimInspection.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/OQCPrelimInspection.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Kitting.js') }}?<?=time()?>"></script>
 
 <!--ADDED 1/29/2021-->
-<script src="{{ asset('public/js/my_js/OqcLotAppNew.js') }}"></script>
-<script src="{{ asset('public/js/my_js/Rework.js') }}"></script>
-<script src="{{ asset('public/js/my_js/ProcessFlow.js') }}"></script>
+<script src="{{ asset('public/js/my_js/OqcLotAppNew.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/Rework.js') }}?<?=time()?>"></script>
+<script src="{{ asset('public/js/my_js/ProcessFlow.js') }}?<?=time()?>"></script>
 
 <!--ADDED 06/16/2025-->
-<script src="{{ asset('public/js/my_js/DefectEscalation.js') }}"></script>
+<script src="{{ asset('public/js/my_js/DefectEscalation.js') }}?<?=time()?>"></script>
 
 
-<script src="{{ asset('public/js/my_js/PilotRun.js') }}"></script>
+<script src="{{ asset('public/js/my_js/PilotRun.js') }}?<?=time()?>"></script>
 <script>
     toastr.options = {
         "closeButton": false,
