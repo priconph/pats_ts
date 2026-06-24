@@ -3202,7 +3202,6 @@ class DefectEscalationController extends Controller
                                     ->orderBy('id', 'desc')
                                     ->first();
 
-        // return $prod_runcard_reel_lots;
 
         if($prod_runcard_reel_lots != null){
             if($prod_runcard_reel_lots->wbs_kitting_has_many != null){
@@ -3722,7 +3721,13 @@ class DefectEscalationController extends Controller
                     $material_process = [];
 
                     if($validator->passes()){
-                         $device = Device::where('name', $request->device_name)->first();
+                         $device = CommonController::getInstance()->getMatrixByPoNo([
+                            'po_no'=> $request->po_number,
+                            'name'=> $request->device_name,
+                            'barcode'=> '',
+                            'get_or_first'=> 'first',
+                        ]);
+                        //  $device = Device::where('name', $request->device_name)->first();
 
                          if($device != null){
                             $material_process = MaterialProcess::with([
@@ -3773,11 +3778,12 @@ class DefectEscalationController extends Controller
                                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                         $lot_no_machine_code = '0';
 
-                                        $device_info = Device::where('name', $request->device_name)->first();
+                                       
+                                        // $device_info = Device::where('name', $request->device_name)->first();
 
-                                        if($device_info != null){
-                                            if($device_info->lot_no_machine_code != null){
-                                                $lot_no_machine_code = $device_info->lot_no_machine_code;
+                                        if($device != null){
+                                            if($device->lot_no_machine_code != null){
+                                                $lot_no_machine_code = $device->lot_no_machine_code;
                                             }
                                         }
                                         $final_reel_lot_no = $last_no_of_the_year . $packing_month . $packing_date . '-'. $serial_no . $lot_no_machine_code;
@@ -3995,6 +4001,7 @@ class DefectEscalationController extends Controller
                                             $query->where('item_desc', $item_desc);
                                         },
                                     ])
+                                    ->where('po_no', $request->po_number) //getMatrixByPoNo
                                     ->where('name', $request->device_name)
                                     ->first();
 
@@ -4190,6 +4197,7 @@ class DefectEscalationController extends Controller
                                             // $query->where('item_desc', $item_desc);
                                         },
                                     ])
+                                    ->where('po_no', $request->po_number) //getMatrixByPoNo
                                     ->where('name', $request->device_name)
                                     ->first();
 
@@ -4259,6 +4267,7 @@ class DefectEscalationController extends Controller
                                                 // $query->where('item_desc', $item_desc);
                                             },
                                         ])
+                                        ->where('po_no', $request->po_number) //getMatrixByPoNo
                                         ->where('name', $request->device_name)
                                         ->first();
 
@@ -4371,286 +4380,6 @@ class DefectEscalationController extends Controller
         }
     }
 
-    // public function scan_emboss_lot_no(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-
-    //     $prep_status_label = 'Not Received For this PO #';
-    //     $runcard_material_status_label = 'Not Received';
-    //     $prep_status = false;
-    //     $runcard_material_status = false;
-    //     $material_certified = false;
-    //     $material_certified_label = 'Not Certified';
-    //     $arr_insert_issuance_id = [];
-    //     $mat_proc_device = [];
-    //     $final_result = 0;
-    //     $validator_error = [];
-    //     // $assessment_no = "";
-    //     $material_process = [];
-
-    //     $runcard_id = null;
-    //     if(isset($request->runcard_id)){
-    //         $runcard_id = $request->runcard_id;
-    //     }
-
-    //     if($runcard_id != null){
-    //         $parts_prep_kit_issuance = WBSSakidashiIssuance::with([
-    //                         'parts_prep_info',
-    //                         'parts_prep_info.prod_runcard_material_list' => function($query) use($runcard_id){
-    //                             $query->where('prod_runcard_id', $runcard_id);
-    //                             $query->where('tbl_wbs', 2);
-    //                             $query->where('for_emboss', 1);
-    //                         },
-    //                         'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
-    //                             // $query->where('issuance_no', $request->whs_slip_no);
-    //                             $query->where('lot_no', $request->lot_no);
-    //                         },
-    //                     ])
-    //                     // ->where('lot_no', $request->lot_no)
-    //                     ->where('po_no', $request->po_number)
-    //                     ->where('device_name', $request->device_name)
-    //                     ->get();
-
-    //         $parts_prep_kit_issuance = collect($parts_prep_kit_issuance)->where('tbl_wbs_sakidashi_issuance_item', '!=', null)->flatten(1);
-
-    //         // return $parts_prep_kit_issuance;
-
-    //         $col_parts_prep_kit_issuance = collect($parts_prep_kit_issuance)->where('parts_prep_info', '!=', null)->where('tbl_wbs_sakidashi_issuance_item', '!=', null)->flatten(1);
-
-    //         if(count($col_parts_prep_kit_issuance) > 0){
-    //             for($index = 0; $index < count($col_parts_prep_kit_issuance); $index++){
-    //                 $prep_status = false;
-    //                 $runcard_material_status = false;
-    //                 if($col_parts_prep_kit_issuance[$index]->parts_prep_info->wbs_table == 2){
-    //                     if($col_parts_prep_kit_issuance[$index]->parts_prep_info->with_partsprep == 0){
-    //                         // if($col_parts_prep_kit_issuance[$index]->parts_prep_info->status == 1){
-    //                             $prep_status_label = 'Parts Prep Done';
-    //                             $prep_status = true;
-    //                         // }
-    //                     }
-    //                     else{
-    //                         if($col_parts_prep_kit_issuance[$index]->parts_prep_info->status == 5 || $col_parts_prep_kit_issuance[$index]->parts_prep_info->status == 7){
-    //                             $prep_status_label = 'Parts Prep Done';
-    //                             $prep_status = true;
-    //                         }
-    //                         else{
-    //                             $prep_status_label = 'Parts Prep Ongoing';
-    //                             $prep_status = false;
-    //                         }
-    //                     }
-
-    //                     if($prep_status){
-    //                         if(count($col_parts_prep_kit_issuance[$index]->parts_prep_info->prod_runcard_material_list) > 0){
-    //                             $runcard_material_status_label = 'Already Exist';
-    //                             $runcard_material_status = false;
-    //                         }
-    //                         else{
-    //                             $runcard_material_status_label = 'Ready to Insert';
-    //                             $runcard_material_status = true;
-    //                         }
-    //                     }
-    //                     else{
-    //                         $runcard_material_status_label = 'Not Received';
-    //                     }
-    //                 }
-
-    //                 $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
-    //                 $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
-    //                 // $assessment_no = $col_parts_prep_kit_issuance[$index]->kit_issuance->assessment;
-
-    //                 $mat_proc_device = Device::with([
-    //                                     'material_process' => function($query){
-    //                                         $query->where('status', 1);
-    //                                     },
-    //                                     'material_process.material_details' => function($query) use($item, $item_desc){
-    //                                         $query->where('status', 1);
-    //                                         $query->where('tbl_wbs', 2);
-    //                                         $query->where('item', $item);
-    //                                         // $query->where('item_desc', $item_desc);
-    //                                     },
-    //                                 ])
-    //                                 ->where('name', $request->device_name)
-    //                                 ->first();
-
-    //                 if($mat_proc_device != null){
-    //                     if(count($mat_proc_device->material_process) > 0){
-    //                         $material_certified = true;
-    //                         $material_certified_label = 'Certified';
-
-    //                         if($runcard_id != null){
-    //                             if($prep_status && $runcard_material_status){
-    //                                 $arr_insert_issuance_id[] = $col_parts_prep_kit_issuance[$index]->id;
-    //                             }
-    //                         }
-    //                         else{
-    //                             if($prep_status){
-    //                                 $arr_insert_issuance_id[] = $col_parts_prep_kit_issuance[$index]->id;
-    //                             }
-    //                         }
-    //                     }
-    //                     else{
-    //                         $material_certified = false;
-    //                         $material_certified_label = 'Not Certified';
-    //                     }
-    //                 }
-    //                 else{
-    //                     $material_certified = false;
-    //                     $material_certified_label = 'Not Certified';
-    //                 }
-
-    //             }
-
-    //             if(count($arr_insert_issuance_id) > 0){
-    //                 // Insert Runcard & Material
-    //                 if($runcard_id != null){
-    //                     // INSERT MATERIAL ONLY
-    //                     DB::beginTransaction();
-    //                     try {
-    //                         // for($index = 0; $index < count($arr_insert_issuance_id); $index++){
-    //                         //     ProdRuncardMaterialList::insert([
-    //                         //         'prod_runcard_id' => $runcard_id,
-    //                         //         'status' => 1,
-    //                         //         'issuance_id' => $arr_insert_issuance_id[$index],
-    //                         //         'tbl_wbs' => 2,
-    //                         //         'for_emboss' => 1,
-    //                         //         'status' => 1,
-    //                         //     ]);
-
-    //                         // }
-
-    //                         $certified_mat_proc_id = [];
-
-    //                         $arr_station_material_issuance_id = [];
-    //                         for($index = 0; $index < count($col_parts_prep_kit_issuance); $index++){
-    //                             $issuance_id = $col_parts_prep_kit_issuance[$index]->id;
-    //                             $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
-    //                             $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
-
-    //                             $mat_proc_materials = Device::with([
-    //                                         'material_process' => function($query){
-    //                                             $query->where('status', 1);
-    //                                         },
-    //                                         'material_process.material_details' => function($query) use($item, $item_desc){
-    //                                             $query->where('status', 1);
-    //                                             $query->where('tbl_wbs', 2);
-    //                                             $query->where('has_emboss', 1);
-    //                                             $query->where('item', $item);
-    //                                             // $query->where('item_desc', $item_desc);
-    //                                         },
-    //                                     ])
-    //                                     ->where('name', $request->device_name)
-    //                                     ->first();
-
-    //                             if($mat_proc_materials != null){
-    //                                 $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
-    //                                 $certified_mat_proc_id = $col_mat_proc_materials->pluck('id');
-    //                             }
-    //                         }
-
-    //                         $prod_runcard_station_details = ProductionRuncardStation::where('production_runcard_id', $runcard_id)
-    //                             ->whereIn('mat_proc_id', $certified_mat_proc_id)
-    //                             ->get();
-
-    //                         $prod_runcard_station_detail_ids = $prod_runcard_station_details->pluck('id');
-
-    //                         // return count($col_parts_prep_kit_issuance);
-    //                         // return $col_parts_prep_kit_issuance[0]->tbl_wbs_sakidashi_issuance_item->item;
-
-    //                         // return $prod_runcard_station_detail_ids;
-
-
-    //                         if(count($prod_runcard_station_detail_ids) > 0){
-    //                             for($index = 0; $index < count($arr_insert_issuance_id); $index++){
-    //                                 ProdRuncardMaterialList::insert([
-    //                                     'prod_runcard_id' => $runcard_id,
-    //                                     'status' => 1,
-    //                                     'issuance_id' => $arr_insert_issuance_id[$index],
-    //                                     'tbl_wbs' => 2,
-    //                                     'for_emboss' => 1,
-    //                                     'status' => 1,
-    //                                 ]);
-
-    //                             }
-
-    //                             for($index = 0; $index < count($col_parts_prep_kit_issuance); $index++){
-    //                                 $issuance_id = $col_parts_prep_kit_issuance[$index]->id;
-    //                                 $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
-    //                                 $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
-
-    //                                 for($index2 = 0; $index2 < count($prod_runcard_station_detail_ids); $index2++){
-    //                                     ProductionRuncardStationMaterial::insert([
-    //                                         'production_runcard_id' => $runcard_id,
-    //                                         'production_runcard_station_id' => $prod_runcard_station_detail_ids[$index2],
-    //                                         'issuance_id' => $issuance_id,
-    //                                         'item' => $item,
-    //                                         'item_desc' => $item_desc,
-    //                                         'tbl_wbs' => 2,
-    //                                         'has_emboss' => 1,
-    //                                         'status' => 1,
-    //                                         'created_by' => Auth::user()->id,
-    //                                         'last_updated_by' => Auth::user()->id,
-    //                                         'update_version' => 1,
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                         'created_at' => date('Y-m-d H:i:s')
-    //                                     ]);
-    //                                 }
-    //                             }
-    //                         }
-    //                         else{
-    //                             $material_certified = false;
-    //                             $material_certified_label = 'Not Certified';
-    //                         }
-
-    //                         // Icommit mo dine
-    //                         DB::commit();
-    //                         $final_result = 1;
-    //                     }
-    //                     catch (Exception $e) {
-    //                         DB::rollback();
-    //                         $final_result = 0;
-    //                         $validator_error = $e->messages();
-    //                     }
-
-    //                 }
-    //             }
-    //             else{
-    //                 $material_certified_label = 'No selected material.';
-    //             }
-
-    //         }
-    //         else{
-    //             $prep_status_label = 'Not Received For this PO #';
-    //             $runcard_material_status_label = 'Not Received';
-    //             $prep_status = false;
-    //             $runcard_material_status = false;
-    //         }
-
-    //         return response()->json([
-    //             'result' => 0,
-    //             'runcard_id' => $runcard_id,
-    //             'prep_status' => $prep_status,
-    //             'runcard_material_status' => $runcard_material_status,
-    //             'prep_status_label' => $prep_status_label,
-    //             'runcard_material_status_label' => $runcard_material_status_label,
-    //             'material_certified' => $material_certified,
-    //             'material_certified_label' => $material_certified_label,
-    //             'arr_insert_issuance_id' => $arr_insert_issuance_id,
-    //             'col_parts_prep_kit_issuance' => $col_parts_prep_kit_issuance,
-    //             'mat_proc_device' => $mat_proc_device,
-    //             // 'assessment_no' => $assessment_no,
-    //             'final_result' => $final_result,
-    //             'validator_error' => $validator_error,
-    //             'material_process' => $material_process,
-    //         ]);
-    //     }
-    //     else{
-    //         return response()->json([
-    //             'final_result' => 2,
-    //             'remarks' => 'No Runcard Details',
-    //         ]);
-    //     }
-
-    // }
-
     public function scan_employee_no(Request $request){
         date_default_timezone_set('Asia/Manila');
 
@@ -4682,6 +4411,7 @@ class DefectEscalationController extends Controller
                 $user_status = true;
                 $user_status_label = 'Valid Operator';
 
+                $prod_runcard = ProductionRuncard::where('id',$runcard_id)->first('po_no'); //
                 $mat_proc_materials = Device::with([
                             'material_process' => function($query){
                                 $query->where('status', 1);
@@ -4690,6 +4420,7 @@ class DefectEscalationController extends Controller
                                 $query->where('manpower_id', $user->id);
                             },
                         ])
+                        ->where('po_no', $prod_runcard->po_no) //getMatrixByPoNo
                         ->where('name', $request->device_name)
                         ->first();
 
@@ -4704,24 +4435,8 @@ class DefectEscalationController extends Controller
 
                 $prod_runcard_station_detail_ids = $prod_runcard_station_details->pluck('id');
 
-                // return $prod_runcard_station_detail_ids;
-
                 if(count($prod_runcard_station_detail_ids) > 0){
-                    // $final_prod_runcard_station_details = $prod_runcard_station_details->whereIn('id', $prod_runcard_station_detail_ids);
-
-                    // return $final_prod_runcard_station_details;
-
-                    // $prod_runcard_station_operators = ProductionRuncardStationOperator::where('production_runcard_id', $runcard_id)
-                    //                                     ->whereIn('production_runcard_station_id', $prod_runcard_station_detail_ids)
-                    //                                     ->where('operator_id', $user->id)
-                    //                                     ->get();
-                    // return $prod_runcard_station_operators;
-                    // if(count($prod_runcard_station_operators) > 0){
-
-                    // }
-                    // else{
-
-                    // }
+                 
 
                     DB::beginTransaction();
                     try {
@@ -4766,84 +4481,6 @@ class DefectEscalationController extends Controller
                     $certified_status = false;
                     $certified_status_label = 'Not Certified';
                 }
-
-                // if(count($prod_runcard_station_detail_ids) > 0){
-                //     $final_prod_runcard_station_details = $prod_runcard_station_details->whereIn('id', $prod_runcard_station_detail_ids);
-
-                //     DB::beginTransaction();
-                //     try {
-                //         $certified_counter = 0;
-                //         for($index = 0; $index < count($final_prod_runcard_station_details); $index++){
-                //             if($final_prod_runcard_station_details[$index]->operator == null){
-                //                 ProductionRuncardStation::where('id', $final_prod_runcard_station_details[$index]->id)->update([
-                //                     'operator' => $user->id
-                //                 ]);
-                //                 $certified_counter++;
-                //             }
-                //             else{
-                //                 $operators = explode(',', $final_prod_runcard_station_details[$index]->operator);
-
-                //                 $searched_operator = array_search($user->id, $operators);
-
-                //                 if($searched_operator == "" || $searched_operator == null){
-                //                     ProductionRuncardStation::where('id', $final_prod_runcard_station_details[$index]->id)->update([
-                //                         'operator' => DB::raw('operator') . ',' . $user->id,
-                //                     ]);
-                //                 }
-                //                 else{
-                //                     $final_result = 0;
-                //                 }
-
-                //                 // return $operators;
-                //                 // for($index2 = 0; $index2 < count($operators); $index2++){
-                //                 //     if($operators[$index2] == $user->id){
-
-                //                 //     }
-                //                 // }
-
-                //             }
-                //         }
-
-                //         if($certified_counter > 0){
-                //             DB::commit();
-                //             $final_result = true;
-                //             $certified_status = true;
-                //             $certified_status_label = 'Operator Saved';
-                //         }
-                //         else{
-                //             $final_result = false;
-                //             $certified_status = false;
-                //             $certified_status_label = 'Already Exist';
-                //         }
-                //         // return $certified_counter;
-                //     } catch (Exception $e) {
-                //         $final_result = 0;
-                //     }
-                //     // return $final_prod_runcard_station_details;
-                // }
-                // else{
-                //     $certified_status = false;
-                //     $certified_status_label = 'Not Certified';
-                // }
-
-                // $device_mat_proc = Device::with([
-                //                         'material_process' => function($query){
-                //                             $query->where('status', 1);
-                //                         },
-                //                         'material_process.manpowers_details' => function($query) use($user){
-                //                             $query->where('manpower_id', $user->id);
-                //                         },
-                //                     ])
-                //                     ->where('name', $request->device_name)
-                //                     ->first();
-
-                // if($device_mat_proc != null){
-                //     $col_mat_proc_materials = collect($device_mat_proc)->flatten(1)->where('material_details', '!=', null);
-                //     $certified_mat_proc_id = $col_mat_proc_materials->pluck('id');
-                // }
-                // $material_process = collect($device_mat_proc)->where('material_process.manpowers_details', '!=', null)->flatten(1);
-
-                // return $device_mat_proc;
             }
             else{
                 $user_status_label = 'Invalid Operator';
@@ -5448,7 +5085,13 @@ class DefectEscalationController extends Controller
                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                         $lot_no_machine_code = '0';
 
-                        $device_info = Device::where('name', $request->device_name)->first();
+                        $device_info = CommonController::getInstance()->getMatrixByPoNo([
+                                'po_no'=> $prod_runcard->po_no,
+                                'name'=> $request->device_code,
+                                'barcode'=> '',
+                                'get_or_first'=> '',
+                        ]);
+                        // $device_info = Device::where('name', $request->device_name)->first();
                         if($device_info != null){
                             if($device_info->lot_no_machine_code != null){
                                 $lot_no_machine_code = $device_info->lot_no_machine_code;
@@ -5593,8 +5236,15 @@ class DefectEscalationController extends Controller
                         $packing_date = date('d');
                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                         $lot_no_machine_code = '0';
+                        $prod_runcard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->first('po_no'); //
 
-                        $device_info = Device::where('name', $request->device_name)->first();
+                        $device_info = CommonController::getInstance()->getMatrixByPoNo([
+                                'po_no'=> $prod_runcard->po_no,
+                                'name'=> '',
+                                'barcode'=> $request->device_name,
+                                'get_or_first'=> '',
+                        ]);
+                        // $device_info = Device::where('name', $request->device_name)->first();
                         if($device_info != null){
                             if($device_info->lot_no_machine_code != null){
                                 $lot_no_machine_code = $device_info->lot_no_machine_code;
@@ -6230,6 +5880,7 @@ class DefectEscalationController extends Controller
 
             if($user != null){
                 if($user->position == 4){
+                    $prod_runcard = ProductionRuncard::where('id',$request->prod_runcard_id)->first('po_no'); //
                     $mat_proc_materials = Device::with([
                         'material_process'  => function($query){
                             $query->where('status', 1);
@@ -6240,6 +5891,7 @@ class DefectEscalationController extends Controller
                             $query->where('item', $request->item);
                         },
                     ])
+                    ->where('po_no', $prod_runcard->po_no) //getMatrixByPoNo
                     ->where('name', $request->device_name)
                     ->first();
 
@@ -6347,153 +5999,6 @@ class DefectEscalationController extends Controller
 
         return response()->json(['final_result' => $final_result, 'validator' => $validator->messages(), 'mat_proc_materials' => $mat_proc_materials, 'error' => $error, 'remarks' => $remarks, 'runcard_id' => $request->prod_runcard_id]);
     }
-
-    // public function save_emboss_lot_issuance(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-
-    //     $data = $request->all();
-
-    //     $final_result = 0;
-    //     $remarks = "";
-    //     $error = [];
-
-    //     $validator = Validator::make($data, [
-    //         // 'txt_prod_runcard_id_query' => ['required'],
-    //         'issuance_id' => ['required'],
-    //         'item' => ['required'],
-    //         'item_desc' => ['required'],
-    //         'operator' => ['required'],
-    //         'prod_runcard_id' => ['required'],
-    //         'device_name' => ['required'],
-    //     ]);
-
-    //     $mat_proc_materials = [];
-
-
-    //     if($validator->passes()){
-    //         $user = User::where('employee_id', $request->operator)->first();
-
-    //         if($user != null){
-    //             if($user->position == 4){
-    //                 $mat_proc_materials = Device::with([
-    //                     'material_process'  => function($query){
-    //                         $query->where('status', 1);
-    //                     },
-    //                     'material_process.material_details' => function($query) use($request){
-    //                         $query->where('status', 1);
-    //                         $query->where('tbl_wbs', 2);
-    //                         $query->where('item', $request->item);
-    //                     },
-    //                 ])
-    //                 ->where('name', $request->device_name)
-    //                 ->first();
-
-    //                 // return $mat_proc_materials;
-    //                 if($mat_proc_materials != null){
-    //                     if(count($mat_proc_materials->material_process) > 0){
-    //                         if($mat_proc_materials != null){
-    //                             $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
-    //                             $certified_mat_proc_id = $col_mat_proc_materials->pluck('id');
-    //                         }
-
-    //                         // return $certified_mat_proc_id;
-
-    //                         if(count($certified_mat_proc_id) > 0){
-    //                             $prod_runcard_station_details = ProductionRuncardStation::where('production_runcard_id', $request->prod_runcard_id)
-    //                                 ->whereIn('mat_proc_id', $certified_mat_proc_id)
-    //                                 ->get();
-
-    //                             $prod_runcard_station_detail_ids = $prod_runcard_station_details->pluck('id');
-
-    //                             // Save Material
-    //                             if(count($prod_runcard_station_detail_ids) > 0){
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProdRuncardMaterialList::insert([
-    //                                         'prod_runcard_id' => $request->prod_runcard_id,
-    //                                         'status' => 1,
-    //                                         'issuance_id' => $request->issuance_id,
-    //                                         'tbl_wbs' => 2,
-    //                                         'for_emboss' => 1,
-    //                                         'status' => 1,
-    //                                     ]);
-
-    //                                     for($index = 0; $index < count($prod_runcard_station_detail_ids); $index++){
-    //                                         ProductionRuncardStationMaterial::insert([
-    //                                             'production_runcard_id' => $request->prod_runcard_id,
-    //                                             'production_runcard_station_id' => $prod_runcard_station_detail_ids[$index],
-    //                                             'issuance_id' => $request->issuance_id,
-    //                                             'item' => $request->item,
-    //                                             'item_desc' => $request->item_desc,
-    //                                             'tbl_wbs' => 2,
-    //                                             'has_emboss' => 1,
-    //                                             'status' => 1,
-    //                                             'created_by' => $user->id,
-    //                                             'last_updated_by' => $user->id,
-    //                                             'update_version' => 1,
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                             'created_at' => date('Y-m-d H:i:s')
-    //                                         ]);
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $final_result = 1;
-    //                                     $remarks = "Material Saved";
-    //                                 }
-    //                                 catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $final_result = 0;
-    //                                     $remarks = "Saving Failed";
-    //                                     $error = $e->messages();
-    //                                 }
-    //                             }
-    //                             else{
-    //                                 $final_result = 0;
-    //                                 $remarks = 'Not Certified';
-    //                             }
-
-    //                         }
-    //                         else{
-    //                             $final_result = 0; //Not Certified
-    //                             $remarks = "Not Certified";
-    //                         }
-
-    //                         $final_result = 1; //Material Saved
-    //                         $remarks = "Material Saved";
-    //                     }
-    //                     else{
-    //                         $final_result = 0; //No device
-    //                         $remarks = "No Device Found.";
-    //                     }
-    //                 }
-    //                 else{
-    //                     $final_result = 3; //No device
-    //                     $remarks = "No Device Found.";
-    //                 }
-    //             }
-    //             else{
-    //                 $final_result = 0;
-    //                 $remarks = 'Invalid Operator.';
-    //             }
-
-    //             // $final_result = 1;
-    //         }
-    //         else{
-    //             $final_result = 0; //Invalid Operator
-    //             $remarks = "Invalid Operator.";
-    //         }
-
-    //         // return response()->json(['final_result' => $final_result, 'mat_proc_materials' => $mat_proc_materials]);
-    //     }
-    //     else{
-    //         $final_result = 0;
-    //         $remarks = "Details not complete.";
-    //     }
-
-    //     return response()->json(['final_result' => $final_result, 'validator' => $validator->messages(), 'mat_proc_materials' => $mat_proc_materials, 'error' => $error, 'remarks' => $remarks, 'runcard_id' => $request->prod_runcard_id]);
-    // }
-
-    // ../USED IN MANUAL PRODUCTION RUNCARD
 
     public function view_ddrs(Request $request){
         date_default_timezone_set('Asia/Manila');
