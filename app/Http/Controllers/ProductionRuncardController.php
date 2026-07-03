@@ -5649,60 +5649,6 @@ class ProductionRuncardController extends Controller
 
                                 // if has NG only
                                 if($request->txt_edit_prod_runcard_station_ng > 0){
-                                    // Increment all above station input
-                                    // $step_num = $request->txt_edit_prod_runcard_station_step;
-
-                                    // $step_num = explode('-', $step_num)[0];
-
-                                    // $prod_runcard_stations = ProductionRuncardStation::orderBy(\DB::raw('CONVERT(SUBSTRING_INDEX(step_num,"-", 1), UNSIGNED INTEGER)', 'ASC'))
-                                    //                         ->orderBy(\DB::raw('right(step_num,LOCATE("-",step_num) - 1)', 'ASC'))
-                                    //                         ->where('production_runcard_id', $request->txt_prod_runcard_id_query)
-                                    //                         ->get();
-
-                                    // $prod_runcard_station_step_num = [];
-                                    // $prod_runcard_station_id = [];
-
-                                    // if(count($prod_runcard_stations) > 0){
-                                    //     for($index = 0; $index < count($prod_runcard_stations); $index++){
-                                    //         $prod_runcard_station_step_num[] = explode('-', $prod_runcard_stations[$index]->step_num)[0];
-                                    //         $prod_runcard_station_id[] = $prod_runcard_stations[$index]->id;
-                                    //     }
-                                    // }
-
-                                    // $prod_runcard_station_step_num = array_unique($prod_runcard_station_step_num);
-
-                                    // $station_unique = [];
-                                    // $station_unique_key = [];
-
-                                    // foreach ($prod_runcard_station_step_num as $prod_runcard_station_step_num_unique => $value) {
-                                    //     if($step_num > $value){
-                                    //         $station_unique_key[] = $prod_runcard_station_step_num_unique;
-                                    //         $station_unique[] = $value;
-                                    //     }
-                                    // }
-
-                                    // $final_station_id = [];
-
-                                    // if(count($prod_runcard_station_id) > 0){
-                                    //     for($index = 0; $index < count($prod_runcard_station_id); $index++){
-                                    //         for($index2 = 0; $index2 < count($station_unique_key); $index2++){
-                                    //             if($station_unique_key[$index2] == $index){
-                                    //                 $final_station_id[] = $prod_runcard_station_id[$index];
-                                    //             }
-                                    //         }
-                                    //     }
-                                    // }
-
-                                    // ProductionRuncardStation::whereIn('id', $final_station_id)
-                                    //     ->where('qty_output', '!=', null)
-                                    //     // ->increment('qty_output', $request->txt_edit_prod_runcard_station_ng);
-                                    //     // ->increment('qty_input', $request->txt_edit_prod_runcard_station_ng);
-                                    //     ->increment('qty_input', $request->txt_edit_prod_runcard_station_ng,
-                                    //         [
-                                    //             'qty_output' => DB::raw('qty_output + ' . $request->txt_edit_prod_runcard_station_ng),
-                                    //         ]);
-                                    // // end of increment
-
                                     // Required to save MOD if has NG only
                                     if(isset($request->mod)){
                                         for($index = 0; $index < count($request->mod); $index++){
@@ -6246,7 +6192,8 @@ class ProductionRuncardController extends Controller
     //                             //     }
     //                             // }
 
-    //                             // $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+    //                             // $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    // ->get();
     //                             // // return $deviceProcessFlowMaterials;
     //                             // for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
     //                             //     if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
@@ -6968,7 +6915,8 @@ class ProductionRuncardController extends Controller
     //                             }
     //                             // return "count " . count($device[0]->process_flow);
 
-    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    // ->get();
     //                             /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
     //                             for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
     //                                 if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
@@ -7470,7 +7418,8 @@ class ProductionRuncardController extends Controller
     //                             }
     //                             // return count($device[0]->process_flow);
 
-    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    // ->get();
     //                             /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
     //                             // return $deviceProcessFlowMaterials;
     //                             for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
@@ -12932,6 +12881,30 @@ class ProductionRuncardController extends Controller
                                                         ]);
 
                                                         // DefectEscalationV2
+                                                        DefectEscalationV2Rev::insert([
+                                                            'po_number'                    => $request->po_number_with_defect,
+                                                            'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                            'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                            'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                            'prod_runcard_station_id'      => $prod_runcard_station_id,
+                                                            // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                            'defect_classification'        => $current_class,
+                                                            'defect_qty'                   => $request->mod_qty[$index],
+                                                            'mod_type'                     => $request->type_of_ng[$index],
+                                                            'mod_id'                       => $mod[$index],
+                                                            'de_occurence'                 => $de_occurence,
+                                                            'de_group'                     => 1,
+                                                            'defect_status'                => 0,
+                                                            'de_user'                      => $user[0]->id,
+                                                            'de_position'                  => $user[0]->position,
+                                                            'created_by'                   => Auth::user()->id,
+                                                            'created_at'                   => now(),
+                                                            'de_shift'                     => $shift,
+                                                            'de_date'                      => date('Y-m-d'),
+                                                            'de_time'                      => date('h:i:s A'),
+                                                            'line'                         => $lineWithDefect,
+                                                            'line_id'                      => $request->line_with_defect_id,
+                                                        ]);
                                                     }
                                                 }
                                                 else{
@@ -14154,7 +14127,7 @@ class ProductionRuncardController extends Controller
     }
 
     public function edit_prod_runcard_station_with_defect(Request $request){
-        // return 'save';
+        // return 'working function';
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
         $time = explode(':', $timeNow);
@@ -14385,7 +14358,8 @@ class ProductionRuncardController extends Controller
                                     // return $request->process_flow_id;
                                     // return $process_flow_ids;
 
-                                    $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+                                    $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    ->get();
                                     /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
                                     for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
                                         if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
@@ -15125,7 +15099,8 @@ class ProductionRuncardController extends Controller
                                 // return $processFlow->id;
                                 // return $process_flow_ids;
 
-                                $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+                                $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    ->get();
                                 /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
                                 for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
                                     if($deviceProcessFlowMaterials[$i]->process_flow_id == $processFlow->id){
@@ -16217,6 +16192,7 @@ class ProductionRuncardController extends Controller
                         // $messages['prod_quali_remarks.required'] = 'Prod Quali Remarks is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16426,6 +16402,7 @@ class ProductionRuncardController extends Controller
                         $messages['mod.required'] = 'Mode of Defect is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16693,6 +16670,7 @@ class ProductionRuncardController extends Controller
                         // $messages['prod_quali_remarks.required'] = 'Prod Quali Remarks is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16776,7 +16754,7 @@ class ProductionRuncardController extends Controller
                                          * -JD
                                         */
                                         'qty_input'=> $request->input,
-                                        // 'assembly_line_id'=> $request->assembly_line, // mdr 06-16-25 -> 11/05/2025 - updated
+                                        'assembly_line_id'=> $request->assembly_line, // mdr 06-16-25 -> 11/05/2025 - updated
                                         'qty_output'=> $request->output,
                                         'operator_id'=> $request->operator_id, // 12-12-2022
                                         'mpc_operator_id'=> $request->mpc_operator_id, // 05-07-2023
@@ -16893,6 +16871,7 @@ class ProductionRuncardController extends Controller
                         $messages['mod.required'] = 'Mode of Defect is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -17036,7 +17015,7 @@ class ProductionRuncardController extends Controller
                                      * -JD
                                      */
                                     'qty_input'=> $request->input,
-                                    // 'assembly_line'=> $request->assembly_line, // mdr 06-16-25
+                                    'assembly_line'=> $request->assembly_line, // mdr 06-16-25
                                     'qty_output'=> $request->output,
                                     'qty_ng'=> $request->qty_ng,
                                     'operator_id'=> $request->operator_id, // 12-12-2022
