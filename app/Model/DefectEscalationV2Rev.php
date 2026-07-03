@@ -9,9 +9,12 @@ use App\Model\ModeOfDefect;
 use App\Model\ProductionRuncard;
 use App\Model\DefectReworkDetails;
 use App\Model\DefectImmediateAction;
+use App\Model\DefectImmediateActionV2;
 use App\Model\DefectContainmentAction;
+use App\Model\DefectContainmentActionV2;
 use Illuminate\Database\Eloquent\Model;
 use App\Model\DefectProblemVerification;
+use App\Model\DefectProblemVerificationV2;
 use App\Model\DefectLevelTwoVerification;
 use App\Model\DefectFinalDispositionDetails;
 use App\Model\DefectVerifyCauseAndEscapeeCause;
@@ -24,6 +27,7 @@ class DefectEscalationV2Rev extends Model
 
     // ✅ Allow mass assignment for these fields
     protected $fillable = [
+
         'po_number',
         'defect_ctrl_number',
         'de_group',
@@ -42,6 +46,7 @@ class DefectEscalationV2Rev extends Model
         'de_pair_no',
         'de_occurence',
         'de_station',
+        'de_other_station',
         'de_user',
         'de_position',
         'area1',
@@ -78,15 +83,15 @@ class DefectEscalationV2Rev extends Model
     }
 
     public function problem_verificaiton_details(){
-        return $this->hasOne(DefectProblemVerification::class, 'de_id', 'id');
+        return $this->hasOne(DefectProblemVerificationV2::class, 'de_id', 'id');
     }
 
     public function immediate_action_details(){
-        return $this->hasOne(DefectImmediateAction::class, 'de_id', 'id');
+        return $this->hasOne(DefectImmediateActionV2::class, 'de_id', 'id');
     }
 
     public function containment_action_details(){
-        return $this->hasOne(DefectContainmentAction::class, 'de_id', 'id');
+        return $this->hasOne(DefectContainmentActionV2::class, 'de_id', 'id');
     }
 
     public function rework_details(){

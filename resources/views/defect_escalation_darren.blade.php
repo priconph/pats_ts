@@ -266,21 +266,6 @@ z-index: 2001;
                         <!-- FRONT TAB -->
                         <div class="tab-pane fade show active" id="front" role="tabpanel">
 
-                            {{-- <div class="row">
-                                <div class="col-sm-4">
-                                    <div class="input-group input-group-sm mb-3">
-                                        <div class="input-group-prepend w-50">
-                                            <span class="input-group-text w-100" id="basic-addon1">Defect Type</span>
-                                        </div>
-                                        <select name="mod_type" id="txtModType" class="form-control">
-                                            <option disabled selected value="">-- Select Defect Type --</option>
-                                            <option value="1">Material NG</option>
-                                            <option value="2">Production NG</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>   --}}
-
                             <div class="row">
                                 <div class="col-sm-3">
                                     <div class="input-group input-group-sm mb-3">
@@ -674,7 +659,7 @@ z-index: 2001;
                                 </div> --}}
                             </div>
 
-                            <div class="row bHeaderClass" hidden>
+                            <div class="row bHeaderClass hidden">
                                 <div class="col-sm-12">
                                     <div id="bToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <span id="bHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
@@ -1927,36 +1912,48 @@ $(document).ready(function() {
     let finalDispositionContext ='';
     let qcContext ='';
 
-    let currentPoNo = sessionStorage.getItem('po_number_for_defect_escalation');
-    let currentDeviceName = sessionStorage.getItem('device_name_for_defect_escalation');
-    let currentDeviceCode = sessionStorage.getItem('device_code_for_defect_escalation');
-    let currentPoQty = sessionStorage.getItem('po_qty_for_defect_escalation');
-    let currentDieNo = sessionStorage.getItem('die_no_for_defect_escalation');
-    let currentLotNo = sessionStorage.getItem('pair_no_for_defect_escalation');
+    // let currentPoNo = sessionStorage.getItem('po_number_for_defect_escalation');
+    // let currentDeviceName = sessionStorage.getItem('device_name_for_defect_escalation');
+    // let currentDeviceCode = sessionStorage.getItem('device_code_for_defect_escalation');
+    // let currentPoQty = sessionStorage.getItem('po_qty_for_defect_escalation');
+    // let currentDieNo = sessionStorage.getItem('die_no_for_defect_escalation');
+    // let currentLotNo = sessionStorage.getItem('pair_no_for_defect_escalation');
+    // if(currentPoNo != null){
+    //     poNumber = currentPoNo;
+    //     deviceName = currentDeviceName;
+    //     deviceCode = currentDeviceCode;
+    //     poQty = currentPoQty;
+    //     dieNo = currentDieNo;
+    //     lotNo = currentLotNo;
 
-    if(currentPoNo != null){
-        poNumber = currentPoNo;
-        deviceName = currentDeviceName;
-        deviceCode = currentDeviceCode;
-        poQty = currentPoQty;
-        dieNo = currentDieNo;
-        lotNo = currentLotNo;
+    //     $('#txt_po_number_lbl').val(poNumber);
+    //     $('#txt_device_name_lbl').val(deviceName);
+    //     $('#txt_device_code_lbl').val(deviceCode);
+    //     $('#txt_po_qty_lbl').val(poQty);
+    //     $('#txtPairNo').val(dieNo);
+    //     $('#txtDMoldNo').val(lotNo);
+    //     // $('#lblPoNumber').text(poNumber);
+    //     sessionStorage.removeItem('po_number_for_defect_escalation');
+    //     sessionStorage.removeItem('device_name_for_defect_escalation');
+    //     sessionStorage.removeItem('device_code_for_defect_escalation');
+    //     sessionStorage.removeItem('po_qty_for_defect_escalation');
+    //     sessionStorage.removeItem('die_no_for_defect_escalation');
+    //     sessionStorage.removeItem('pair_no_for_defect_escalation');
+    //     getDefectCount(poNumber);
+    // }
 
-        $('#txt_po_number_lbl').val(poNumber);
-        $('#txt_device_name_lbl').val(deviceName);
-        $('#txt_device_code_lbl').val(deviceCode);
-        $('#txt_po_qty_lbl').val(poQty);
-        $('#txtPairNo').val(dieNo);
-        $('#txtDMoldNo').val(lotNo);
-        // $('#lblPoNumber').text(poNumber);
-        sessionStorage.removeItem('po_number_for_defect_escalation');
-        sessionStorage.removeItem('device_name_for_defect_escalation');
-        sessionStorage.removeItem('device_code_for_defect_escalation');
-        sessionStorage.removeItem('po_qty_for_defect_escalation');
-        sessionStorage.removeItem('die_no_for_defect_escalation');
-        sessionStorage.removeItem('pair_no_for_defect_escalation');
-        getDefectCount(poNumber);
-    }
+    const params = new URLSearchParams(window.location.search);
+
+    // console.log('url', params)
+    // console.log('params.get(po_number):', params.get('po_number'));
+    // console.log('params.get(device_name):', params.get('device_name'));
+
+    $('#txt_po_number_lbl').val(params.get('po_number'));
+    $('#txt_device_name_lbl').val(params.get('device_name'));
+    $('#txt_device_code_lbl').val(params.get('device_code'));
+    $('#txt_po_qty_lbl').val(params.get('po_qty'));
+    $('#txtPairNo').val(params.get('die_no'));
+    $('#txtDMoldNo').val(params.get('pair_no'));
 
     let defectEscalationDataTable = $("#tblDefectEscalation").DataTable({
         processing: true,
@@ -2064,7 +2061,6 @@ $(document).ready(function() {
 
         if(defectType.length > 1){
             defectTypeTest = defectType.split(",");
-
         }else{
             defectTypeTest = defectType;
         }
@@ -2122,7 +2118,6 @@ $(document).ready(function() {
             if(verificationStatus == 'VERIFIED' && occurence == 2 || occurence == 3 || isDefectType1){
                 $('.bHeaderClass').attr('hidden', false);
             }
-
         }
 
         $.ajax({
@@ -2135,7 +2130,9 @@ $(document).ready(function() {
                     return alert('Defect not found.');
                 }
 
+                
                 const data = response.data;
+                // console.log('data', data);
                 const userId = data.de_user;
                 const userName = data.operator_info.name;
                 const manUserDetails = response.manUserDetails;
@@ -2158,6 +2155,13 @@ $(document).ready(function() {
                 $('#txtRuncardNumber').val(data.production_runcard.runcard_no);
 
                     const runcardId = data.prod_runcard_id;
+
+                    if(data.detailed_description === null || data.detailed_description === ''){
+                        $('.bHeaderClass').attr('hidden', true);
+                    }else{
+                        $('.bHeaderClass').attr('hidden', false);
+                    }
+
                     $('#txtRuncardId').val(runcardId);
                     $('#txtRuncardStationId').val(data.prod_runcard_station_id);
                     $('#txtStationModId').val(data.prod_runcard_station_mod_id);
@@ -2185,13 +2189,16 @@ $(document).ready(function() {
                     $('#txtProductName').val($('#txt_device_name_lbl').val());
 
                     $('#txtStation').val(data.de_station).trigger('change').prop('disabled', isViewing);
-                    if (data.de_station == 7 || data.de_station == 3 || data.de_station == 4 || data.de_station == 2) {
-                        $('#otherStationContainer').show();
-                        $('#txtOtherStation').val(data.de_other_station).prop('readonly', isViewing);
-                    } else {
-                        $('#otherStationContainer').hide();
-                        $('#txtOtherStation').val('').prop('readonly', true);
-                    }
+                    // console.log('data.de_station', data.de_station);
+
+                    // if (data.de_station == 7 || data.de_station == 3 || data.de_station == 4 || data.de_station == 2) {
+                    //     // console.log('isViewing', isViewing);
+                    //     // $('#otherStationContainer').show();
+                    //     $('#txtOtherStation').val(data.de_other_station).prop('readonly', isViewing);
+                    // } else {
+                    //     $('#otherStationContainer').hide();
+                    //     $('#txtOtherStation').val('').prop('readonly', true);
+                    // }
 
 
                     // Shift radio
@@ -2205,6 +2212,7 @@ $(document).ready(function() {
 
                     let testClassification = data.defect_classification;
                     // console.log('defectClassification', typeof(testClassification));
+                    // console.log('defectClassifasdasdaication', testClassification);
 
                     // 1. Convert "2,4,6" into an array ["2", "4", "6"]
                     // We use split and handle cases where data might be null/empty
@@ -2221,18 +2229,6 @@ $(document).ready(function() {
                             .prop('checked', isSelected)
                             .prop('disabled', isViewing && !isSelected);
                     });
-
-                    // if(testClassification.includes('2')){
-
-                    // }
-                    // $("#txtDefectClassification1Id").prop('checked', data.defect_classification == 1).prop('disabled', isViewing && data.defect_classification != 1);
-                    // $("#txtDefectClassification2Id").prop('checked', data.defect_classification == 2).prop('disabled', isViewing && data.defect_classification != 2);
-                    // $("#txtDefectClassification3Id").prop('checked', data.defect_classification == 3).prop('disabled', isViewing && data.defect_classification != 3);
-                    // $("#txtDefectClassification4Id").prop('checked', data.defect_classification == 4).prop('disabled', isViewing && data.defect_classification != 4);
-                    // $("#txtDefectClassification5Id").prop('checked', data.defect_classification == 5).prop('disabled', isViewing && data.defect_classification != 5);
-
-
-
 
                     $('#txtDetailedDescription').val(data.detailed_description).prop('readonly', isViewing);
 
@@ -2266,7 +2262,6 @@ $(document).ready(function() {
                         });
                     }
 
-                    // 3. Update the Checkboxes for ALL active classifications
                     [1, 2, 3, 4, 5].forEach(id => {
                         let isSelected = testClassification.includes(id.toString());
                         $("#txtDefectClassification" + id + "Id")
@@ -2274,94 +2269,6 @@ $(document).ready(function() {
                             .prop('disabled', isViewing && !isSelected);
                     });
 
-                    // if (data.defect_classification == 1) {
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').attr('hidden', true);
-
-                    //     // ✅ Pass a callback to preselect and disable the dropdown
-                    //     // getModOfDefect($("#txtDefects"), 1, function () {
-                    //     //     $('#txtDefects').val(data.mod_id).trigger('change').prop('disabled', isViewing);
-                    //     // });
-
-                    //     getModOfDefect($("#txtDefects"), 1, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-
-                    // } else if(data.defect_classification == 2) {
-                    //     let labelText = $('input[name="d_classification"][value="2"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 2, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 3) {
-                    //     let labelText = $('input[name="d_classification"][value="3"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 3, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 4) {
-                    //     let labelText = $('input[name="d_classification"][value="4"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 4, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 5) {
-                    //     let labelText = $('input[name="d_classification"][value="5"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 5, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }
 
                     let areaCols = [
                         (data.area1 || "").split(","),
@@ -2527,8 +2434,485 @@ $(document).ready(function() {
 
                             );
 
+                            // console.log('data', data);
+                    if(data.defect_classification == 1 ){
+                        if(data.defect_status == 0 || data.defect_status == 1  || data.defect_status == 2|| data.defect_status == 3 || data.defect_status == 4 || data.defect_status == 5 || data.defect_status == 6 || data.defect_status == 7 || data.defect_status == 8){
+                            $('.cHeaderClass').attr('hidden', !pvIsCompelete);
+                            $('.dHeaderClass').attr('hidden', !iaIsComplete);
+                            $('.backTabClass').attr('hidden', !caIsComplete);
+                            $('.ifReworkHeaderClass').attr('hidden', !caIsComplete);
+                            $('.gHeaderClass').attr('hidden', !rwdIsComplete);
+                            $('.hHeaderClass').attr('hidden', !fdIsComplete);
+                            $('.iHeaderClass').attr('hidden', !rcecIsComplete);
+                            $('.jHeaderClass').attr('hidden', !cdIsComplete);
 
-                    if(data.defect_classification == 1){
+                            // console.log('asdasdasd',data.problem_verificaiton_details);
+
+                            if(data.problem_verificaiton_details != null){
+                                if( data.problem_verificaiton_details.prod_verification_user != null){
+                                    $('#txtPVerificationUser').val(data.problem_verificaiton_details.prod_verification_user.name).prop('readonly' ,true);
+                                    $('#txtPVerificationUserId').val(data.problem_verificaiton_details.prod_verification_user.id).prop('readonly' ,true);
+                                    $("#txtPVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_prod_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_prod_result != 1);
+                                    $("#txtPVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_prod_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_prod_result != 2);
+                                    $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
+                                    $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
+                                }
+
+                                if( data.problem_verificaiton_details.engr_verification_user != null){
+                                    $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
+                                    $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
+                                    $("#txtEVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_engr_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_engr_result != 1);
+                                    $("#txtEVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_engr_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_engr_result != 2);
+                                    $('#txtEVerificationDate').val(data.problem_verificaiton_details.vr_engr_date).prop('readonly');
+                                    $('#txtEVerificationRemarks').val(data.problem_verificaiton_details.vr_engr_remarks).prop('readonly', isViewing);
+                                }
+
+                                if( data.problem_verificaiton_details.qc_verification_user != null){
+                                    $('#txtQVerificationUser').val(data.problem_verificaiton_details.qc_verification_user.name).prop('readonly' ,true);
+                                    $('#txtQVerificationUserId').val(data.problem_verificaiton_details.qc_verification_user.id).prop('readonly' ,true);
+                                    $("#txtQVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_qc_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_qc_result != 1);
+                                    $("#txtQVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_qc_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_qc_result != 2);
+                                    $('#txtQVerificationDate').val(data.problem_verificaiton_details.vr_qc_date).prop('readonly');
+                                    $('#txtQVerificationRemarks').val(data.problem_verificaiton_details.vr_qc_remarks).prop('readonly', isViewing);
+                                }
+
+                                //disposition result
+
+                                if( data.problem_verificaiton_details.d_prod_user != null){
+                                    $('#txtPDispositionUser').val(data.problem_verificaiton_details.d_prod_user.name).prop('readonly' ,true);
+                                    $('#txtPDispositionUserID').val(data.problem_verificaiton_details.d_prod_user.id).prop('readonly' ,true);
+                                    $("#txtDisposition1").prop('checked', data.problem_verificaiton_details.d_prod_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 1);
+                                    $("#txtDisposition2").prop('checked', data.problem_verificaiton_details.d_prod_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 2);
+                                    $("#txtDisposition3").prop('checked', data.problem_verificaiton_details.d_prod_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 3);
+                                    $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
+                                    $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
+                                }
+
+                                if( data.problem_verificaiton_details.d_engr_user != null){
+                                    $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
+                                    $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
+                                    $("#txtEDisposition1").prop('checked', data.problem_verificaiton_details.d_engr_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 1);
+                                    $("#txtEDisposition2").prop('checked', data.problem_verificaiton_details.d_engr_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 2);
+                                    $("#txtEDisposition3").prop('checked', data.problem_verificaiton_details.d_engr_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 3);
+                                    $('#txtEDispositionDate').val(data.problem_verificaiton_details.d_engr_date).prop('readonly');
+                                    $('#txtEDispositionRemarks').val(data.problem_verificaiton_details.d_engr_remarks).prop('readonly', isViewing);
+                                }
+
+                                if( data.problem_verificaiton_details.d_qc_user != null){
+                                    $('#txtQDispositionUser').val(data.problem_verificaiton_details.d_qc_user.name).prop('readonly' ,true);
+                                    $('#txtQDispositionUserID').val(data.problem_verificaiton_details.d_qc_user.id).prop('readonly' ,true);
+                                    $("#txtQDisposition1").prop('checked', data.problem_verificaiton_details.d_qc_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 1);
+                                    $("#txtQDisposition2").prop('checked', data.problem_verificaiton_details.d_qc_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 2);
+                                    $("#txtQDisposition3").prop('checked', data.problem_verificaiton_details.d_qc_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 3);
+                                    $('#txtQDispositionDate').val(data.problem_verificaiton_details.d_qc_date).prop('readonly');
+                                    $('#txtQDispositionRemarks').val(data.problem_verificaiton_details.d_qc_remarks).prop('readonly', isViewing);
+                                }
+
+                            }
+
+                            if(data.immediate_action_details != null){
+                                const iad = data.immediate_action_details ?? {};
+                                // ================= MAN =================
+                                $('#txtActionDetailsMan')
+                                    .val(iad.at_man_action_details ?? '')
+                                    .prop('readonly', isViewing);
+
+                                $('#txtWhenMan')
+                                    .val(iad.at_man_date ?? '')
+                                    .prop('readonly', isViewing);
+
+                                let $selectMan = $('#txtSelectUserMan');
+                                $.each(manUserDetails, function (id, name) {
+                                    if ($selectMan.find(`option[value="${id}"]`).length === 0) {
+                                        $selectMan.append(`<option value="${id}">${name}</option>`);
+                                    }
+                                });
+                                $selectMan.val(Object.keys(manUserDetails)).trigger('change');
+
+                                // ================= MACHINE =================
+                                $('#txtActionDetailsMachine')
+                                    .val(iad.at_machine_action_details ?? '')
+                                    .prop('readonly', isViewing);
+
+                                $('#txtWhenMachine')
+                                    .val(iad.at_machine_date ?? '')
+                                    .prop('readonly', isViewing);
+
+                                let $selectMachine = $('#txtSelectUserMachine');
+                                $.each(machineUserDetails, function (id, name) {
+                                    if ($selectMachine.find(`option[value="${id}"]`).length === 0) {
+                                        $selectMachine.append(`<option value="${id}">${name}</option>`);
+                                    }
+                                });
+                                $selectMachine.val(Object.keys(machineUserDetails)).trigger('change');
+
+                                // ================= MATERIAL =================
+                                $('#txtActionDetailsMaterial')
+                                    .val(iad.at_material_action_details ?? '')
+                                    .prop('readonly', isViewing);
+
+                                $('#txtWhenMaterial')
+                                    .val(iad.at_material_date ?? '')
+                                    .prop('readonly', isViewing);
+
+                                let $selectMaterial = $('#txtSelectUserMaterial');
+                                $.each(materialUserDetails, function (id, name) {
+                                    if ($selectMaterial.find(`option[value="${id}"]`).length === 0) {
+                                        $selectMaterial.append(`<option value="${id}">${name}</option>`);
+                                    }
+                                });
+                                $selectMaterial.val(Object.keys(materialUserDetails)).trigger('change');
+
+                                // ================= METHOD =================
+                                $('#txtActionDetailsMethod')
+                                    .val(iad.at_method_action_details ?? '')
+                                    .prop('readonly', isViewing);
+
+                                $('#txtWhenMethod')
+                                    .val(iad.at_method_date ?? '')
+                                    .prop('readonly', isViewing);
+
+                                let $selectMethod = $('#txtSelectUserMethod');
+                                $.each(methodUserDetails, function (id, name) {
+                                    if ($selectMethod.find(`option[value="${id}"]`).length === 0) {
+                                        $selectMethod.append(`<option value="${id}">${name}</option>`);
+                                    }
+                                });
+                                $selectMethod.val(Object.keys(methodUserDetails)).trigger('change');
+
+                                // ================= ENVIRONMENT =================
+                                $('#txtActionDetailsEnvironment')
+                                    .val(iad.at_environment_action_details ?? '')
+                                    .prop('readonly', isViewing);
+
+                                $('#txtWhenEnvironment')
+                                    .val(iad.at_environment_date ?? '')
+                                    .prop('readonly', isViewing);
+
+                                let $selectEnvironment = $('#txtSelectUserEnvironment');
+                                $.each(environmentUserDetails, function (id, name) {
+                                    if ($selectEnvironment.find(`option[value="${id}"]`).length === 0) {
+                                        $selectEnvironment.append(`<option value="${id}">${name}</option>`);
+                                    }
+                                });
+                                $selectEnvironment.val(Object.keys(environmentUserDetails)).trigger('change');
+                            }
+
+                            if(data.containment_action_details != null){
+                                const cad = data?.containment_action_details ?? {};
+                                $('#txtWipTotalQty').val(cad.wip_total_qty ?? '').prop('readonly', isViewing);
+                                $('#txtWipOkQty').val(cad.wip_ok_qty ?? '').prop('readonly', isViewing);
+                                $('#txtWipNgQty').val(cad.wip_ng_qty ?? '').prop('readonly', isViewing);
+                                $('#txtWipMod').val(cad.wip_mod ?? '').prop('readonly', isViewing);
+                                $('#txtWipRemarks').val(cad.wip_remarks ?? '').prop('readonly', isViewing);
+
+                                $('#txtPfTotalQty').val(cad.pf_total_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPfOkQty').val(cad.pf_ok_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPfNgQty').val(cad.pf_ng_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPfMod').val(cad.pf_mod ?? '').prop('readonly', isViewing);
+                                $('#txtPfRemarks').val(cad.pf_remarks ?? '').prop('readonly', isViewing);
+
+                                $('#txtOqcTotalQty').val(cad.qc_total_qty ?? '').prop('readonly', isViewing);
+                                $('#txtOqcOkQty').val(cad.qc_ok_qty ?? '').prop('readonly', isViewing);
+                                $('#txtOqcNgQty').val(cad.qc_ng_qty ?? '').prop('readonly', isViewing);
+                                $('#txtOqcMod').val(cad.qc_mod ?? '').prop('readonly', isViewing);
+                                $('#txtOqcRemarks').val(cad.qc_remarks ?? '').prop('readonly', isViewing);
+
+                                $('#txtPackingTotalQty').val(cad.p_total_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPackingOkQty').val(cad.p_ok_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPackingNgQty').val(cad.p_ng_qty ?? '').prop('readonly', isViewing);
+                                $('#txtPackingMod').val(cad.p_mod ?? '').prop('readonly', isViewing);
+                                $('#txtPackingRemarks').val(cad.p_remarks ?? '').prop('readonly', isViewing);
+
+                                $('#txtShippedTotalQty').val(cad.s_total_qty ?? '').prop('readonly', isViewing);
+                                $('#txtShippedOkQty').val(cad.s_ok_qty ?? '').prop('readonly', isViewing);
+                                $('#txtShippedNgQty').val(cad.s_ng_qty ?? '').prop('readonly', isViewing);
+                                $('#txtShippedMod').val(cad.s_mod ?? '').prop('readonly', isViewing);
+                                $('#txtShippedRemarks').val(cad.s_remarks ?? '').prop('readonly', isViewing);
+                            }
+
+                            if(reworkDetails != null){
+                                const rd = reworkDetails ?? {};
+
+                                $("#txtOthers").on("change", function () {
+                                    if (!isViewing) {
+                                        $("#txtReworkActivityOthers")
+                                            .prop("disabled", !this.checked)
+                                            .val(this.checked ? $("#txtReworkActivityOthers").val() : '');
+                                    }
+                                });
+
+                                // console.log('reworkDetails', rd);
+                                // --- Operators ---
+                                $('#txtReworkerOperator1').val(rd.reworker_operator1?.name ?? '');
+                                $('#txtReworkerOperator2').val(rd.reworker_operator2?.name ?? '');
+                                $('#txtReworkerOperatorId1').val(rd.reworker_user_id1 ?? '');
+                                $('#txtReworkerOperatorId2').val(rd.reworker_user_id2 ?? '');
+                                $('#txtReworkDate').val(rd.rework_date ?? '').prop('readonly', isViewing);
+
+                                // --- Rework activity (normalize to array) ---
+                                let selected = rd.rework_activity;
+
+                                // console.log('selected', selected);
+
+                                if (selected == null) {
+                                    selected = [];
+                                } else if (Array.isArray(selected)) {
+                                    // ok
+                                } else if (typeof selected === 'string') {
+                                    try {
+                                        const parsed = JSON.parse(selected);
+                                        selected = Array.isArray(parsed) ? parsed : selected.split(',');
+                                    } catch {
+                                        selected = selected.split(',');
+                                    }
+                                } else {
+                                    selected = [selected];
+                                }
+
+                                selected = selected.map(v => String(v).trim()).filter(Boolean);
+
+                                // Uncheck all, then check selected
+                                $("[name='rework_activity[]']").prop("checked", false);
+                                selected.forEach(val => {
+                                    $("[name='rework_activity[]'][value='" + val + "']").prop("checked", true);
+                                });
+
+                                // --- OTHERS ---
+                                if (selected.includes('10')) {
+                                    $("#txtOthers").prop("checked", true);
+                                    $("#txtReworkActivityOthers")
+                                        .prop("disabled", false)
+                                        .val(rd.rework_act_others ?? '');
+                                } else {
+                                    $("#txtOthers").prop("checked", false);
+                                    $("#txtReworkActivityOthers").prop("disabled", true).val('');
+                                }
+
+                                // --- Unit results (1–5) ---
+                                for (let i = 1; i <= 5; i++) {
+                                    const result = rd["unit" + i + "_result"];
+
+                                    $("[name='rework" + i + "'][value='1']")
+                                        .prop('checked', result == 1)
+                                        .prop('disabled', isViewing && result != 1);
+
+                                    $("[name='rework" + i + "'][value='2']")
+                                        .prop('checked', result == 2)
+                                        .prop('disabled', isViewing && result != 2);
+                                }
+
+                                // --- MPC checking ---
+                                $("input[name='mpc_check']").each(function () {
+                                    $(this)
+                                        .prop('checked', $(this).val() == rd.rework_mpc_checking)
+                                        .prop('disabled', isViewing && $(this).val() != rd.rework_mpc_checking);
+                                });
+
+                                // --- Activity after rework ---
+                                $("input[name='activity_after_rework']").each(function () {
+                                    $(this)
+                                        .prop('checked', $(this).val() == rd.activity_after_rework)
+                                        .prop('disabled', isViewing && $(this).val() != rd.activity_after_rework);
+                                });
+
+                                // --- Replaced parts ---
+                                $('#replacedPartsContainer').empty();
+
+                                let parts = rd.rework_replace_parts ?? [];
+                                let lots  = rd.rework_lot_no ?? [];
+
+                                if (typeof parts === 'string') parts = parts.split(',').map(p => p.trim());
+                                if (typeof lots === 'string')  lots  = lots.split(',').map(l => l.trim());
+
+                                if (parts.length === 0) parts = [''];
+                                if (lots.length === 0)  lots  = [''];
+
+                                parts.forEach((part, index) => {
+                                    let lot = lots[index] ?? '';
+
+                                    $('#replacedPartsContainer').append(`
+                                        <div class="replaced-part-row mb-2 border rounded p-2">
+                                            <div class="input-group input-group-sm mb-2">
+                                                <span class="input-group-text w-50">Part Name</span>
+                                                <input type="text" class="form-control" name="r_part_name[]" value="${part}" ${isViewing ? 'readonly' : ''}>
+                                            </div>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text w-50">Lot No</span>
+                                                <input type="text" class="form-control" name="r_lot_no[]" value="${lot}" ${isViewing ? 'readonly' : ''}>
+                                            </div>
+                                        </div>
+                                    `);
+                                });
+
+                            }
+
+                            if (finalDispositionDetails?.f_disposition != null) {
+
+                                $("#txtDispostionResult1")
+                                    .prop('checked', finalDispositionDetails.f_disposition == 1)
+                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition != 1);
+
+                                $("#txtDispostionResult2")
+                                    .prop('checked', finalDispositionDetails.f_disposition == 2)
+                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition != 2);
+
+                                $('#txtDEngrManagerUser')
+                                    .val(finalDispositionDetails.final_disposition_e_manager?.name ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDEngrManagerUserId')
+                                    .val(finalDispositionDetails.final_disposition_e_manager?.id ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDEngrManagerDateId')
+                                    .val(finalDispositionDetails.engr_manager_date ?? '');
+
+                                $('#txtDPEngrUser')
+                                    .val(finalDispositionDetails.final_disposition_e_process?.name ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDPEngrUserId')
+                                    .val(finalDispositionDetails.final_disposition_e_process?.id ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDPEngrDateId')
+                                    .val(finalDispositionDetails.process_engr_date ?? '');
+
+                                $('#txtFDispositionRemarks')
+                                    .val(finalDispositionDetails.f_disposition_engr_remarks ?? '')
+                                    .prop('readonly', isViewing);
+
+
+                                $("#txtQcDispostionResult1")
+                                    .prop('checked', finalDispositionDetails.f_disposition_qc == 1)
+                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition_qc != 1);
+
+                                $("#txtQcDispostionResult2")
+                                    .prop('checked', finalDispositionDetails.f_disposition_qc == 2)
+                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition_qc != 2);
+
+                                $('#txtDQCManagerUser')
+                                    .val(finalDispositionDetails.final_disposition_qc_manager?.name ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDQCManagerUserId')
+                                    .val(finalDispositionDetails.final_disposition_qc_manager?.id ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtQcManagerDateId')
+                                    .val(finalDispositionDetails.qc_manager_date ?? '');
+
+                                $('#txtDQcUser')
+                                    .val(finalDispositionDetails.final_disposition_qc_supervisor?.name ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDQcUserId')
+                                    .val(finalDispositionDetails.final_disposition_qc_supervisor?.id ?? '')
+                                    .prop('readonly', true);
+
+                                $('#txtDQcDateId')
+                                    .val(finalDispositionDetails.qc_supervisor_date ?? '');
+
+                                $('#txtFQcDispositionRemarks')
+                                    .val(finalDispositionDetails.f_disposition_qc_remarks ?? '')
+                                    .prop('readonly', isViewing);
+                            }
+
+                            if(rootAndCauseEscapeeDetails != null){
+                                $('#txtRootCauseEscapee').val(rootAndCauseEscapeeDetails?.rc_ec ?? '').prop('readonly', isViewing);
+                            }
+
+                            if (capaDetails && capaDetails.length > 0) {
+                                let parentContent = $('.iHeaderContent');
+                                let templateRow = parentContent.find('.row.mb-3').first();
+
+                                // Remove extra rows
+                                parentContent.find('.row.mb-3').not(':first').remove();
+
+                                // Loop through capaDetails
+                                capaDetails.forEach((detail, index) => {
+                                    // Clone template if not first
+                                    let $row = index === 0 ? templateRow : templateRow.clone(false, false);
+
+                                    // Clear/Set textarea and date
+                                    $row.find('textarea').val(detail.de_capa);
+                                    $row.find('input[type="date"]').val(detail.de_due_date);
+
+                                    // Find select
+                                    let $select = $row.find('.selUser');
+
+                                    // Remove old Select2 wrappers
+                                    $select.next('.select2-container').remove();
+
+                                    // Clear options and add placeholder
+                                    $select.empty().append('<option value="" disabled>-- Select User --</option>');
+
+                                    // Populate options
+                                    $.each(capaUserDetails, function(id, name) {
+                                        $select.append(new Option(name, id));
+                                    });
+
+                                    // Remove ID to avoid duplicates
+                                    $select.removeAttr('id');
+
+                                    // Initialize Select2
+                                    if ($.fn.select2) {
+                                        $select.select2({
+                                            width: '100%',
+                                            theme: 'bootstrap4',
+                                            placeholder: '-- Select User --',
+                                            allowClear: true
+                                        });
+                                    }
+
+                                    // Set selected user if exists
+                                    if (detail.de_pic_id) {
+                                        $select.val(String(detail.de_pic_id)).trigger('change');
+                                    }
+
+                                    // Append cloned row (skip first since it’s template)
+                                    if (index > 0) {
+                                        parentContent.append($row);
+                                    }
+                                });
+                            }
+
+                            if(verificationAndConfirmationResults != null){
+                                $('#txtActionStated').val(verificationAndConfirmationResults?.action_stated ?? '').prop('readonly', isViewing);
+                                $('#txtProblemReoccur').val(verificationAndConfirmationResults?.prodblem_reoccur ?? '').prop('readonly', isViewing);
+                                $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
+                                $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
+                                $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
+
+
+                                if( verificationAndConfirmationResults.qc_inspector != null){
+                                    $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
+                                    $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
+                                    $('#txtVcQcInspectorDateId').val(verificationAndConfirmationResults?.qc_inspector_date ?? '').prop('readonly');
+                                }
+
+                                if( verificationAndConfirmationResults.qc_supervisor != null){
+                                    $('#txtVCSupervisorUser').val(verificationAndConfirmationResults.qc_supervisor.name).prop('readonly' ,true);
+                                    $('#txtVCSupervisorUserId').val(verificationAndConfirmationResults.qc_supervisor.id).prop('readonly' ,true);
+                                    $('#txtVcQcSupervisorDateId').val(verificationAndConfirmationResults?.qc_supervisor_date ?? '').prop('readonly');
+                                }
+
+                                if( verificationAndConfirmationResults.qc_manager != null){
+                                    $('#txtVCManagerUser').val(verificationAndConfirmationResults.qc_manager.name).prop('readonly' ,true);
+                                    $('#txtVCManagerUserId').val(verificationAndConfirmationResults.qc_manager.id).prop('readonly' ,true);
+                                    $('#txtVcQcManagerDateId').val(verificationAndConfirmationResults?.qc_manager_date ?? '').prop('readonly');
+                                }
+
+
+                            }
+
+                        }
+
+                    }
+
+                    // else if(data.de_occurence == 2 && (data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5)){
+                    else if(data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5){
                         if(data.defect_status == 0 || data.defect_status == 1  || data.defect_status == 2|| data.defect_status == 3 || data.defect_status == 4 || data.defect_status == 5 || data.defect_status == 6 || data.defect_status == 7 || data.defect_status == 8){
                             $('.cHeaderClass').attr('hidden', !pvIsCompelete);
                             $('.dHeaderClass').attr('hidden', !iaIsComplete);
@@ -2998,487 +3382,13 @@ $(document).ready(function() {
 
                             }
 
+
+
                         }
 
                     }
 
-                    else if(data.de_occurence == 2 && (data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5)){
-                        if(data.defect_status == 0 || data.defect_status == 1  || data.defect_status == 2|| data.defect_status == 3 || data.defect_status == 4 || data.defect_status == 5 || data.defect_status == 6 || data.defect_status == 7 || data.defect_status == 8){
-                            $('.cHeaderClass').attr('hidden', !pvIsCompelete);
-                            $('.dHeaderClass').attr('hidden', !iaIsComplete);
-                            $('.backTabClass').attr('hidden', !caIsComplete);
-                            $('.ifReworkHeaderClass').attr('hidden', !caIsComplete);
-                            $('.gHeaderClass').attr('hidden', !rwdIsComplete);
-                            $('.hHeaderClass').attr('hidden', !fdIsComplete);
-                            $('.iHeaderClass').attr('hidden', !rcecIsComplete);
-                            $('.jHeaderClass').attr('hidden', !cdIsComplete);
 
-                            if(data.problem_verificaiton_details != null){
-                                if( data.problem_verificaiton_details.prod_verification_user != null){
-                                    $('#txtPVerificationUser').val(data.problem_verificaiton_details.prod_verification_user.name).prop('readonly' ,true);
-                                    $('#txtPVerificationUserId').val(data.problem_verificaiton_details.prod_verification_user.id).prop('readonly' ,true);
-                                    $("#txtPVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_prod_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_prod_result != 1);
-                                    $("#txtPVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_prod_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_prod_result != 2);
-                                    $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
-                                    $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
-                                }
-
-                                if( data.problem_verificaiton_details.engr_verification_user != null){
-                                    $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
-                                    $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
-                                    $("#txtEVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_engr_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_engr_result != 1);
-                                    $("#txtEVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_engr_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_engr_result != 2);
-                                    $('#txtEVerificationDate').val(data.problem_verificaiton_details.vr_engr_date).prop('readonly');
-                                    $('#txtEVerificationRemarks').val(data.problem_verificaiton_details.vr_engr_remarks).prop('readonly', isViewing);
-                                }
-
-                                if( data.problem_verificaiton_details.qc_verification_user != null){
-                                    $('#txtQVerificationUser').val(data.problem_verificaiton_details.qc_verification_user.name).prop('readonly' ,true);
-                                    $('#txtQVerificationUserId').val(data.problem_verificaiton_details.qc_verification_user.id).prop('readonly' ,true);
-                                    $("#txtQVerificationResult1").prop('checked', data.problem_verificaiton_details.vr_qc_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.vr_qc_result != 1);
-                                    $("#txtQVerificationResult2").prop('checked', data.problem_verificaiton_details.vr_qc_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.vr_qc_result != 2);
-                                    $('#txtQVerificationDate').val(data.problem_verificaiton_details.vr_qc_date).prop('readonly');
-                                    $('#txtQVerificationRemarks').val(data.problem_verificaiton_details.vr_qc_remarks).prop('readonly', isViewing);
-                                }
-
-                                //disposition result
-
-                                if( data.problem_verificaiton_details.d_prod_user != null){
-                                    $('#txtPDispositionUser').val(data.problem_verificaiton_details.d_prod_user.name).prop('readonly' ,true);
-                                    $('#txtPDispositionUserID').val(data.problem_verificaiton_details.d_prod_user.id).prop('readonly' ,true);
-                                    $("#txtDisposition1").prop('checked', data.problem_verificaiton_details.d_prod_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 1);
-                                    $("#txtDisposition2").prop('checked', data.problem_verificaiton_details.d_prod_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 2);
-                                    $("#txtDisposition3").prop('checked', data.problem_verificaiton_details.d_prod_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_prod_result != 3);
-                                    $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
-                                    $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
-                                }
-
-                                if( data.problem_verificaiton_details.d_engr_user != null){
-                                    $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
-                                    $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
-                                    $("#txtEDisposition1").prop('checked', data.problem_verificaiton_details.d_engr_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 1);
-                                    $("#txtEDisposition2").prop('checked', data.problem_verificaiton_details.d_engr_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 2);
-                                    $("#txtEDisposition3").prop('checked', data.problem_verificaiton_details.d_engr_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_engr_result != 3);
-                                    $('#txtEDispositionDate').val(data.problem_verificaiton_details.d_engr_date).prop('readonly');
-                                    $('#txtEDispositionRemarks').val(data.problem_verificaiton_details.d_engr_remarks).prop('readonly', isViewing);
-                                }
-
-                                if( data.problem_verificaiton_details.d_qc_user != null){
-                                    $('#txtQDispositionUser').val(data.problem_verificaiton_details.d_qc_user.name).prop('readonly' ,true);
-                                    $('#txtQDispositionUserID').val(data.problem_verificaiton_details.d_qc_user.id).prop('readonly' ,true);
-                                    $("#txtQDisposition1").prop('checked', data.problem_verificaiton_details.d_qc_result == 1).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 1);
-                                    $("#txtQDisposition2").prop('checked', data.problem_verificaiton_details.d_qc_result == 2).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 2);
-                                    $("#txtQDisposition3").prop('checked', data.problem_verificaiton_details.d_qc_result == 3).prop('disabled', isViewing && data.problem_verificaiton_details.d_qc_result != 3);
-                                    $('#txtQDispositionDate').val(data.problem_verificaiton_details.d_qc_date).prop('readonly');
-                                    $('#txtQDispositionRemarks').val(data.problem_verificaiton_details.d_qc_remarks).prop('readonly', isViewing);
-                                }
-
-                            }
-
-                            if(data.immediate_action_details != null){
-                                const iad = data.immediate_action_details ?? {};
-                                // ================= MAN =================
-                                $('#txtActionDetailsMan')
-                                    .val(iad.at_man_action_details ?? '')
-                                    .prop('readonly', isViewing);
-
-                                $('#txtWhenMan')
-                                    .val(iad.at_man_date ?? '')
-                                    .prop('readonly', isViewing);
-
-                                let $selectMan = $('#txtSelectUserMan');
-                                $.each(manUserDetails, function (id, name) {
-                                    if ($selectMan.find(`option[value="${id}"]`).length === 0) {
-                                        $selectMan.append(`<option value="${id}">${name}</option>`);
-                                    }
-                                });
-                                $selectMan.val(Object.keys(manUserDetails)).trigger('change');
-
-                                // ================= MACHINE =================
-                                $('#txtActionDetailsMachine')
-                                    .val(iad.at_machine_action_details ?? '')
-                                    .prop('readonly', isViewing);
-
-                                $('#txtWhenMachine')
-                                    .val(iad.at_machine_date ?? '')
-                                    .prop('readonly', isViewing);
-
-                                let $selectMachine = $('#txtSelectUserMachine');
-                                $.each(machineUserDetails, function (id, name) {
-                                    if ($selectMachine.find(`option[value="${id}"]`).length === 0) {
-                                        $selectMachine.append(`<option value="${id}">${name}</option>`);
-                                    }
-                                });
-                                $selectMachine.val(Object.keys(machineUserDetails)).trigger('change');
-
-                                // ================= MATERIAL =================
-                                $('#txtActionDetailsMaterial')
-                                    .val(iad.at_material_action_details ?? '')
-                                    .prop('readonly', isViewing);
-
-                                $('#txtWhenMaterial')
-                                    .val(iad.at_material_date ?? '')
-                                    .prop('readonly', isViewing);
-
-                                let $selectMaterial = $('#txtSelectUserMaterial');
-                                $.each(materialUserDetails, function (id, name) {
-                                    if ($selectMaterial.find(`option[value="${id}"]`).length === 0) {
-                                        $selectMaterial.append(`<option value="${id}">${name}</option>`);
-                                    }
-                                });
-                                $selectMaterial.val(Object.keys(materialUserDetails)).trigger('change');
-
-                                // ================= METHOD =================
-                                $('#txtActionDetailsMethod')
-                                    .val(iad.at_method_action_details ?? '')
-                                    .prop('readonly', isViewing);
-
-                                $('#txtWhenMethod')
-                                    .val(iad.at_method_date ?? '')
-                                    .prop('readonly', isViewing);
-
-                                let $selectMethod = $('#txtSelectUserMethod');
-                                $.each(methodUserDetails, function (id, name) {
-                                    if ($selectMethod.find(`option[value="${id}"]`).length === 0) {
-                                        $selectMethod.append(`<option value="${id}">${name}</option>`);
-                                    }
-                                });
-                                $selectMethod.val(Object.keys(methodUserDetails)).trigger('change');
-
-                                // ================= ENVIRONMENT =================
-                                $('#txtActionDetailsEnvironment')
-                                    .val(iad.at_environment_action_details ?? '')
-                                    .prop('readonly', isViewing);
-
-                                $('#txtWhenEnvironment')
-                                    .val(iad.at_environment_date ?? '')
-                                    .prop('readonly', isViewing);
-
-                                let $selectEnvironment = $('#txtSelectUserEnvironment');
-                                $.each(environmentUserDetails, function (id, name) {
-                                    if ($selectEnvironment.find(`option[value="${id}"]`).length === 0) {
-                                        $selectEnvironment.append(`<option value="${id}">${name}</option>`);
-                                    }
-                                });
-                                $selectEnvironment.val(Object.keys(environmentUserDetails)).trigger('change');
-                            }
-
-                            if(data.containment_action_details != null){
-                                const cad = data?.containment_action_details ?? {};
-                                $('#txtWipTotalQty').val(cad.wip_total_qty ?? '').prop('readonly', isViewing);
-                                $('#txtWipOkQty').val(cad.wip_ok_qty ?? '').prop('readonly', isViewing);
-                                $('#txtWipNgQty').val(cad.wip_ng_qty ?? '').prop('readonly', isViewing);
-                                $('#txtWipMod').val(cad.wip_mod ?? '').prop('readonly', isViewing);
-                                $('#txtWipRemarks').val(cad.wip_remarks ?? '').prop('readonly', isViewing);
-
-                                $('#txtPfTotalQty').val(cad.pf_total_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPfOkQty').val(cad.pf_ok_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPfNgQty').val(cad.pf_ng_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPfMod').val(cad.pf_mod ?? '').prop('readonly', isViewing);
-                                $('#txtPfRemarks').val(cad.pf_remarks ?? '').prop('readonly', isViewing);
-
-                                $('#txtOqcTotalQty').val(cad.qc_total_qty ?? '').prop('readonly', isViewing);
-                                $('#txtOqcOkQty').val(cad.qc_ok_qty ?? '').prop('readonly', isViewing);
-                                $('#txtOqcNgQty').val(cad.qc_ng_qty ?? '').prop('readonly', isViewing);
-                                $('#txtOqcMod').val(cad.qc_mod ?? '').prop('readonly', isViewing);
-                                $('#txtOqcRemarks').val(cad.qc_remarks ?? '').prop('readonly', isViewing);
-
-                                $('#txtPackingTotalQty').val(cad.p_total_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPackingOkQty').val(cad.p_ok_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPackingNgQty').val(cad.p_ng_qty ?? '').prop('readonly', isViewing);
-                                $('#txtPackingMod').val(cad.p_mod ?? '').prop('readonly', isViewing);
-                                $('#txtPackingRemarks').val(cad.p_remarks ?? '').prop('readonly', isViewing);
-
-                                $('#txtShippedTotalQty').val(cad.s_total_qty ?? '').prop('readonly', isViewing);
-                                $('#txtShippedOkQty').val(cad.s_ok_qty ?? '').prop('readonly', isViewing);
-                                $('#txtShippedNgQty').val(cad.s_ng_qty ?? '').prop('readonly', isViewing);
-                                $('#txtShippedMod').val(cad.s_mod ?? '').prop('readonly', isViewing);
-                                $('#txtShippedRemarks').val(cad.s_remarks ?? '').prop('readonly', isViewing);
-                            }
-
-                            if(reworkDetails != null){
-                                const rd = reworkDetails ?? {};
-
-                                $("#txtOthers").on("change", function () {
-                                    if (!isViewing) {
-                                        $("#txtReworkActivityOthers")
-                                            .prop("disabled", !this.checked)
-                                            .val(this.checked ? $("#txtReworkActivityOthers").val() : '');
-                                    }
-                                });
-
-                                // console.log('reworkDetails', rd);
-                                // --- Operators ---
-                                $('#txtReworkerOperator1').val(rd.reworker_operator1?.name ?? '');
-                                $('#txtReworkerOperator2').val(rd.reworker_operator2?.name ?? '');
-                                $('#txtReworkerOperatorId1').val(rd.reworker_user_id1 ?? '');
-                                $('#txtReworkerOperatorId2').val(rd.reworker_user_id2 ?? '');
-                                $('#txtReworkDate').val(rd.rework_date ?? '').prop('readonly', isViewing);
-
-                                // --- Rework activity (normalize to array) ---
-                                let selected = rd.rework_activity;
-
-                                // console.log('selected', selected);
-
-                                if (selected == null) {
-                                    selected = [];
-                                } else if (Array.isArray(selected)) {
-                                    // ok
-                                } else if (typeof selected === 'string') {
-                                    try {
-                                        const parsed = JSON.parse(selected);
-                                        selected = Array.isArray(parsed) ? parsed : selected.split(',');
-                                    } catch {
-                                        selected = selected.split(',');
-                                    }
-                                } else {
-                                    selected = [selected];
-                                }
-
-                                selected = selected.map(v => String(v).trim()).filter(Boolean);
-
-                                // Uncheck all, then check selected
-                                $("[name='rework_activity[]']").prop("checked", false);
-                                selected.forEach(val => {
-                                    $("[name='rework_activity[]'][value='" + val + "']").prop("checked", true);
-                                });
-
-                                // --- OTHERS ---
-                                if (selected.includes('10')) {
-                                    $("#txtOthers").prop("checked", true);
-                                    $("#txtReworkActivityOthers")
-                                        .prop("disabled", false)
-                                        .val(rd.rework_act_others ?? '');
-                                } else {
-                                    $("#txtOthers").prop("checked", false);
-                                    $("#txtReworkActivityOthers").prop("disabled", true).val('');
-                                }
-
-                                // --- Unit results (1–5) ---
-                                for (let i = 1; i <= 5; i++) {
-                                    const result = rd["unit" + i + "_result"];
-
-                                    $("[name='rework" + i + "'][value='1']")
-                                        .prop('checked', result == 1)
-                                        .prop('disabled', isViewing && result != 1);
-
-                                    $("[name='rework" + i + "'][value='2']")
-                                        .prop('checked', result == 2)
-                                        .prop('disabled', isViewing && result != 2);
-                                }
-
-                                // --- MPC checking ---
-                                $("input[name='mpc_check']").each(function () {
-                                    $(this)
-                                        .prop('checked', $(this).val() == rd.rework_mpc_checking)
-                                        .prop('disabled', isViewing && $(this).val() != rd.rework_mpc_checking);
-                                });
-
-                                // --- Activity after rework ---
-                                $("input[name='activity_after_rework']").each(function () {
-                                    $(this)
-                                        .prop('checked', $(this).val() == rd.activity_after_rework)
-                                        .prop('disabled', isViewing && $(this).val() != rd.activity_after_rework);
-                                });
-
-                                // --- Replaced parts ---
-                                $('#replacedPartsContainer').empty();
-
-                                let parts = rd.rework_replace_parts ?? [];
-                                let lots  = rd.rework_lot_no ?? [];
-
-                                if (typeof parts === 'string') parts = parts.split(',').map(p => p.trim());
-                                if (typeof lots === 'string')  lots  = lots.split(',').map(l => l.trim());
-
-                                if (parts.length === 0) parts = [''];
-                                if (lots.length === 0)  lots  = [''];
-
-                                parts.forEach((part, index) => {
-                                    let lot = lots[index] ?? '';
-
-                                    $('#replacedPartsContainer').append(`
-                                        <div class="replaced-part-row mb-2 border rounded p-2">
-                                            <div class="input-group input-group-sm mb-2">
-                                                <span class="input-group-text w-50">Part Name</span>
-                                                <input type="text" class="form-control" name="r_part_name[]" value="${part}" ${isViewing ? 'readonly' : ''}>
-                                            </div>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text w-50">Lot No</span>
-                                                <input type="text" class="form-control" name="r_lot_no[]" value="${lot}" ${isViewing ? 'readonly' : ''}>
-                                            </div>
-                                        </div>
-                                    `);
-                                });
-
-                            }
-
-                            if (finalDispositionDetails?.f_disposition != null) {
-
-                                $("#txtDispostionResult1")
-                                    .prop('checked', finalDispositionDetails.f_disposition == 1)
-                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition != 1);
-
-                                $("#txtDispostionResult2")
-                                    .prop('checked', finalDispositionDetails.f_disposition == 2)
-                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition != 2);
-
-                                $('#txtDEngrManagerUser')
-                                    .val(finalDispositionDetails.final_disposition_e_manager?.name ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDEngrManagerUserId')
-                                    .val(finalDispositionDetails.final_disposition_e_manager?.id ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDEngrManagerDateId')
-                                    .val(finalDispositionDetails.engr_manager_date ?? '');
-
-                                $('#txtDPEngrUser')
-                                    .val(finalDispositionDetails.final_disposition_e_process?.name ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDPEngrUserId')
-                                    .val(finalDispositionDetails.final_disposition_e_process?.id ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDPEngrDateId')
-                                    .val(finalDispositionDetails.process_engr_date ?? '');
-
-                                $('#txtFDispositionRemarks')
-                                    .val(finalDispositionDetails.f_disposition_engr_remarks ?? '')
-                                    .prop('readonly', isViewing);
-
-
-                                $("#txtQcDispostionResult1")
-                                    .prop('checked', finalDispositionDetails.f_disposition_qc == 1)
-                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition_qc != 1);
-
-                                $("#txtQcDispostionResult2")
-                                    .prop('checked', finalDispositionDetails.f_disposition_qc == 2)
-                                    .prop('disabled', isViewing && finalDispositionDetails.f_disposition_qc != 2);
-
-                                $('#txtDQCManagerUser')
-                                    .val(finalDispositionDetails.final_disposition_qc_manager?.name ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDQCManagerUserId')
-                                    .val(finalDispositionDetails.final_disposition_qc_manager?.id ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtQcManagerDateId')
-                                    .val(finalDispositionDetails.qc_manager_date ?? '');
-
-                                $('#txtDQcUser')
-                                    .val(finalDispositionDetails.final_disposition_qc_supervisor?.name ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDQcUserId')
-                                    .val(finalDispositionDetails.final_disposition_qc_supervisor?.id ?? '')
-                                    .prop('readonly', true);
-
-                                $('#txtDQcDateId')
-                                    .val(finalDispositionDetails.qc_supervisor_date ?? '');
-
-                                $('#txtFQcDispositionRemarks')
-                                    .val(finalDispositionDetails.f_disposition_qc_remarks ?? '')
-                                    .prop('readonly', isViewing);
-                            }
-
-                            if(rootAndCauseEscapeeDetails != null){
-                                $('#txtRootCauseEscapee').val(rootAndCauseEscapeeDetails?.rc_ec ?? '').prop('readonly', isViewing);
-                            }
-
-                            if (capaDetails && capaDetails.length > 0) {
-                                let parentContent = $('.iHeaderContent');
-                                let templateRow = parentContent.find('.row.mb-3').first();
-
-                                // Remove extra rows
-                                parentContent.find('.row.mb-3').not(':first').remove();
-
-                                // Loop through capaDetails
-                                capaDetails.forEach((detail, index) => {
-                                    // Clone template if not first
-                                    let $row = index === 0 ? templateRow : templateRow.clone(false, false);
-
-                                    // Clear/Set textarea and date
-                                    $row.find('textarea').val(detail.de_capa);
-                                    $row.find('input[type="date"]').val(detail.de_due_date);
-
-                                    // Find select
-                                    let $select = $row.find('.selUser');
-
-                                    // Remove old Select2 wrappers
-                                    $select.next('.select2-container').remove();
-
-                                    // Clear options and add placeholder
-                                    $select.empty().append('<option value="" disabled>-- Select User --</option>');
-
-                                    // Populate options
-                                    $.each(capaUserDetails, function(id, name) {
-                                        $select.append(new Option(name, id));
-                                    });
-
-                                    // Remove ID to avoid duplicates
-                                    $select.removeAttr('id');
-
-                                    // Initialize Select2
-                                    if ($.fn.select2) {
-                                        $select.select2({
-                                            width: '100%',
-                                            theme: 'bootstrap4',
-                                            placeholder: '-- Select User --',
-                                            allowClear: true
-                                        });
-                                    }
-
-                                    // Set selected user if exists
-                                    if (detail.de_pic_id) {
-                                        $select.val(String(detail.de_pic_id)).trigger('change');
-                                    }
-
-                                    // Append cloned row (skip first since it’s template)
-                                    if (index > 0) {
-                                        parentContent.append($row);
-                                    }
-                                });
-                            }
-
-                            if(verificationAndConfirmationResults != null){
-                                $('#txtActionStated').val(verificationAndConfirmationResults?.action_stated ?? '').prop('readonly', isViewing);
-                                $('#txtProblemReoccur').val(verificationAndConfirmationResults?.prodblem_reoccur ?? '').prop('readonly', isViewing);
-                                $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
-                                $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
-                                $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
-
-
-                                if( verificationAndConfirmationResults.qc_inspector != null){
-                                    $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
-                                    $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
-                                    $('#txtVcQcInspectorDateId').val(verificationAndConfirmationResults?.qc_inspector_date ?? '').prop('readonly');
-                                }
-
-                                if( verificationAndConfirmationResults.qc_supervisor != null){
-                                    $('#txtVCSupervisorUser').val(verificationAndConfirmationResults.qc_supervisor.name).prop('readonly' ,true);
-                                    $('#txtVCSupervisorUserId').val(verificationAndConfirmationResults.qc_supervisor.id).prop('readonly' ,true);
-                                    $('#txtVcQcSupervisorDateId').val(verificationAndConfirmationResults?.qc_supervisor_date ?? '').prop('readonly');
-                                }
-
-                                if( verificationAndConfirmationResults.qc_manager != null){
-                                    $('#txtVCManagerUser').val(verificationAndConfirmationResults.qc_manager.name).prop('readonly' ,true);
-                                    $('#txtVCManagerUserId').val(verificationAndConfirmationResults.qc_manager.id).prop('readonly' ,true);
-                                    $('#txtVcQcManagerDateId').val(verificationAndConfirmationResults?.qc_manager_date ?? '').prop('readonly');
-                                }
-
-
-                            }
-
-
-
-                        }
-
-                    }else{
-                        $('.bHeaderClass').attr('hidden', true);
-                    }
                         $('#btnSaveDefectEscalation').prop('disabled', isViewing);
                     },
                     error: function () {
@@ -3969,55 +3879,16 @@ $(document).ready(function() {
             $(this).closest('tr').remove();
         });
 
-    // Initialize all existing rows
-    $('.iHeaderContent .capaRowTemplate select.selCapaUser').each(function() {
-        let $select = $(this);
+        // Initialize all existing rows
+        $('.iHeaderContent .capaRowTemplate select.selCapaUser').each(function() {
+            let $select = $(this);
 
-        // Populate users
-        GetUserForPersonInCharge($select);
+            // Populate users
+            GetUserForPersonInCharge($select);
 
-        // Initialize Select2
-        if ($.fn.select2 && !$select.hasClass('select2-hidden-accessible')) {
-            $select.select2({
-                theme: 'bootstrap4',
-                placeholder: '-- Select User --',
-                allowClear: true,
-                width: '100%'
-            });
-        }
-    });
-
-    // Add new CAPA row
-    $(document).on('click', '.addCapaRowBtn', function() {
-        let $parent = $(this).closest('.iHeaderContent');
-        let $template = $parent.find('.capaRowTemplate').first();
-
-        // Clone the template row
-        let $newRow = $template.clone(false, false);
-
-        // Remove old Select2 wrappers if any
-        $newRow.find('.select2-container').remove();
-
-        // Clear input fields
-        $newRow.find('textarea').val('');
-        $newRow.find('input[type="date"]').val('');
-
-        // Remove IDs to avoid duplicates
-        $newRow.find('[id]').removeAttr('id');
-
-        // Handle select elements
-        $newRow.find('select.selCapaUser').each(function() {
-            let $oldSelect = $(this);
-
-            // Clear old options
-            $oldSelect.empty().append('<option value="" disabled selected>-- Loading --</option>');
-
-            // Populate options via your function
-            GetUserForPersonInCharge($oldSelect);
-
-            // Initialize Select2 safely
-            if ($.fn.select2 && !$oldSelect.hasClass('select2-hidden-accessible')) {
-                $oldSelect.select2({
+            // Initialize Select2
+            if ($.fn.select2 && !$select.hasClass('select2-hidden-accessible')) {
+                $select.select2({
                     theme: 'bootstrap4',
                     placeholder: '-- Select User --',
                     allowClear: true,
@@ -4026,32 +3897,71 @@ $(document).ready(function() {
             }
         });
 
-        // Append new row
-        $parent.append($newRow);
-    });
+        // Add new CAPA row
+        $(document).on('click', '.addCapaRowBtn', function() {
+            let $parent = $(this).closest('.iHeaderContent');
+            let $template = $parent.find('.capaRowTemplate').first();
 
-    // Remove CAPA row
-    $(document).on('click', '.removeCapaRowBtn', function() {
-        let $parent = $(this).closest('.iHeaderContent');
-        let $rows = $parent.find('.capaRowTemplate');
-        let $row = $(this).closest('.capaRowTemplate');
+            // Clone the template row
+            let $newRow = $template.clone(false, false);
 
-        if ($rows.length > 1) {
-            // Destroy Select2 first to avoid dangling instances
-            $row.find('select.selCapaUser').each(function() {
-                let $select = $(this);
-                if ($select.hasClass('select2-hidden-accessible')) {
-                    $select.select2('destroy');
+            // Remove old Select2 wrappers if any
+            $newRow.find('.select2-container').remove();
+
+            // Clear input fields
+            $newRow.find('textarea').val('');
+            $newRow.find('input[type="date"]').val('');
+
+            // Remove IDs to avoid duplicates
+            $newRow.find('[id]').removeAttr('id');
+
+            // Handle select elements
+            $newRow.find('select.selCapaUser').each(function() {
+                let $oldSelect = $(this);
+
+                // Clear old options
+                $oldSelect.empty().append('<option value="" disabled selected>-- Loading --</option>');
+
+                // Populate options via your function
+                GetUserForPersonInCharge($oldSelect);
+
+                // Initialize Select2 safely
+                if ($.fn.select2 && !$oldSelect.hasClass('select2-hidden-accessible')) {
+                    $oldSelect.select2({
+                        theme: 'bootstrap4',
+                        placeholder: '-- Select User --',
+                        allowClear: true,
+                        width: '100%'
+                    });
                 }
             });
-            $row.remove();
-        } else {
-            // Last row: just reset
-            $row.find('select.selCapaUser').val(null).trigger('change');
-            $row.find('textarea').val('');
-            $row.find('input[type="date"]').val('');
-        }
-    });
+
+            // Append new row
+            $parent.append($newRow);
+        });
+
+        // Remove CAPA row
+        $(document).on('click', '.removeCapaRowBtn', function() {
+            let $parent = $(this).closest('.iHeaderContent');
+            let $rows = $parent.find('.capaRowTemplate');
+            let $row = $(this).closest('.capaRowTemplate');
+
+            if ($rows.length > 1) {
+                // Destroy Select2 first to avoid dangling instances
+                $row.find('select.selCapaUser').each(function() {
+                    let $select = $(this);
+                    if ($select.hasClass('select2-hidden-accessible')) {
+                        $select.select2('destroy');
+                    }
+                });
+                $row.remove();
+            } else {
+                // Last row: just reset
+                $row.find('select.selCapaUser').val(null).trigger('change');
+                $row.find('textarea').val('');
+                $row.find('input[type="date"]').val('');
+            }
+        });
 
 
 
@@ -4096,6 +4006,7 @@ $(document).ready(function() {
     document.getElementById('txtStation').addEventListener('change', function () {
         const otherStationContainer = document.getElementById('otherStationContainer');
         if (this.value === '7' || this.value === '3' || this.value === '4' || this.value === '2') {
+            // console.log('selected value', this.value);
             otherStationContainer.style.display = 'block';
         } else {
             otherStationContainer.style.display = 'none';
@@ -4399,6 +4310,7 @@ $(document).ready(function() {
 
     $('#modalAddDefectEscalation').on('hidden.bs.modal', function () {
         resetDefectModal();
+
         // $('.bToggleHeader').slideUp(200);
         $('#bHeaderIcon').html('&#x25BA;');
         $('.bHeaderVerificationHeader').hide();
@@ -4441,14 +4353,14 @@ function resetDefectModal() {
 
     // Reset inputs
     $('#modalAddDefectEscalation').find('input, textarea').each(function () {
-        $(this).val('');
+        // $(this).val(''); //Ito reason ng ng csrf error boss, dini delete neto ang CSRF token
         $(this).prop('checked', false);
         $(this).prop('readonly', false);
         $(this).prop('disabled', false);
     });
 
     // Reset hidden inputs
-    $('#modalAddDefectEscalation').find('input[type="hidden"]').val('');
+    // $('#modalAddDefectEscalation').find('input[type="hidden"]').val(''); //Ito reason ng ng csrf error boss, dini delete neto ang CSRF token
 
     // Hide conditional sections
     $('.cHeaderClass').attr('hidden', true);

@@ -212,7 +212,7 @@ function getDefectCount(poNumber){
                 // $("#lblRuncardTransSlip").text('...');
         },
         success: function(JsonObject){
-            console.log('JsonObject',JsonObject['data']);
+            // console.log('JsonObject',JsonObject['data']);
         },
         error: function(data, xhr, status){
             toastr.error('An error occured!\n' + 'Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);

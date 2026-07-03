@@ -424,7 +424,7 @@ class DefectEscalationV2Controller extends Controller{
                 ]);
 
 
-                DefectProblemVerification::updateOrCreate(
+                DefectProblemVerificationV2::updateOrCreate(
                     // 🔎 Search condition
                     ['de_id' => $request->defect_id],
 

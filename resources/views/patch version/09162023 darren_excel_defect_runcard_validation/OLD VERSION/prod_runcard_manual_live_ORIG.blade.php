@@ -1959,7 +1959,7 @@
     </div>
 
     <!-- Modal Alert -->
-    <div class="modal fade" id="modalScanEmployeeId" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static">
+    <div class="modal fade" id="modalScanEmployeeId" data-backdrop="static" data-keyboard="false"  tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header">

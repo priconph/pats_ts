@@ -6553,20 +6553,35 @@
                 appendHTML += '</td>';
                 appendHTML += '<td>';
                 appendHTML += '<select class="form-control" name="type_of_ng[]">';
-                    if(modeOfDefect[index]['type_of_ng'] == 1){
-                       appendHTML += '<option value="1">MAT\'L NG.</option>';
-                        appendHTML += '<option value="2">PROD\'N NG.</option>';
-                        appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
-                        appendHTML += '<option value="4">Auto Inserter</option>';
-                        appendHTML += '<option value="5">NG Samples</option>';
+                    // if(modeOfDefect[index]['type_of_ng'] == 1){
+                    //    appendHTML += '<option value="1">MAT\'L NG.</option>';
+                    //     appendHTML += '<option value="2">PROD\'N NG.</option>';
+                    //     appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
+                    //     appendHTML += '<option value="4">Auto Inserter</option>';
+                    //     appendHTML += '<option value="5">NG Samples</option>';
+
+                    // }
+                    // else{
+                    //   appendHTML += '<option value="1">MAT\'L NG.</option>';
+                    //   appendHTML += '<option value="2" selected="true">PROD\'N NG.</option>';
+                    //    appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
+                    //     appendHTML += '<option value="4">Auto Inserter</option>';
+                    //     appendHTML += '<option value="5">NG Samples</option>';
+                    // }
+                      if(modeOfDefect[index]['type_of_ng'] == 1){
+                       appendHTML += '<option value="1">Critical</option>';
+                        appendHTML += '<option value="2">Non-Critical</option>';
+                        appendHTML += '<option value="3">Auto-Insert Defects</option>';
+                        appendHTML += '<option value="4">NG Samples</option>';
+                        // appendHTML += '<option value="5">NG Samples</option>';
 
                     }
                     else{
-                      appendHTML += '<option value="1">MAT\'L NG.</option>';
-                      appendHTML += '<option value="2" selected="true">PROD\'N NG.</option>';
-                       appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
-                        appendHTML += '<option value="4">Auto Inserter</option>';
-                        appendHTML += '<option value="5">NG Samples</option>';
+                      appendHTML += '<option value="1">Critical</option>';
+                      appendHTML += '<option value="2">Non-Critical</option>';
+                       appendHTML += '<option value="3">Auto-Insert Defects</option>';
+                        appendHTML += '<option value="4">NG Samples</option>';
+                        // appendHTML += '<option value="5">NG Samples</option>';
                     }
                   appendHTML += '</select>';
                 appendHTML += '<td>';
@@ -7870,26 +7885,41 @@ Ex: PO = 450245666 so the DE # = 450245666, PO = ES23 then Runcard# = ES23
     // added 11/05/2025 - mdr
     GetAssemblyLines($(".sel-assembly-lines"));
 
-    $(document).on('click', '.btn_go_to_defect_escalation', function (e) {
-      e.preventDefault();
+//     $(document).on('click', '.btn_go_to_defect_escalation', function (e) {
+//       e.preventDefault();
 
-      let poNumber = $('#txt_po_number_lbl').val();
-      let deviceName = $('#txt_device_name_lbl').val();
-      let deviceCode = $('#txt_device_code_lbl').val();
-      let poQty = $('#txt_po_qty_lbl').val();
+//       let poNumber = $('#txt_po_number_lbl').val();
+//       let deviceName = $('#txt_device_name_lbl').val();
+//       let deviceCode = $('#txt_device_code_lbl').val();
+//       let poQty = $('#txt_po_qty_lbl').val();
 
-      let dieNo = $('#txt_die_no').val();
-      let pairNo = $('#txt_pair_no').val();
+//       let dieNo = $('#txt_die_no').val();
+//       let pairNo = $('#txt_pair_no').val();
 
-      sessionStorage.setItem('po_number_for_defect_escalation', poNumber);
-      sessionStorage.setItem('device_name_for_defect_escalation', deviceName);
-      sessionStorage.setItem('device_code_for_defect_escalation', deviceCode);
-      sessionStorage.setItem('po_qty_for_defect_escalation', poQty);
-      sessionStorage.setItem('die_no_for_defect_escalation', dieNo);
-      sessionStorage.setItem('pair_no_for_defect_escalation', pairNo);
+//       sessionStorage.setItem('po_number_for_defect_escalation', poNumber);
+//       sessionStorage.setItem('device_name_for_defect_escalation', deviceName);
+//       sessionStorage.setItem('device_code_for_defect_escalation', deviceCode);
+//       sessionStorage.setItem('po_qty_for_defect_escalation', poQty);
+//       sessionStorage.setItem('die_no_for_defect_escalation', dieNo);
+//       sessionStorage.setItem('pair_no_for_defect_escalation', pairNo);
 
-      window.open('http://rapidx/pats_ts/defect_escalation_v2_old', '_blank');
-  });
+//       window.open('http://rapidx/pats_ts/defect_escalation_v2_old', '_blank');
+//   });
+
+$(document).on('click', '.btn_go_to_defect_escalation', function(e) {
+    e.preventDefault();
+
+    let poNumber = $('#txt_po_number').val();
+    let deviceName = $('#txt_device_name_lbl').val();
+    let deviceCode = $('#txt_device_code_lbl').val();
+    let poQty = $('#txt_po_qty_lbl').val();
+    let dieNo = $('#txt_die_no').val();
+    let pairNo = $('#txt_pair_no').val();
+
+    let url = `http://rapidx/pats_ts/defect_escalation_v2_old?po_number=${encodeURIComponent(poNumber)}&device_name=${encodeURIComponent(deviceName)}&device_code=${encodeURIComponent(deviceCode)}&po_qty=${encodeURIComponent(poQty)}&die_no=${encodeURIComponent(dieNo)}&pair_no=${encodeURIComponent(pairNo)}`;
+
+    window.open(url, '_blank');
+});
 
 
   </script>

@@ -1103,7 +1103,7 @@ Route::get('/get_defect_runcard_details_new', 'DefectEscalationDarrenController@
 Route::get('/get_defect_ctrl', 'DefectEscalationDarrenController@get_defect_ctrl');
 Route::post('/add_defect_escalation', 'DefectEscalationDarrenController@add_defect_escalation');
 Route::post('/add_defect_escalation_test', 'DefectEscalationDarrenController@add_defect_escalation_test');
-Route::get('/get_verification_user_ongoing', 'DefectEscalationDarfrenController@get_verification_user_ongoing');
+Route::get('/get_verification_user_ongoing', 'DefectEscalationDarrenController@get_verification_user_ongoing');
 
 Route::get('/get_assembly_lines_for_defect_escalation', 'DefectEscalationDarrenController@get_assembly_lines_for_defect_escalation');
 
