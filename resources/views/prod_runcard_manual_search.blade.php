@@ -704,7 +704,6 @@
                             <span class="input-group-text w-100" id="basic-addon1">Line</span>
                         </div>
                         <select class="form-control select2 select2bs4 sel-assembly-lines" id="txtAssemblyLineId" name="assembly_line">
-                            <option value=""> N/A </option>
                           </select>
                       </div>
                     </div>

@@ -277,7 +277,7 @@ function GetAssemblyLines(cboElement, selectedId = null) {
             let result = '';
 
             // Always include N/A as first option
-            result += '<option value="">N/A</option>';
+            // result += '<option value="">N/A</option>';
 
             if (JsonObject['assembly_lines'] && JsonObject['assembly_lines'].length > 0) {
                 for (let index = 0; index < JsonObject['assembly_lines'].length; index++) {
