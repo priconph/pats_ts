@@ -9584,7 +9584,8 @@ class ProductionRuncardController extends Controller
                                 /* 03112025 by Nessa */
                                 $es_po = substr($request->txt_po_number, 0, 2);
                                 if ($es_po == 'ES'){
-                                    $runcard_no = substr($request->txt_po_number, 0, -4);
+                                    // $runcard_no = substr($request->txt_po_number, 0, -4);
+                                    $runcard_no = str_replace('-', '', $request->txt_po_number); //07-09-26 Sample Output: ES26095
                                 }else{
                                     $runcard_no = substr($request->txt_po_number, 0, -5);
                                 }
@@ -9636,7 +9637,8 @@ class ProductionRuncardController extends Controller
                                     /* 03112025 by Nessa */
                                     $es_po = substr($request->txt_po_number, 0, 2);
                                     if ($es_po == 'ES'){
-                                        $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
+                                        // $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
+                                        $final_runcard_no = str_replace('-', '', $request->txt_po_number). '-001'; //07-09-26 Sample Output: ES26095
                                     }else{
                                         $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
 
@@ -10118,7 +10120,6 @@ class ProductionRuncardController extends Controller
                                     if ( str_contains(  $request->txt_po_number, 'ES') ){
                                         // $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
                                         $final_runcard_no = str_replace('-','',$request->txt_po_number) . '-001'; //06282025 Updated by Darren&Nessa
-
                                     }else{
                                         $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
 
@@ -11705,17 +11706,18 @@ class ProductionRuncardController extends Controller
          * For the validation of the Filtered Material on WBS vs Matrix Material
          * -JD
          */
-        // return $materialTypeChecking;
+        // return $materialTypeChecking; //MP260624 | 1351-12064 | 4/4 A10000002
+        //  return $lotNumber;
         $materialList = [];
         $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::where("process_flow_id", $request->process_flow_id)->get();
 
         // return $deviceProcessFlowMaterials;
         for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
-            if($deviceProcessFlowMaterials[$i]->material_part_no == $materialTypeChecking){
+            if($deviceProcessFlowMaterials[$i]->material_part_no == $materialTypeChecking){ // NEED TO HAVE SAME Material Number
                 $materialList[] = $deviceProcessFlowMaterials[$i];
             }
         }
-        // return $mate rialList;
+        // return $deviceProcessFlowMaterials[]->material_part_no;
 
         return response()->json(['data' => $materialList, "lot_no" => $lotNumber]);
     }

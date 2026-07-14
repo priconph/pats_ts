@@ -1958,14 +1958,15 @@
                              * 08-11-2022
                              * -JD
                             */
-                            console.log('actionEditMaterialProcessFlow');
-                            console.log('i before ',i);
+                            // console.log('actionEditMaterialProcessFlow');
+                            // console.log('i before ',i);
                             if(data['process_flow_info']['process_flow_substation_details'].length > 0){
                               let processFlowSubstationDetails = data['process_flow_info']['process_flow_substation_details'];
                               // console.table(processFlowSubstationDetails);
+                              console.log('bossda', processFlowSubstationDetails)
 
                               i = processFlowSubstationDetails.length; // i - variable at the top
-                              console.log('i now ',i);
+                            //   console.log('i now ',i);
                               for (let index = 0; index < processFlowSubstationDetails.length; index++) {
                                 let material_id = processFlowSubstationDetails[index].material_id;
                                 let material_lot_no = processFlowSubstationDetails[index].lot_no;

@@ -1284,7 +1284,7 @@ class PilotRunController extends Controller
         }
         // For Update
         if(isset($request->pilot_run_d_id)){
-           $a_pilot = APilotRun::where('id',$request->global_pilotrun_id)
+            $a_pilot = APilotRun::where('id',$request->global_pilotrun_id)
             ->where('status',2)
             ->count();
 
@@ -1297,15 +1297,16 @@ class PilotRunController extends Controller
                 '3p_ini_check',
                 '3p_fin_check',
             ];
-            collect($column_prodn)->each(function ($required_column_prodn) use ($d_pilot_run_query) {
+             collect($column_prodn)->each(function ($required_column_prodn) use ($d_pilot_run_query) {
                 $d_pilot_run_query->whereNotNull($required_column_prodn);
             });
-
             if($d_pilot_run_query->count() === 1 && $a_pilot === 1){
                 APilotRun::where('id',$request->global_pilotrun_id)
                 ->update([
                     'status' => 3, // C For Engr
                 ]);
+                DB::commit();
+                return response()->json(['result' => "1"]);
             }
 
             if ($request->pilot_run_d_status == 4){ // D - Done Update
