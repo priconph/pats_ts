@@ -25,7 +25,7 @@ class MachineController extends Controller
     //View Machines
 	public function view_machines(){
         // Old 07-08-2022
-    	// $machines = Machine::all(); 
+    	// $machines = Machine::all();
 
         // $machines = EEDMSGeneralLogistics::where('g_logdel', 0)->get();
         // or this
@@ -54,7 +54,7 @@ class MachineController extends Controller
                 $result = '';
                 $result .= '<center>';
                 $result .=   '<div class="btn-group">';
-                            
+
                 if($machine->machine_status == "Available" || $machine->machine_status == "Not Available"){
                     $disabled = "";
                     $result .=  '<button type="button" '.$disabled.' class="btn btn-primary dropdown-toggle btn-xs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Action">';
@@ -212,38 +212,46 @@ class MachineController extends Controller
      */
     public function get_machines_for_runcard_station(Request $request){
         $process_flow_array = [];
-        $device = Device::where("name", $request->txt_device_name_lbl)->get();
+        return 'TODO get_machines_for_runcard_station';
+
+        $device = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $po_number,
+            'name'=>  $request->txt_device_name_lbl,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
+        // $device = Device::where("name", $request->txt_device_name_lbl)->get();
         // return $device;
         if( count($device) > 0 ){
             $processFlowDetails = ProcessFlow::with(['processFlow'])->where("device_id", $device[0]->id)
             ->where("status", 1)
             ->get();
-            for ($i=0; $i < count($processFlowDetails); $i++) { 
+            for ($i=0; $i < count($processFlowDetails); $i++) {
                 if($processFlowDetails[$i]->machine_id != 'N/A'){
                     if (str_contains($processFlowDetails[$i]->machine_id, ',')) {
                         $exploded_array = explode(',',$processFlowDetails[$i]->machine_id);
-                        for ($j=0; $j < count($exploded_array); $j++) { 
+                        for ($j=0; $j < count($exploded_array); $j++) {
                             $process_flow_array[] = $exploded_array[$j];
                         }
                     }else{
                         $process_flow_array[] = $processFlowDetails[$i]->machine_id;
                     }
-                    
+
                 }
             }
             // return $process_flow_array;
-            
+
             $machine_array = [];
-            for ($i=0; $i < count($process_flow_array) ; $i++) { 
+            for ($i=0; $i < count($process_flow_array) ; $i++) {
                 $machines = DB::connection('mysql_rapid_eedms_v2')->table('generallogistics')
                 ->where('id', $process_flow_array[$i])
                 ->get()->flatten(1);
                 $machine_array[] = $machines;
             }
-            
+
             // ->unique('process_flow_id')->flatten(1);
             return response()->json([ 'machines' => array_flatten($machine_array), 'processFlowDetails' => $processFlowDetails, 'process_flow_array' => $process_flow_array]);
-            
+
         }
     }
 
@@ -255,44 +263,51 @@ class MachineController extends Controller
 
     //     $arr_machine_code = ['MACHINE','DIESET'];
     //     $results = DB::connection('mysql_rapid_eedms_v2')->select( DB::raw("SELECT id, machine_code_number, machine_name FROM generallogistics WHERE machine_code IN ('MACHINE','DIESET')"));
-        
+
     //     return response()->json(['machines' => $results]);
     //     // return response()->json(['machines_array' => $machines_array]);
     // }
 
     public function get_machines_test(Request $request){
         $process_flow_material_ids_array = [];
-        $device = Device::where("name", $request->txt_device_name_lbl)->get();
+        return 'TODO get_machines_test';
+         $device = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $po_number,
+            'name'=>  $request->txt_device_name_lbl,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
+        // $device = Device::where("name", $request->txt_device_name_lbl)->get();
         // return $device;
         if( count($device) > 0 ){
             $processFlowDetails = ProcessFlow::with(['processFlow'])->where("device_id", $device[0]->id)
             ->where("status", 1)
             ->get();
-            for ($i=0; $i < count($processFlowDetails); $i++) { 
+            for ($i=0; $i < count($processFlowDetails); $i++) {
                 if($processFlowDetails[$i]->machine_id != 'N/A'){
                     if (str_contains($processFlowDetails[$i]->machine_id, ',')) {
                         $exploded_array = explode(',',$processFlowDetails[$i]->machine_id);
-                        for ($j=0; $j < count($exploded_array); $j++) { 
+                        for ($j=0; $j < count($exploded_array); $j++) {
                             $process_flow_material_ids_array[] = $exploded_array[$j];
                         }
                     }else{
                         $process_flow_material_ids_array[] = $processFlowDetails[$i]->machine_id;
                     }
-                    
+
                 }
             }
 
             $machine_array = [];
-            for ($i=0; $i < count($process_flow_material_ids_array) ; $i++) { 
+            for ($i=0; $i < count($process_flow_material_ids_array) ; $i++) {
                 $machines = DB::connection('mysql_rapid_eedms_v2')->table('generallogistics')
                 ->where('id', $process_flow_material_ids_array[$i])
                 ->get()->flatten(1);
                 $machine_array[] = $machines;
             }
-            
+
             // ->unique('process_flow_id')->flatten(1);
             return response()->json([ 'machines' => array_flatten($machine_array), 'processFlowDetails' => $processFlowDetails, 'process_flow_material_ids_array' => $process_flow_material_ids_array]);
-            
+
         }
     }
 
@@ -337,7 +352,7 @@ class MachineController extends Controller
     }
 
     // Change Machine Status
-    public function change_machine_stat(Request $request){        
+    public function change_machine_stat(Request $request){
         date_default_timezone_set('Asia/Manila');
 
         $data = $request->all();
@@ -350,7 +365,7 @@ class MachineController extends Controller
         if($validator->passes()){
             try{
                 Machine::where('id', $request->machine_id)
-                    ->increment('update_version', 1, 
+                    ->increment('update_version', 1,
                         [
                             'status' => $request->status,
                             'last_updated_by' => Auth::user()->id,
@@ -364,8 +379,8 @@ class MachineController extends Controller
                 DB::rollback();
                 // throw $e;
                 return response()->json(['result' => "0"]);
-            }  
-            
+            }
+
             return response()->json(['result' => 1]);
         }
         else{
@@ -396,7 +411,7 @@ class MachineController extends Controller
             DB::commit();
 
             return response()->json(['result' => "1"]);
-        }    
+        }
         catch(\Exception $e) {
             DB::rollback();
             return response()->json(['result' => $e]);

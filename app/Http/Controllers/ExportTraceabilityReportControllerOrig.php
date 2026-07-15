@@ -494,9 +494,14 @@ class ExportTraceabilityReportControllerOrig extends Controller{
 
         // return $prodn_runcard_tsppts;
 
-        $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
-        // ->where('status', 1)
-        ->get();
+        $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $po_number,
+            'name'=>  $prodn_runcard_tsppts[0]->device_name,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
+
+        // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)->where('status', 1)->get();
 
         // return $materialprocess;
 
@@ -655,7 +660,7 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         // return Excel::download(new ExportTraceabilityReport_dynamic($prodn_runcard,$prodn_runcard_tsppts,$material_name,$sakidashi_issuance_item,$dlabel,$dlabel_boxes,$materialprocess,$operator_details,$defect_escalation), 'PATS generated.xlsx');
 
     }
-    
+
     public function export_traceability_1(Request $request,$po_number,$lot_no_from,$lot_no_to,$shipment_date_test)
     {
 
@@ -752,9 +757,23 @@ class ExportTraceabilityReportControllerOrig extends Controller{
 
         // return $prodn_runcard_tsppts;
 
-        $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
+           $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $prod_runcard->po_no,
+            'name'=>  $prodn_runcard_tsppts[0]->device_name,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
+
+        $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $po_number,
+            'name'=>  $prodn_runcard_tsppts[0]->device_name,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
+
+        // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
         // ->where('status', 1)
-        ->get();
+        // ->get();
 
         // return $materialprocess;
 
@@ -997,9 +1016,15 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         ->get();
 
 
-        $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
-        ->get();
+        // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
+        // ->get();
 
+         $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
+            'po_no'=> $po_number,
+            'name'=>  $prodn_runcard_tsppts[0]->device_name,
+            'barcode'=> '',
+            'get_or_first'=> '',
+        ]);
 
         $tempo_array = [
             "runcard_no" => [],

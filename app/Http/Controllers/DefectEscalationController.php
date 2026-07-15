@@ -1032,8 +1032,8 @@ class DefectEscalationController extends Controller
                                 $packing_month = $arr_packing_months[(integer)date('m') - 1];
                                 $packing_date = date('d');
                                 $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
-                                $lot_no_machine_code = '0'; 
-                              
+                                $lot_no_machine_code = '0';
+
                                 // $device_info = Device::where('name', $request->device_name)->first();
 
                                 if($device != null){
@@ -3778,7 +3778,7 @@ class DefectEscalationController extends Controller
                                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                         $lot_no_machine_code = '0';
 
-                                       
+
                                         // $device_info = Device::where('name', $request->device_name)->first();
 
                                         if($device != null){
@@ -4436,7 +4436,7 @@ class DefectEscalationController extends Controller
                 $prod_runcard_station_detail_ids = $prod_runcard_station_details->pluck('id');
 
                 if(count($prod_runcard_station_detail_ids) > 0){
-                 
+
 
                     DB::beginTransaction();
                     try {
@@ -5086,7 +5086,7 @@ class DefectEscalationController extends Controller
                         $lot_no_machine_code = '0';
 
                         $device_info = CommonController::getInstance()->getMatrixByPoNo([
-                                'po_no'=> $prod_runcard->po_no,
+                                'po_no'=> $request->txt_po_number,
                                 'name'=> $request->device_code,
                                 'barcode'=> '',
                                 'get_or_first'=> '',

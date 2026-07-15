@@ -195,49 +195,6 @@ class OQCLotAppController extends Controller
                 }
             }
 
-            // if ($oqc_inspection->status == 8){
-            //     if( $oqc_inspection->require_oqc_before_emboss == 1){
-            //         $result ='<span class="badge badge-pill badge-info">For Lot Application</span>';
-            //     }else{
-            //         $result ='<span class="badge badge-pill badge-info">OQC Not required before emboss</span>';
-            //     }
-            // }else{
-
-            //     if( $oqc_inspection->require_oqc_before_emboss == 1){
-            //         $result ='<span class="badge badge-pill badge-info">For Lot Application</span>';
-            //     }else{
-            //         $result ='<span class="badge badge-pill badge-info">OQC Not required before emboss</span>';
-            //     }
-
-            // }
-
-
-            // if( $oqc_inspection->require_oqc_before_emboss == 1){
-            //     if ($oqc_inspection->oqc_details != null){
-            //         switch ($oqc_inspection->oqc_details->status) {
-            //             case 1:
-            //                 $result ='<span class="badge badge-pill badge-warning">For OQC Supv. Approval</span>';
-            //                 break;
-            //             case 2:
-            //                 $result ='<span class="badge badge-pill badge-success">Done; Closed Lot</span>';
-            //                 break;
-            //             default:
-            //                 $result ='<span class="badge badge-pill badge-primary">For Prod`n Supv. Approval</span>';
-            //                 break;
-            //         }
-
-            //     }else{
-
-            //         $result ='<span class="badge badge-pill badge-info">For Lot Application</span>';
-            //     }
-
-            // }else{
-
-            //         $result ='<span class="badge badge-pill badge-info">OQC Not required before emboss</span>';
-            // }
-
-
-
             return $result;
         })
 
@@ -263,14 +220,20 @@ class OQCLotAppController extends Controller
             return $result;
         })
 
-        ->addColumn('sub_lot_raw', function($oqc_inspection)use($oqc_inspections){
+        ->addColumn('sub_lot_raw', function($oqc_inspection)use($oqc_inspections,$request){
             $result = "";
 
             $runcard_no = ($oqc_inspection->runcard_no);
             $newstring = substr($runcard_no, -3);
 
             $device_name = ($oqc_inspection->wbs_kitting->device_name);
-            $devices = Device::where('name', $device_name)->get()->take(1);
+            $devices = CommonController::getInstance()->getMatrixByPoNo([
+                'po_no'=> $request['po_no'],
+                'name'=>  $request,
+                'barcode'=> '',
+                'get_or_first'=> '',
+            ]);
+            // $devices = Device::where('name', $device_name)->get()->take(1);
 
             $ctr = 1;
             if ( $devices ){
@@ -289,40 +252,6 @@ class OQCLotAppController extends Controller
 
             return $ctr;
         })
-
-        // ->addColumn('packing_code_raw', function($oqc_inspection)use($oqc_inspections){
-        //     $result = "";
-        //     $series_name = "";
-
-        //     $runcard_no = ($oqc_inspection->runcard_no);
-        //     $newstring = substr($runcard_no, -3);
-
-        //     $device_name = ($oqc_inspection->wbs_kitting->device_name);
-        //     $devices     = Device::where('name', $device_name)->get()->take(1);
-        //     $exp_series  = explode("-", $devices[0]->name)[0];
-        //     $series_code = Series::where('series_name', 'like','%'.$exp_series.'%')->get()->take(1);
-        //     $month       = date('m');
-
-        //     $ctr = 1;
-        //     if ( $devices ){
-
-        //         $i_total = 1000;
-        //         $q = $devices[0]->ship_boxing / $devices[0]->boxing;
-
-        //         for($i=$q;$i<$i_total; $i=$i+$q){
-        //             if( $newstring <= $i ){
-        //                 break;
-        //             }
-        //             $ctr++;
-        //         }
-
-        //     }
-        //     $counter = sprintf('%03d', $ctr);
-
-        //     $packing_code = $series_code[0]->series_code.''.$month.'-'.$counter;
-        //     return $packing_code;
-
-        // })
 
         ->addColumn('action', function($oqc_inspection){
             $result = "";
@@ -422,7 +351,7 @@ class OQCLotAppController extends Controller
         // return $result;
 
         // })
-            //nmodify guaranteed_lot 
+            //nmodify guaranteed_lot
         ->addColumn('guar_lot_raw', function($oqc_inspection){
             $result = "";
 
@@ -590,6 +519,7 @@ class OQCLotAppController extends Controller
             $newstring = substr($runcard_no, -3);
 
             $device_name = ($runcard_details[0]->wbs_kitting->device_name);
+
             $devices = Device::where('name', $device_name)->get()->take(1);
 
             $ctr = 1;
