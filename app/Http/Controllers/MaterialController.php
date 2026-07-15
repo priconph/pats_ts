@@ -177,7 +177,7 @@ class MaterialController extends Controller
             'materials' => $materials,
         ]);
     }
-    public function getMaterialsFromRecieving1(Request $request)
+    public function getMaterialsFromRecievingRev1(Request $request)
     {
         $deviceName = $request->deviceName;
 
