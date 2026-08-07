@@ -20,7 +20,8 @@ class DeviceController extends Controller
     public function getProcessFlowByDeviceName(Request $request)
     {
         // return 'TODO';
-        $device = Device::where("name", $request->deviceName)->get();
+        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
+        // $device = Device::where("name", $request->deviceName)->get();
         // return $device;
         if( count($device) > 0 ){
             $processFlowDetails = ProcessFlow::with(['processFlow'])->where("device_id", $device[0]->id)
@@ -46,7 +47,8 @@ class DeviceController extends Controller
     {
         // return 'TODO';
 
-        $device = Device::where("name", $request->deviceName)->get();
+        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
+        // $device = Device::where("name", $request->deviceName)->get();
         if( count($device) > 0 ){
             $processFlow = ProcessFlow::where("device_id", $device[0]->id)->where("status", 1)->get();
             if( count($processFlow) > 0 )

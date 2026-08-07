@@ -2608,8 +2608,9 @@
           ],
           order: [[2, "asc"]],
           "rowCallback": function(row,data,index ){
-            currentPoNo = data['po_no'];
-            $('#txt_po_number_lbl').val( data['po_no'] );
+            // Fall back to the previously known PO # if this row/model doesn't expose one.
+            currentPoNo = data['po_no'] || data['po_number'] || currentPoNo;
+            $('#txt_po_number_lbl').val( currentPoNo || '' );
             $('#txt_device_name_lbl').val( data['wbs_kitting']['device_name'] );
             $('#txt_device_code_lbl').val( data['wbs_kitting']['device_code'] );
             $('#txt_po_qty_lbl').val( data['wbs_kitting']['po_qty'] );

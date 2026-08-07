@@ -2375,7 +2375,8 @@ class ProcessFlowController extends Controller
         session_start();
         if($request->ajax()){
             if(Auth::check()){
-            	$device_info = Device::where('name', $request->device_name)->first();
+            	$device_info = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
+            	// $device_info = Device::where('name', $request->device_name)->first();
 
             	$data = [];
 

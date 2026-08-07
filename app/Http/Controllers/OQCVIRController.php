@@ -41,7 +41,7 @@ class OQCVIRController extends Controller
              // ->groupBy('fkid_runcard')
             ->get();
         return DataTables::of($oqc_lotapp_details)
-        
+
         ->addColumn('status_raw', function($oqc_lotapp){
             $result = "";
 
@@ -160,14 +160,15 @@ class OQCVIRController extends Controller
         })
 
         ->addColumn('sub_lot_raw', function($oqc_lotapp)use($oqc_lotapp_details){
-            $result = "";     
-                
+            $result = "";
+
             $lot_batch_no = ($oqc_lotapp->lot_batch_no);
             $newstring = substr($lot_batch_no, -3);
 
             $device_name = ($oqc_lotapp->wbs_kitting->device_name);
-            $devices = Device::where('name', $device_name)->get()->take(1);
-            
+            $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $device_name, 'barcode' => '', 'get_or_first' => '']);
+            // $devices = Device::where('name', $device_name)->get()->take(1);
+
             $ctr = 1;
             if ( $devices ){
 
@@ -179,9 +180,9 @@ class OQCVIRController extends Controller
                         break;
                     }
                     $ctr++;
-                }   
+                }
 
-            }            
+            }
 
             return $ctr;
         })
@@ -211,7 +212,7 @@ class OQCVIRController extends Controller
                         $result ='---';
                     }
                 }
-                
+
 
             return $result;
         })
@@ -220,7 +221,7 @@ class OQCVIRController extends Controller
             $result = "";
 
             $result.='<center><button type="button" class="px-2 py-1 btn btn-sm btn-success btn_update_vir" id="btn_update" data-toggle="modal" value="'.$oqc_lotapp['id'].'" title="View/Update Details"><i class="fa fa-edit fa-sm"></i></button>';
-            
+
             $result.='  <button type="button" class="px-2 py-1 btn btn-sm btn-info btn_view_lotApp" id="btn_view" data-toggle="modal" value="'.$oqc_lotapp['lot_batch_no'].'" title="View Lot App Details"><i class="fa fa-eye fa-sm"></i></button>';
 
             if ($oqc_lotapp->oqcvir_details != null){
@@ -299,7 +300,7 @@ class OQCVIRController extends Controller
             }
         }
 
-        return response()->json(['ins_result_by_id' => $ins_result_by_id, 'packing_code' => $packing_code, 'po_no' => $po_no, 'dis_packing_code' => $dis_packing_code]); 
+        return response()->json(['ins_result_by_id' => $ins_result_by_id, 'packing_code' => $packing_code, 'po_no' => $po_no, 'dis_packing_code' => $dis_packing_code]);
     }
 
     // Get PO Details
@@ -318,7 +319,7 @@ class OQCVIRController extends Controller
         ->where('status', '!=', '3')
         ->orderBy('submission','asc')->get();
         return DataTables::of($oqc_vir)
-        
+
         ->addColumn('sub_raw', function($oqc_vir){
             $result = "";
 
@@ -463,7 +464,8 @@ class OQCVIRController extends Controller
             ->get();
 
         $device_name = ($oqc_details[0]->wbs_kitting->device_name);
-        $devices = Device::where('name', $device_name)->take(1)->get();
+        $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $device_name, 'barcode' => '', 'get_or_first' => '']);
+        // $devices = Device::where('name', $device_name)->take(1)->get();
         $exp_series  = explode("-", $devices[0]->name)[0];
         $series = Series::where('series_name', 'like','%'.$exp_series.'%')->get()->take(1);
 
@@ -486,7 +488,7 @@ class OQCVIRController extends Controller
         }
 
        $d_qty = $devices[0]->ship_boxing / $devices[0]->boxing;
-        
+
         return response()->json(['oqc_details' => $oqc_details, 'devices' => $devices, 'series' => $series, 'total' => $total, 'd_qty' => $d_qty]);
     }
 
@@ -498,7 +500,7 @@ class OQCVIRController extends Controller
     // Add
     public function add_oqc_vir(Request $request){
         date_default_timezone_set('Asia/Manila');
-        
+
         $user_exist = User::where('id', $request->name_hidden_OQCInsName_id)->get();
         if($user_exist->count() == 0){
             return response()->json(['result' => "2"]); //invalid employee no.
@@ -528,7 +530,7 @@ class OQCVIRController extends Controller
             'name_oqc_result' => ['max:255'],
             'name_judgement' => ['max:255'],
             'name_oqc_vir_remarks' => ['max:255']
-            
+
         ]);
 
         if ($validator->fails()) {
@@ -567,7 +569,7 @@ class OQCVIRController extends Controller
             }else{
 
                 if ( $request->hidden_OQCVIR_new_status == 1 ){ // lot accepted
-                   
+
                     if ( $request->hidden_total_count_sub_lot == $request->hidden_d_qty){
 
                        // update = equal sa dlabel qty
@@ -600,7 +602,7 @@ class OQCVIRController extends Controller
                             return response()->json(['result' => $e]);
                         }
                     }else{
-                        
+
                        // update = hindi pa equal sa dlabel qty
                        try{
                             oqcVIR::where('id',$request->hidden_OQCVIR_id)
@@ -627,11 +629,11 @@ class OQCVIRController extends Controller
                         catch(\Exception $e) {
                             DB::rollback();
                             return response()->json(['result' => $e]);
-                        }                   
+                        }
                     }
 
                 } else if ( $request->hidden_OQCVIR_new_status == 2 ){ // lot rejected
-                    
+
                    // update = equal sa dlabel qty
                    try{
                         oqcVIR::where('id',$request->hidden_OQCVIR_id)
@@ -658,7 +660,7 @@ class OQCVIRController extends Controller
                     catch(\Exception $e) {
                         DB::rollback();
                         return response()->json(['result' => $e]);
-                    } 
+                    }
 
                 } else if ( $request->hidden_OQCVIR_new_status == 3 ){ // on-going inspection
 
@@ -768,7 +770,7 @@ class OQCVIRController extends Controller
 
         ->addColumn('assy_raw', function($oqc_inspection){
         $result = "";
-            
+
         $assy_line = AssemblyLine::where('id',$oqc_inspection['assy_line'])->get();
             if( $assy_line ){
                 $result = $assy_line[0]->name;
@@ -799,10 +801,10 @@ class OQCVIRController extends Controller
             if ( $oqc_inspection ){
                 $empno_arr = array();
                 $empno_arr = $oqc_inspection->FVO_empid;
-                $empno_arr = explode(',', $empno_arr);  
+                $empno_arr = explode(',', $empno_arr);
                 $user_details = array();
                 if(count( $empno_arr )){
-                    for ($i=0; $i < count($empno_arr) ; $i++) { 
+                    for ($i=0; $i < count($empno_arr) ; $i++) {
                         $user_details_temp = array();
                         $user_details_temp = User::where('id',$empno_arr[$i])->get();
                         array_push($user_details, $user_details_temp);
@@ -815,7 +817,7 @@ class OQCVIRController extends Controller
                     }
                 }
             }
-           
+
             return $result;
         })
 

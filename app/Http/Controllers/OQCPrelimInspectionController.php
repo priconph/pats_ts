@@ -28,14 +28,14 @@ class OQCPrelimInspectionController extends Controller
 
 			return DataTables::of($oqc_batches)
 			->addColumn('action',function($oqc_batch) use($request)
-			{	
+			{
 				$result = '';
 
 				$oqc_data = OQCPrelimInspection::with(['oqcvir_details'])->where('po_num',$request->po_number)->where('pack_code_no',$oqc_batch->pack_code_no)->distinct('pack_code_no')->orderBy('updated_at','desc')->first();
 
 				//check lot count
 				$lot_count = 0;
-				
+
 				$packop = oqcVIR::with(['user_details','oqclotapp_details'])
 				->whereHas('oqclotapp_details', function($query) use($request)
 				{
@@ -54,7 +54,7 @@ class OQCPrelimInspectionController extends Controller
 					$lot_count += $lotcounter[$i]->ok_qty;
 				}
 
-				switch($oqc_data->inspector_judgement) 
+				switch($oqc_data->inspector_judgement)
 				{
 					case 1:
 					{
@@ -68,10 +68,10 @@ class OQCPrelimInspectionController extends Controller
 						break;
 					}
 					case 2:
-					{	
+					{
 						$result = ' <button type="button" class="px-2 py-1 btn btn-sm btn-success btn_open_packin_history" data-toggle="modal" data-target="#modal_oqc_history" title="View OQC Preliminary Inspection History" po-num='.$oqc_data->po_num.' pack-code='.$oqc_data->pack_code_no.'><i class="fa fa-history fa-sm"></i></button>';
 
-						$result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-warning btn_open_oqc_supervisor" title="Load Supervisor Conformance" po-num='.$oqc_data->po_num.' pack-code='.$oqc_data->pack_code_no.' lot-count='.$lot_count.'><i class="fa fa-edit fa-sm"></i></button>';	
+						$result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-warning btn_open_oqc_supervisor" title="Load Supervisor Conformance" po-num='.$oqc_data->po_num.' pack-code='.$oqc_data->pack_code_no.' lot-count='.$lot_count.'><i class="fa fa-edit fa-sm"></i></button>';
 
 
 						break;
@@ -87,7 +87,7 @@ class OQCPrelimInspectionController extends Controller
 			->addColumn('pack_code',function($oqc_batch) use($request)
 			{
 				$oqc_data = OQCPrelimInspection::with(['oqcvir_details'])->where('po_num',$request->po_number)->where('pack_code_no',$oqc_batch->pack_code_no)->distinct('pack_code_no')->orderBy('updated_at','desc')->first();
-				
+
 				$result = $oqc_data->pack_code_no;
 
 				return $result;
@@ -106,8 +106,8 @@ class OQCPrelimInspectionController extends Controller
 				for($i = 0; $i < count($lotcounter); $i++)
 				{
 					$lot_count += $lotcounter[$i]->ok_qty;
-				}	
-				
+				}
+
 
 				return $lot_count;
 			})
@@ -118,7 +118,7 @@ class OQCPrelimInspectionController extends Controller
 				switch($oqc_data->inspector_judgement)
 				{
 					case 1:
-					{	
+					{
 						$result = '<span class="badge badge-pill badge-success">Packing Lot QC Accept</span>';
 
 						if($oqc_data->shipping_date == null)
@@ -147,7 +147,7 @@ class OQCPrelimInspectionController extends Controller
 				return $result;
 			})
 			->rawColumns(['action','status'])
-			->make(true);	
+			->make(true);
 	}
 
 	public function view_history(Request $request)
@@ -166,15 +166,15 @@ class OQCPrelimInspectionController extends Controller
 				$result2 = "<span class='badge badge-pill badge-success'>".$result."</span>";
 			}
 			else
-			{	
+			{
 				$result .= "Rejected";
 				$result2 = "<span class='badge badge-pill badge-danger'>".$result."</span>";
-			}			
+			}
 
 			return $result2;
 		})
 		->addColumn('datetime',function($oqc_history){
-			
+
 			$result = $oqc_history->created_at;
 
 			return $result;
@@ -183,16 +183,16 @@ class OQCPrelimInspectionController extends Controller
 
 			$result = $oqc_history->po_num;
 
-			return $result;			
+			return $result;
 		})
 		->addColumn('pack_code',function($oqc_history){
 
 			$result = $oqc_history->pack_code_no;
 
-			return $result;			
+			return $result;
 		})
 		->addColumn('doc_compliance',function($oqc_history){
-			
+
 			switch($oqc_history->document_compliance)
 			{
 				case 1:
@@ -218,7 +218,7 @@ class OQCPrelimInspectionController extends Controller
 			return $result;
 		})
 		->addColumn('acc_req',function($oqc_history){
-			
+
 			switch($oqc_history->accessory_requirement)
 			{
 				case 1:
@@ -268,7 +268,7 @@ class OQCPrelimInspectionController extends Controller
 				}
 			}
 			return $result;
-			
+
 		})
 		->addColumn('ship_date',function($oqc_history){
 
@@ -281,7 +281,7 @@ class OQCPrelimInspectionController extends Controller
 				$result = $oqc_history->shipping_date;
 			}
 
-			return $result;			
+			return $result;
 		})
 		->addColumn('ship_destination',function($oqc_history){
 
@@ -292,12 +292,12 @@ class OQCPrelimInspectionController extends Controller
 			else
 			{
 				$result = $oqc_history->shipping_destination;
-			}		
-			
+			}
+
 			return $result;
 		})
 		->addColumn('ship_remarks',function($oqc_history){
-			
+
 			if($oqc_history->shipping_remarks == null)
 			{
 				$result = " ";
@@ -307,7 +307,7 @@ class OQCPrelimInspectionController extends Controller
 				$result = $oqc_history->shipping_remarks;
 			}
 
-			return $result;		
+			return $result;
 		})
 		->rawColumns(['judgement','doc_compliance','acc_req','coc_req','ship_date','ship_destination','ship_remarks'])
 		->make(true);
@@ -442,13 +442,13 @@ class OQCPrelimInspectionController extends Controller
         	$user = User::with([
                             'oqc_stamps' => function($query) {
                                 $query->where('status', 1);
-                                $query->orderBy('id', 'desc');    
+                                $query->orderBy('id', 'desc');
                             }
                         ])
         				->withCount([
                             'oqc_stamps' => function($query) {
                                 $query->where('status', 1);
-                                $query->orderBy('id', 'desc');    
+                                $query->orderBy('id', 'desc');
                             }
                         ])
                         ->having('oqc_stamps_count', '>', 0)
@@ -508,13 +508,13 @@ class OQCPrelimInspectionController extends Controller
         	$user = User::with([
                             'oqc_stamps' => function($query) {
                                 $query->where('status', 1);
-                                $query->orderBy('id', 'desc');    
+                                $query->orderBy('id', 'desc');
                             }
                         ])
         				->withCount([
                             'oqc_stamps' => function($query) {
                                 $query->where('status', 1);
-                                $query->orderBy('id', 'desc');    
+                                $query->orderBy('id', 'desc');
                             }
                         ])
                         ->having('oqc_stamps_count', '>', 0)
@@ -587,7 +587,8 @@ class OQCPrelimInspectionController extends Controller
 			$query->where('po_no',$request->po_num);
 			})->where('packing_code',$request->pack_code)->select(DB::raw('distinct fkid_oqclotapp'))->get();
 
-		$device = Device::where('name',$request->device)->first();
+		$device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->po_num, 'name' => $request->device, 'barcode' => '', 'get_or_first' => 'first']);
+		// $device = Device::where('name',$request->device)->first();
 
 		return response()->json(['reellots' => $reellots,'device' => $device]);
 	}

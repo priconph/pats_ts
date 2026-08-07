@@ -45,7 +45,7 @@ class PackingOperatorController extends Controller
 	public function packop_view_reel_lot_no(Request $request)
 	{
 		$AvailableReels = oqcLotApp::where('po_no', $request->po_number)->get();
-		
+
 		return DataTables::of($AvailableReels)
 		->addColumn('action', function($available_reel){
 
@@ -62,7 +62,8 @@ class PackingOperatorController extends Controller
 		})
 		->addColumn('customer', function($available_reel) use($request){
 
-			$device = Device::where('name',$request->device)->first();
+			$device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->device, 'barcode' => '', 'get_or_first' => 'first']);
+			// $device = Device::where('name',$request->device)->first();
 
 				$result = 'P';
 				$result .= $device->huawei_p_n;
@@ -92,7 +93,8 @@ class PackingOperatorController extends Controller
 	{
 		$result = 1;
 
-		$devices = Device::where('name', $request->device_name)->first();
+		$devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
+	// $devices = Device::where('name', $request->device_name)->first();
 
 		$box_lot_count = $devices->ship_boxing / $devices->boxing;
 

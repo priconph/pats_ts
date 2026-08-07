@@ -29,7 +29,8 @@ class PilotRunController extends Controller
 
         $data = APilotRun::where('po_no', $request->po_no)->orderBy('id')->limit(1)->get();
         if( isset($data->device_name) ){
-            $data->device_details = Device::where('name', $data[$i]->device_name)->get();
+            $data->device_details = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $data[$i]->device_name, 'barcode' => '', 'get_or_first' => '']);
+            // $data->device_details = Device::where('name', $data[$i]->device_name)->get();
         }
 
         return response()->json(['data' => $data]);

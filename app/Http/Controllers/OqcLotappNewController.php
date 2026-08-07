@@ -78,12 +78,12 @@ class OqcLotappNewController extends Controller
                         break;
                     }
                     case 2:
-                    {   
+                    {
                         $lotapp_total_quantity += $lotapp_quantity[$i]->rework_details->defect_escalation_station_many_details[0]->qty_good;
                         break;
                     }
                     default:
-                    {   
+                    {
                          $lotapp_total_quantity += 0;
                         break;
                     }
@@ -98,7 +98,7 @@ class OqcLotappNewController extends Controller
         //return $lotapp_total_quantity;
 
         if(count($lotapp_details) > 0)
-        {                     
+        {
             return response()->json(['result' => 1, 'lotapp_details' => $lotapp_details, 'lotapp_quantity' => $lotapp_total_quantity]);
         }
         else
@@ -199,7 +199,7 @@ class OqcLotappNewController extends Controller
                 $result = "---";
             }
 
-           
+
 
             return $result;
 
@@ -239,7 +239,7 @@ class OqcLotappNewController extends Controller
             else
             {
                 $result = "---";
-            }             
+            }
 
             return $result;
 
@@ -269,22 +269,22 @@ class OqcLotappNewController extends Controller
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-warning  btn-generate-sticker" title="Print QR Code" data-toggle="modal" data-target="#modal_LotApp_QRcode" oqclotapp-id='.$lotapp->id.'><i class="fa fa-print fa-sm"></i></button>';
 
                     break;
                 }
                 case 3:
-                {   
+                {
                      $result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-primary btn-other-submission" data-toggle="modal" data-target="#modalLotAppOtherSubmission" title="Submit Other Submission" oqclotapp-id='.$lotapp->id.'><i class="fa fa-tags"></i></button>';
 
                      $result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-warning  btn-generate-sticker" title="Print QR Code" data-toggle="modal" data-target="#modal_LotApp_QRcode" oqclotapp-id='.$lotapp->id.'><i class="fa fa-print fa-sm"></i></button>';
 
-                   
+
                     break;
                 }
                 case 4:
-                {   
+                {
                      $result .= ' <button type="button" class="px-2 py-1 btn btn-sm btn-warning  btn-generate-sticker" title="Print QR Code" data-toggle="modal" data-target="#modal_LotApp_QRcode" oqclotapp-id='.$lotapp->id.'><i class="fa fa-print fa-sm"></i></button>';
                     break;
                 }
@@ -294,7 +294,7 @@ class OqcLotappNewController extends Controller
                     break;
                 }
                 default:
-                {   
+                {
 
 
                     $result = "";
@@ -312,14 +312,14 @@ class OqcLotappNewController extends Controller
             $result = $lotapp->oqc_lotapp_id;
 
             return $result;
-            
+
         })
          ->addColumn('created_at',function($lotapp){
 
             $result = $lotapp->created_at;
 
             return $result;
-            
+
         })
         ->addColumn('total_lot_qty',function($lotapp){
 
@@ -336,7 +336,7 @@ class OqcLotappNewController extends Controller
             else
             {
                 $result = "---";
-            }   
+            }
 
             return $result;
         })
@@ -398,7 +398,7 @@ class OqcLotappNewController extends Controller
     }
 
     public function load_oqclotapp_runcards(Request $request)
-    {   
+    {
         if(isset($request->array_remove_runcards))
         {
             $array_remove_runcards = $request->array_remove_runcards;
@@ -430,12 +430,12 @@ class OqcLotappNewController extends Controller
             switch($runcard->item_type)
             {
                 case 1:
-                {   
+                {
                     $result = $runcard->runcard_details->runcard_no;
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = $runcard->rework_details->defect_escalation_no;
                     break;
                 }
@@ -454,12 +454,12 @@ class OqcLotappNewController extends Controller
             switch($runcard->item_type)
             {
                 case 1:
-                {   
+                {
                     $result = "Production Runcard";
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = "Rework / DE";
                     break;
                 }
@@ -477,12 +477,12 @@ class OqcLotappNewController extends Controller
             switch($runcard->item_type)
             {
                 case 1:
-                {   
+                {
                     $result = $runcard->runcard_details->prod_runcard_station_many_details[0]->qty_output;
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = $runcard->rework_details->defect_escalation_station_many_details[0]->qty_good;
                     break;
                 }
@@ -501,12 +501,12 @@ class OqcLotappNewController extends Controller
             switch($runcard->item_type)
             {
                 case 1:
-                {   
+                {
                     $result = $runcard->runcard_details->remarks;
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = $runcard->rework_details->remarks;
                     break;
                 }
@@ -518,24 +518,24 @@ class OqcLotappNewController extends Controller
             }
 
              return $result;
-            
+
         })
         ->addColumn('from_submission',function($runcard){
 
             switch($runcard->for_submission)
             {
                 case 1:
-                {   
+                {
                     $result = "1st Submission";
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = "2nd Submission";
                     break;
                 }
                  case 3:
-                {   
+                {
                     $result = "3rd Submission";
                     break;
                 }
@@ -554,12 +554,12 @@ class OqcLotappNewController extends Controller
             switch($runcard->item_type)
             {
                 case 1:
-                {   
+                {
                     $result = $runcard->runcard_details->created_at;
                     break;
                 }
                 case 2:
-                {   
+                {
                     $result = $runcard->rework_details->created_at;
                     break;
                 }
@@ -570,17 +570,17 @@ class OqcLotappNewController extends Controller
                 }
             }
 
-            
+
 
              return $result;
-            
+
         })
 
         //add this for edit status and edit action
         ->addColumn('edit_status',function($runcard) use ($array_remove_runcards){
 
             if(in_array($runcard->id, $array_remove_runcards))
-            {  
+            {
                 $result = "<strong style='color: red;'>For Removal</strong>";
             }
             else
@@ -595,7 +595,7 @@ class OqcLotappNewController extends Controller
         ->addColumn('edit_action',function($runcard) use ($array_remove_runcards){
 
             if(in_array($runcard->id, $array_remove_runcards))
-            {  
+            {
                 $result = '<button type="button" class="btn btn-sm btn-warning btn-cancel-remove-runcard" runcard-id="'.$runcard->id.'" title="Cancel Remove"><i class="fa fa-retweet"></i></button>';
             }
             else
@@ -611,7 +611,7 @@ class OqcLotappNewController extends Controller
         ->addColumn('edit_status_sub',function($runcard) use ($array_remove_runcards){
 
             if(in_array($runcard->id, $array_remove_runcards))
-            {  
+            {
                 $result = "<strong style='color: red;'>For Removal</strong>";
             }
             else
@@ -626,7 +626,7 @@ class OqcLotappNewController extends Controller
         ->addColumn('edit_action_sub',function($runcard) use ($array_remove_runcards){
 
             if(in_array($runcard->id, $array_remove_runcards))
-            {  
+            {
                 $result = '<button type="button" class="btn btn-sm btn-warning btn-cancel-remove-runcard-sub" runcard-id="'.$runcard->id.'" title="Cancel Remove"><i class="fa fa-retweet"></i></button>';
             }
             else
@@ -836,7 +836,7 @@ class OqcLotappNewController extends Controller
                     break;
                 }
                 default:
-                {   
+                {
                     $result = "---";
                     break;
                 }
@@ -906,7 +906,8 @@ class OqcLotappNewController extends Controller
 
     public function load_device_details(Request $request)
     {
-        $device_details = Device::where('name',$request->current_series)->where('status',1)->get();
+        $device_details = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->current_series, 'barcode' => '', 'get_or_first' => '']);
+        // $device_details = Device::where('name',$request->current_series)->where('status',1)->get();
 
         if(count($device_details) > 0)
         {
@@ -1066,7 +1067,7 @@ class OqcLotappNewController extends Controller
     }
 
     public function edit_add_runcard(Request $request)
-    {   
+    {
 
         //get runcard_details
         $runcard_details = ProductionRuncard::with(['prod_runcard_station_many_details' => function($query){
@@ -1076,7 +1077,7 @@ class OqcLotappNewController extends Controller
         }])->where('po_no',$request->po_num)->where('runcard_no', $request->runcard_no)->where('status', 3)->get();
 
         if(count($runcard_details) > 0)
-        {   
+        {
             //get lotapp_details
              $oqclotapp_details = OqcLotappRuncards::where('runcard_no',$runcard_details[0]->id)->where('logdel',0)->get();
 
@@ -1096,7 +1097,7 @@ class OqcLotappNewController extends Controller
     }
 
     public function edit_add_rework(Request $request)
-    {   
+    {
 
         //get rework_details
        $reworks = OqcLotappRuncards::with(['rework_details','rework_details.defect_escalation_station_many_details' => function($query){
@@ -1107,7 +1108,7 @@ class OqcLotappNewController extends Controller
 
 
         if(count($rework_details) > 0)
-        {   
+        {
             //get lotapp_details
              $oqclotapp_details = OqcLotappRuncards::where('runcard_no',$rework_details[0]->id)->where('logdel',0)->get();
 
@@ -1139,7 +1140,7 @@ class OqcLotappNewController extends Controller
          try
          {
             if(count($edited_by) > 0)
-             { 
+             {
                 if(isset($request->array_runcard_remove))
                 {
                     //step 1, remove all the existing by changing logdel = 1
@@ -1170,7 +1171,7 @@ class OqcLotappNewController extends Controller
                             'created_at' => date('Y-m-d H:i:s'),
                             'logdel' => 0
                         ]);
-                    }   
+                    }
                 }
 
                 return response()->json(['result' => 1]);
@@ -1185,7 +1186,7 @@ class OqcLotappNewController extends Controller
                 // throw $e;
                 return response()->json(['result' => $e]);
             }
-         
+
     }
 
     public function submit_oqc_lot_application_sub(Request $request)
@@ -1266,7 +1267,7 @@ class OqcLotappNewController extends Controller
 
     //BULK RUNCARDS FUNCTION------------------------------
     public function load_bulk_runcards(Request $request)
-    {   
+    {
         $array_runcards = [];
 
         if(isset($request->array_runcards))
@@ -1300,7 +1301,7 @@ class OqcLotappNewController extends Controller
                 $result = '<input type="checkbox" class="bulk-runcard"  output-qty='.$runcard->prod_runcard_station_many_details[0]->qty_output.' runcard-no="'.$runcard->runcard_no.'" runcard-id="'.$runcard->id.'">';
             }
 
-            
+
             return $result;
         })
         ->addColumn('runcard_no', function($runcard){
@@ -1320,7 +1321,7 @@ class OqcLotappNewController extends Controller
                  $result = "---";
             }
 
-           
+
             return $result;
         })
         ->addColumn('remarks', function($runcard){
@@ -1370,7 +1371,7 @@ class OqcLotappNewController extends Controller
                 $result = '<input type="checkbox" class="bulk-rework"  output-qty='.$runcard->defect_escalation_station_many_details[0]->qty_good.' runcard-no="'.$runcard->defect_escalation_no.'" runcard-id="'.$runcard->id.'">';
             }
 
-            
+
             return $result;
         })
         ->addColumn('runcard_no', function($runcard){
@@ -1390,7 +1391,7 @@ class OqcLotappNewController extends Controller
                  $result = "---";
             }
 
-           
+
             return $result;
         })
         ->addColumn('remarks', function($runcard){

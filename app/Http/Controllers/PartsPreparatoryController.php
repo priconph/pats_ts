@@ -511,7 +511,8 @@ class PartsPreparatoryController extends Controller
                 $icon_partsprep = '';
 
                 //---
-                $devices = Device::where('barcode',$request->device_code)->get();
+                $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => '', 'barcode' => $request->device_code, 'get_or_first' => '']);
+                // $devices = Device::where('barcode',$request->device_code)->get();
                 if(!$devices->count()){
                     $devices = array();
                     $devices[0]['id'] = 0;
@@ -604,7 +605,8 @@ class PartsPreparatoryController extends Controller
 
 
         //---
-        $devices = Device::where('barcode',$request->device_code)->get();
+        $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => '', 'barcode' => $request->device_code, 'get_or_first' => '']);
+        // $devices = Device::where('barcode',$request->device_code)->get();
         if(!$devices->count()){
             $devices = array();
             $devices[0]['id'] = 0;

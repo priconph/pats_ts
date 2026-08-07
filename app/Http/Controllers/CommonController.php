@@ -38,39 +38,72 @@ class CommonController extends Controller
 	{
 		trigger_error('Deserializing is not allowed.',E_USER_ERROR);
 	}
-    public function getMatrixByPoNo($params){
+    /**
+     * Lookup Device record(s) used across the app (matrix/device_info/mat_proc_materials).
+     *
+     * $params supports:
+     *   - po_no | po_number : (optional) PO number to filter by. Either key works and
+     *                          filtering is only applied `when()` a non-empty value is given.
+     *   - name               : (optional) Device name to filter by (takes priority over barcode).
+     *   - barcode            : (optional) Device barcode to filter by (used when name is empty).
+     *   - get_or_first       : 'first' returns a single model, anything else returns a collection.
+     *
+     * $with allows the caller to pass dynamic relationship closures/arrays (e.g.
+     * 'material_process', 'material_process.manpowers_details', 'material_process.material_details')
+     * so complex eager loads can reuse this helper instead of duplicating Device::with(...) queries.
+     *
+     * The returned model(s) always carry a `po_no` attribute (falling back to the
+     * filter value when the column itself is empty) so Blade/JS payloads can safely
+     * read it even when it was not part of the request payload.
+     */
+    public function getMatrixByPoNo($params, $with = []){
         try {
-            if($params['get_or_first'] === 'first'){
-                 if($params['name'] != ''){
-                    return $matrix = Device::where('name',$params['name'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->first();
-                }
-                if($params['barcode'] != ''){
-                    return $matrix = Device::where('barcode',$params['barcode'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->first();
-                }
+            $poNo = $params['po_no'] ?? $params['po_number'] ?? null;
+            $name = $params['name'] ?? null;
+            $barcode = $params['barcode'] ?? null;
+            $getOrFirst = $params['get_or_first'] ?? '';
 
-            }else{
-                 if($params['name'] != ''){
-                    return $matrix = Device::where('name',$params['name'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->get();
-                }
-                if($params['barcode'] != ''){
-                    return $matrix = Device::where('barcode',$params['barcode'])
-                    ->where('po_no',$params['po_no'])
-                    ->where('status',1)
-                    ->get();
-                }
+            $query = Device::query()
+                ->when(!empty($with), function($query) use ($with){
+                    $query->with($with);
+                })
+                ->when(filled($name), function($query) use ($name){
+                    $query->where('name', $name);
+                })
+                ->when(!filled($name) && filled($barcode), function($query) use ($barcode){
+                    $query->where('barcode', $barcode);
+                })
+                ->when(filled($poNo), function($query) use ($poNo){
+                    $query->where('po_no', $poNo);
+                })
+                ->where('status', 1);
+
+            $result = $getOrFirst === 'first' ? $query->first() : $query->get();
+
+            if($result instanceof \Illuminate\Database\Eloquent\Model){
+                $this->ensurePoNoAttribute($result, $poNo);
+            } elseif($result instanceof \Illuminate\Support\Collection){
+                $result->each(function($item) use ($poNo){
+                    $this->ensurePoNoAttribute($item, $poNo);
+                });
             }
-        } catch (Exception $e) {
+
+            return $result;
+        } catch (\Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Ensure the given model always exposes a `po_no` attribute, falling back
+     * to the PO number used for filtering when the column itself is empty.
+     */
+    private function ensurePoNoAttribute($model, $fallbackPoNo){
+        if($model && blank($model->po_no)){
+            $model->setAttribute('po_no', $fallbackPoNo);
+        }
+
+        return $model;
     }
 
     public function generate_qrcode(Request $request){

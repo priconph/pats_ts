@@ -48,7 +48,8 @@ class ProductionRuncardController extends Controller
     public function checkAllProcessIsDone(Request $request)
     { //ggmodify
         $runcards = ProductionRuncardStation::where("production_runcard_id", $request->id)->get();
-        $device = Device::where("name", $request->deviceName)->get();
+        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
+        // $device = Device::where("name", $request->deviceName)->get();
         $is_final_visual_exist = ProductionRuncardStation::with('process_flow.processFlow')->where("production_runcard_id", $request->id)->orderBy('id',"DESC")->limit(1)->get();
         $processFlow = [];
         if( count($device) > 0 ) {
@@ -502,7 +503,8 @@ class ProductionRuncardController extends Controller
     public function fn_view_setup_stations(Request $request){
         // date_default_timezone_set('Asia/Manila');
         $prod_runcard_id_query = $request->prod_runcard_id_query;
-        $devices = Device::where('barcode',$request->device_code)->get();
+        $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => '', 'barcode' => $request->device_code, 'get_or_first' => '']);
+        // $devices = Device::where('barcode',$request->device_code)->get();
 
         if(!$devices->count()){
             $devices = array();
@@ -1017,7 +1019,8 @@ class ProductionRuncardController extends Controller
 
         if($validator->passes()){
 
-            $device = Device::where('barcode', $request->txt_device_code)->first();
+            $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => '', 'barcode' => $request->txt_device_code, 'get_or_first' => 'first']);
+            // $device = Device::where('barcode', $request->txt_device_code)->first();
 
 
             if($device != null){
@@ -1147,7 +1150,8 @@ class ProductionRuncardController extends Controller
                                 $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                 $lot_no_machine_code = '0';
 
-                                $device_info = Device::where('name', $request->device_name)->first();
+                                $device_info = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
+                                // $device_info = Device::where('name', $request->device_name)->first();
 
                                 if($device_info != null){
                                     if($device_info->lot_no_machine_code != null){
@@ -3969,7 +3973,7 @@ class ProductionRuncardController extends Controller
             // $matrix = Device::where('name', $material_kitting->device_name)->get();
 
         }
-        if(blank($request->po_number)){ 
+        if(blank($request->po_number)){
              return response()->json(['material_kitting' => null, 'doc_a_drawing_query' => [], 'doc_g_drawing_query' => [], 'matrix' => [1]]);
         }
 
@@ -4973,20 +4977,22 @@ class ProductionRuncardController extends Controller
                             $item_desc = $col_parts_prep_kit_issuance[$index]->item_desc;
 
 
-                            $mat_proc_materials = Device::with([
-                                        'material_process' => function($query){
-                                            $query->where('status', 1);
-                                        },
-                                        'material_process.material_details' => function($query) use($item, $item_desc){
-                                            $query->where('status', 1);
-                                            $query->where('tbl_wbs', 1);
-                                            $query->where('item', $item);
-                                            $query->where('item_desc', $item_desc);
-                                        },
-                                    ])
-                                    ->where('po_no',$request->po_number) //getMatrixByPoNo
-                                    ->where('name', $request->device_name)
-                                    ->first();
+                            $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                                    'po_no' => $request->po_no,
+                                    'po_number' => $request->po_number,
+                                    'name' => $request->device_name,
+                                    'get_or_first' => 'first',
+                                ], [
+                                    'material_process' => function($query){
+                                        $query->where('status', 1);
+                                    },
+                                    'material_process.material_details' => function($query) use($item, $item_desc){
+                                        $query->where('status', 1);
+                                        $query->where('tbl_wbs', 1);
+                                        $query->where('item', $item);
+                                        $query->where('item_desc', $item_desc);
+                                    },
+                                ]);
 
 
                             if($mat_proc_materials != null){
@@ -5238,21 +5244,23 @@ class ProductionRuncardController extends Controller
                                 $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
                                 $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
 
-                                $mat_proc_materials = Device::with([
-                                            'material_process' => function($query){
-                                                $query->where('status', 1);
-                                            },
-                                            'material_process.material_details' => function($query) use($item, $item_desc){
-                                                $query->where('status', 1);
-                                                $query->where('tbl_wbs', 2);
-                                                // $query->where('has_emboss', 0);
-                                                $query->where('item', $item);
-                                                // $query->where('item_desc', $item_desc);
-                                            },
-                                        ])
-                                        ->where('po_no',$request->po_number) //getMatrixByPoNo
-                                        ->where('name', $request->device_name)
-                                        ->first();
+                                $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                                        'po_no' => $request->po_no,
+                                        'po_number' => $request->po_number,
+                                        'name' => $request->device_name,
+                                        'get_or_first' => 'first',
+                                    ], [
+                                        'material_process' => function($query){
+                                            $query->where('status', 1);
+                                        },
+                                        'material_process.material_details' => function($query) use($item, $item_desc){
+                                            $query->where('status', 1);
+                                            $query->where('tbl_wbs', 2);
+                                            // $query->where('has_emboss', 0);
+                                            $query->where('item', $item);
+                                            // $query->where('item_desc', $item_desc);
+                                        },
+                                    ]);
 
                                 if($mat_proc_materials != null){
                                     $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
@@ -5394,17 +5402,19 @@ class ProductionRuncardController extends Controller
                 $user_status = true;
                 $user_status_label = 'Valid Operator';
 
-                $mat_proc_materials = Device::with([
+                $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                            'po_no' => $request->po_no,
+                            'po_number' => $request->po_number,
+                            'name' => $request->device_name,
+                            'get_or_first' => 'first',
+                        ], [
                             'material_process' => function($query){
                                 $query->where('status', 1);
                             },
                             'material_process.manpowers_details' => function($query) use($user){
                                 $query->where('manpower_id', $user->id);
                             },
-                        ])
-                        ->where('po_no',$request->po_number) //getMatrixByPoNo
-                        ->where('name', $request->device_name)
-                        ->first();
+                        ]);
 
                 if($mat_proc_materials != null){
                     $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('manpowers_details', '!=', null);
@@ -16145,7 +16155,8 @@ class ProductionRuncardController extends Controller
         // return $request->judgement;
         if($request->ajax()){
             if(Auth::check()){
-                  $device = Device::where("name", $request->device_name)->get();
+                  $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => '']);
+                  // $device = Device::where("name", $request->device_name)->get();
                   $PFlow = ProcessFlow::where("device_id", $device[0]->id)->get();
 
                 // Update Runcard
@@ -16462,7 +16473,8 @@ class ProductionRuncardController extends Controller
                                 $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                 $lot_no_machine_code = '0';
 
-                                $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
+                                $device_info = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
+                                // $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
 
                                 if($device_info != null){
                                     if($device_info->lot_no_machine_code != null){
@@ -16933,7 +16945,8 @@ class ProductionRuncardController extends Controller
                                 $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                 $lot_no_machine_code = '0';
 
-                                $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
+                                $device_info = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
+                                // $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
                                 // return $device_info;
 
                                 if($device_info != null){
@@ -17034,7 +17047,8 @@ class ProductionRuncardController extends Controller
                                 // return 'asda';
                                 // insert data for process flow
                                 // return $request->device_name;
-                                $device = Device::where("name", $request->device_name)->get();
+                                $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => '']);
+                                // $device = Device::where("name", $request->device_name)->get();
                                 // return $device;
 
                                 $PFlow = ProcessFlow::where("device_id", $device[0]->id)->get();
@@ -18986,7 +19000,8 @@ class ProductionRuncardController extends Controller
         // return $materialTypeChecking;
         // return $lotNumber;
         $materialList = [];
-        $devices = Device::where("name", $request->device_name)->get();
+        $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => '']);
+        // $devices = Device::where("name", $request->device_name)->get();
         // return $devices;
         $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::where("device_id", $devices[0]->id)->get();
         // $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::where("status", 1)->get();

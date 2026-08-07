@@ -520,7 +520,8 @@ class OQCLotAppController extends Controller
 
             $device_name = ($runcard_details[0]->wbs_kitting->device_name);
 
-            $devices = Device::where('name', $device_name)->get()->take(1);
+            $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $device_name, 'barcode' => '', 'get_or_first' => '']);
+            // $devices = Device::where('name', $device_name)->get()->take(1);
 
             $ctr = 1;
             if ( $devices ){

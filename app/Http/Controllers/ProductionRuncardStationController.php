@@ -20,7 +20,8 @@ class ProductionRuncardStationController extends Controller
     		->get();
             // return $prodRuncardStation;
         $message = "No ProcessFlow Set.";
-        $device = Device::where("name", $request->deviceName)->get();
+        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
+        // $device = Device::where("name", $request->deviceName)->get();
         if( count($device) > 0 ) {
             $processFlows = ProcessFlow::with("processFlow")
             	->where("device_id", $device[0]->id)
@@ -35,7 +36,7 @@ class ProductionRuncardStationController extends Controller
             if( count($prodRuncardStation) == 0 )
             	return response()->json(['id' => $processFlows[0]->id, 'value' => $processFlows[0]->step]);
 
-            for ($i=0; $i < count($processFlows); $i++) { 
+            for ($i=0; $i < count($processFlows); $i++) {
                 $message = "All Process already set.";
             	if( $i <  count($processFlows)-1){
             		if( $processFlows[$i]->id == $prodRuncardStation[0]->process_flow_id ) {

@@ -84,7 +84,7 @@ class ScrapVerificationRuncardController extends Controller
                     where('po_no','=',$request['po_number'])
                     ->get()->take(1);
                 break;
-            
+
             default:
                 # code...
                 break;
@@ -123,7 +123,7 @@ class ScrapVerificationRuncardController extends Controller
                     switch ( $datatable_svr->status ) {
                         case 1:
                             $result = '<span data-sorter="6" class="badge badge-success font-weight-normal">Verified</span>';
-                            break;                        
+                            break;
                         default:
                             # code...
                             break;
@@ -209,7 +209,7 @@ class ScrapVerificationRuncardController extends Controller
                     switch ( $datatable_svr->status ) {
                         case 1:
                             $result = '<span data-sorter="6" class="badge badge-success font-weight-normal">Verified</span>';
-                            break;                        
+                            break;
                         default:
                             # code...
                             break;
@@ -364,7 +364,7 @@ class ScrapVerificationRuncardController extends Controller
                         case 7:
                             $result = '<span data-sorter="8" class="badge badge-success font-weight-normal">Done: Approved</span>';
                             break;
-                        
+
                         default:
                             # code...
                             break;
@@ -379,7 +379,8 @@ class ScrapVerificationRuncardController extends Controller
                 $icon_partsprep = '';
 
                 //---
-                $devices = Device::where('barcode',$request->device_code)->get();
+                $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => '', 'barcode' => $request->device_code, 'get_or_first' => '']);
+                // $devices = Device::where('barcode',$request->device_code)->get();
                 if(!$devices->count()){
                     $devices = array();
                     $devices[0]['id'] = 0;
@@ -472,7 +473,8 @@ class ScrapVerificationRuncardController extends Controller
 
 
         //---
-        $devices = Device::where('barcode',$request->device_code)->get();
+        $devices = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => '', 'barcode' => $request->device_code, 'get_or_first' => '']);
+        // $devices = Device::where('barcode',$request->device_code)->get();
         if(!$devices->count()){
             $devices = array();
             $devices[0]['id'] = 0;
@@ -620,7 +622,7 @@ class ScrapVerificationRuncardController extends Controller
                     ->get();
                     // ->groupBy('tbl_wbs_sakidashi_issuance_item.item_desc')->toArray();
                 break;
-            
+
             default:
                 # code...
                 break;
@@ -663,7 +665,7 @@ class ScrapVerificationRuncardController extends Controller
                     $scrap_verification_runcard[0]['device_name'] = $lot_number[0]->device_name;
                     $scrap_verification_runcard[0]['po'] = $lot_number[0]->po_no;
                     break;
-                
+
                 default:
                     # code...
                     break;
@@ -698,7 +700,7 @@ class ScrapVerificationRuncardController extends Controller
         if($parts_preps->count() > 0){
             $runcard_number = $parts_preps[0]->runcard_number+1;
         }
-        
+
         $runcard_number_arr = array();
         $runcard_number_arr['runcard_number_str'] = $runcard_po.str_pad($runcard_number,3,'0',STR_PAD_LEFT);
         $runcard_number_arr['runcard_po'] = $runcard_po;
@@ -1269,7 +1271,7 @@ class ScrapVerificationRuncardController extends Controller
     //                     );
     //                 DB::commit();
     //                 $result = $this->return_result(1,1,1,1);
-                    
+
     //             } catch (Exception $e) {
     //                 DB::rollback();
     //                 $result = $this->return_result(0,0,0,0);
@@ -1433,7 +1435,7 @@ class ScrapVerificationRuncardController extends Controller
 
     public function testonlyxxx(){
         $device = Device::with([
-            'material_process' => 
+            'material_process' =>
             function($query){
                 $query->where('status', 1);
             },
@@ -1475,7 +1477,7 @@ class ScrapVerificationRuncardController extends Controller
         // return $devices;
 
         $stations = MaterialProcess::with([
-            'station_sub_station' => 
+            'station_sub_station' =>
             function($query){
                 $query->where('status', 1);
             },
