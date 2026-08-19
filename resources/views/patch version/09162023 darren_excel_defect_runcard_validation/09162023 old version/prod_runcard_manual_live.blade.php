@@ -5484,7 +5484,7 @@
           });
         }
       });
-    //nmodify MIGZ 09/14/23
+
      $(document).on('keypress',function(e){ //enable this
         if( ($("#modalScanEmployeeId").data('bs.modal') || {})._isShown ){
             $('#id_search_employee_id').focus();

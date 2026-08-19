@@ -371,6 +371,7 @@ class DeviceController extends Controller
 
         $validator = Validator::make($data, [
             // 'name' => ['required', 'string', 'max:255', 'unique:devices'],
+            'po_no' => 'required',
             'name' => ['required', 'string', 'max:255'],
             'barcode' => ['required', 'string', 'max:255', 'unique:devices'],
             'process' => ['required', 'string', 'max:255'],
@@ -392,7 +393,7 @@ class DeviceController extends Controller
                 $id = Device::insertGetId([
                     'name' => $request->name,
                     'process' => $request->process,
-                    // 'huawei_p_n' => $request->huawei_p_n,
+                    'po_no' => $request->po_no,
                     // 'lot_no_machine_code' => $request->lot_no_machine_code,
                     // 'mrp_no' => $request->mrp_no,
                     'boxing' => $request->boxing,
@@ -466,7 +467,7 @@ class DeviceController extends Controller
         $data = $request->all();
 
         $validator = Validator::make($data, [
-            // 'name' => 'required|string|max:255|unique:devices,name,'. $request->device_id,
+            'po_no' => 'required',
             'name' => 'required|string|max:255',
             'barcode' => 'required|string|max:255|unique:devices,barcode,'. $request->device_id,
             // 'mrp_no' => ['required', 'string', 'max:255'],
@@ -487,6 +488,7 @@ class DeviceController extends Controller
                     'name' => $request->name,
                     'process' => $request->process,
                     'type' => $request->type,
+                    'po_no' => $request->po_no,
                     // 'huawei_p_n' => $request->huawei_p_n,
                     // 'lot_no_machine_code' => $request->lot_no_machine_code,
                     'barcode' => $request->barcode,

@@ -15,20 +15,22 @@ function GetMaterialKitting(){
           gDrawingRev = "";
         },
         success: function(data){
-            // alert(data['matrix'].length);
+            // alert(data['matrix'].length); 
            if(data['matrix'].length === 0){
-                    let notif_alert = ` <p style="font-size:50px; color:red;"><i class="fa fa-exclamation-triangle text-danger"></i> NOT SAVED!, Please check the Matrix!</p>
-                    <p style="font-size:50px; color:red;"><strong>CALL THE ATTENTION OF IMMEDIATE SUPERVISOR</strong></p>`;
-                    $('#alert_notif').html(notif_alert);
-                    $('#modalScanEmployeeId').modal('show');  //enable this
-                    $("#txt_po_number_lbl").val('');
-                    $("#txt_device_name_lbl").val('');
-                    $("#txt_device_code_lbl").val('');
-                    $("#txt_po_qty_lbl").val('');
-                    $("#txt_lot_qty").val("");
-                    return;
+                let notif_alert = ` <p style="font-size:50px; color:red;"><i class="fa fa-exclamation-triangle text-danger"></i> NOT SAVED!, Please check the Matrix!</p>
+                <p style="font-size:50px; color:red;"><strong>CALL THE ATTENTION OF IMMEDIATE SUPERVISOR</strong></p>`;
+                $('#alert_notif').html(notif_alert);
+                $('#modalScanEmployeeId').modal('show');  //enable this
+                $("#txt_po_number_lbl").val('');
+                $("#txt_device_name_lbl").val('');
+                $("#txt_device_code_lbl").val('');
+                $("#txt_po_qty_lbl").val('');
+                $("#txt_lot_qty").val("");
+                $("#tbl_prod_runcard").hide();
+                return;
             }
           if(data['material_kitting'] != null){
+            $("#tbl_prod_runcard").show();
             $("#txt_po_number_lbl").val(data['material_kitting']['po_no']);
             $("#txt_device_name_lbl").val(data['material_kitting']['device_name']);
             $("#txt_device_code_lbl").val(data['material_kitting']['device_code']);
@@ -38,20 +40,6 @@ function GetMaterialKitting(){
             $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
 
             boxing = data['matrix'][0]['ship_boxing'];
-
-            // alert(data['matrix'][0]['ship_boxing'])
-            // if(data['material_kitting']['matrix'] != null){
-            //   $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
-            //   //boxing = data['material_kitting']['device_info']['boxing'];
-
-
-            //   // alert(boxing);
-            // }
-            // else{
-            //   boxing = "";
-            //   // $("#txt_lot_qty").val("");
-            // }
-
             if(data['material_kitting']['assessment'] != null){
               assessment = data['material_kitting']['device_info']['assessment'];
             }

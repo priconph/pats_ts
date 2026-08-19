@@ -168,7 +168,9 @@ function GetDeviceByIdToEdit(deviceId){
         success: function(JsonObject){
             let result = JsonObject['device'];
             if(result.length > 0){
+                alert('asdsad')
                 $("#txtEditDeviceName").val(result[0].name);
+                $("#textEditPoNo").val(result[0].po_no);
                 $("#txtEditDeviceBarcode").val(result[0].barcode);
                 $("#txtEditDeviceMRPNo").val(result[0].mrp_no);
                 $("#txtEditDeviceBoxing").val(result[0].boxing);

@@ -111,6 +111,7 @@
                         <tr>
                           <th>Action</th>
                           <th>Approval Status</th>
+                          <th>Po Number</th>
                           <th>Code</th>
                           <th>Device Name</th>
                           <th>Overall Inspection</th>
@@ -222,6 +223,10 @@
             <div class="row">
               <div class="col-sm-12">
                 <div class="form-group">
+                  <label>PO Number</label>
+                    <input type="text" class="form-control" name="po_no" id="txtAddPoNo">
+                </div>
+                <div class="form-group">
                   <label>Code</label>
                     <input type="text" class="form-control" name="barcode" id="txtAddDeviceBarcode">
                 </div>
@@ -319,6 +324,10 @@
             <div class="row">
               <div class="col-sm-12">
                 <input type="hidden" class="form-control" name="device_id" id="txtEditDeviceId">
+                <div class="form-group">
+                  <label>PO Number</label>
+                    <input type="text" class="form-control" name="po_no" id="textEditPoNo">
+                </div>
                 <div class="form-group">
                   <label>Code</label>
                     <input type="text" class="form-control" name="barcode" id="txtEditDeviceBarcode">
@@ -1223,10 +1232,10 @@
           "columns":[
             { "data" : "action1", orderable:false, searchable:false },
             { "data" : "total_approved_status" },
+            { "data" : "po_no" },
             { "data" : "barcode" },
             { "data" : "name" },
             { "data" : "process_lbl" }, // overall
-            // { "data" : "huawei_p_n" },
             // { "data" : "lot_no_machine_code" },
             // { "data" : "mrp_no" },
             { "data" : "boxing" },
