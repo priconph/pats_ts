@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
-use QrCode;
-use DataTables;
 use App\Model\APilotRun;
-use Illuminate\Support\Str;
+use App\Model\DefectEscalationV2Rev;
+use App\Model\Device;
+use Auth;
+use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Model\DefectEscalationV2Rev;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use QrCode;
 
 class CommonController extends Controller
 {

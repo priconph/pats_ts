@@ -3974,7 +3974,12 @@ class ProductionRuncardController extends Controller
             $doc_a_drawing_query = collect($doc_details_query)->where('doc_type', 'A Drawing')->flatten(1);
             $doc_g_drawing_query = collect($doc_details_query)->where('doc_type', 'G Drawing')->flatten(1);
 
-            $matrix = Device::where('name', $material_kitting->device_name)->get();
+            $matrix = CommonController::getInstance()->getMatrixByPoNo([
+                'po_no'=> $request->po_number,
+                'name'=> $material_kitting->device_name,
+                'get_or_first'=> '',
+            ]);
+            // $matrix = Device::where('name', $material_kitting->device_name)->get();
 
         }
         if(blank($request->po_number)){
