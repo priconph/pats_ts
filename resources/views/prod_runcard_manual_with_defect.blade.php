@@ -5031,6 +5031,16 @@
       $(document).on('click','.btn_edit_prod_runcard_station',function(e){
         var data_arr = [];
 
+        let poNumber = $('#txt_po_number_lbl').val();
+			$('#txtPoNumberWithDefect').val(poNumber);
+			let assemblyLine = $('#txtAssemblyLineId option:selected').text();
+			let assemblyLineId = $('#txtAssemblyLineId').val();
+			// console.log('assemblyLine',assemblyLine);
+			let lineWithDefect = assemblyLine.replace(/^Line\s*\d+\s*\(|\)$/g, '');
+			// console.log('lineWithDefect',lineWithDefect);
+			$('#txtLineWithDefect').val(lineWithDefect);
+			$('#txtLineWithDefectId').val(assemblyLineId);
+
 
 
         $('#frm_edit_prod_runcard_station_details')[0].reset();
@@ -6050,6 +6060,8 @@
         dataType : 'json',
         success     : function(data){
         //MIGZ 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
+        console.log();
+
         //   if(data['isFinalVisualExist'] && $("#txt_from_prod_runcard_num").val() == "N/A"){
           if(data['isFinalVisualExist']){
             $("#btnSubmitToOQCLotApp").attr('disabled', false);

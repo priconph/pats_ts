@@ -244,6 +244,7 @@ class UserController extends Controller
 
     //View Users
 	public function view_users(){
+        date_default_timezone_set('Asia/Manila');
     	$users = User::with([
                     'user_level',
                     'oqc_stamps' => function($query) {
@@ -344,10 +345,11 @@ class UserController extends Controller
                     }
                 }
                 else if($user->oic_role == 3){
-                    if($user->oic_date_from <= date('Y-m-d') && $user->oic_date_to >= date('Y-m-d')){
 
+                    if($user->oic_date_from <= date('Y-m-d') && $user->oic_date_to >= date('Y-m-d')){
                         $result .= '<span class="badge badge-pill badge-warning">QC OIC</span>'.'&nbsp;'. '<span class="badge badge-pill badge-light">From: '. date("M d, Y", strtotime($user->oic_date_from)) .'</span>'. '&nbsp;'. '<span class="badge badge-pill badge-light">To: '. date("M d, Y", strtotime($user->oic_date_to)) .'</span>';
                     }else{
+                        // return '';
                         $result .= '<span class="badge badge-pill badge-danger">OIC role is expired</span>'.'&nbsp;';
                     }
                 }
@@ -572,10 +574,12 @@ class UserController extends Controller
 
     public function get_verification_user(Request $request){
         // return $request->scan_context;
+        date_default_timezone_set('Asia/Manila');
         $id = strtoupper($request->scanned_id);
         $user = User::where('employee_id', $id)->first();
-
+// return $user->position;
         if ($user->position == 1 || $user->position == 2 || $user->position == 9) {
+            // return'$user->position;';
             if($request->scan_context == 'P'){
                 if($user->position == 1 ){
                     return response()->json([
@@ -660,9 +664,8 @@ class UserController extends Controller
             //     'user' => $user
             // ]);
         } else {
-            // return $user->oic_role;
-            if($user->oic_role == 1){
             // return 'asd';
+            if($user->oic_role == 1){
 
                 if($request->scan_context == 'P' || $request->scan_context == 'DP'){
                     if($user->oic_date_from <= date('Y-m-d') && $user->oic_date_to >= date('Y-m-d')){
@@ -824,9 +827,9 @@ class UserController extends Controller
         if($request->is_oic == 1){
             if($userDetails->position == 4 || $userDetails->position == 3 ){
                 $oic_role = 1; // Production OIC
-            }else if($userDetails->position == 9  || $userDetails->position == 5){
+            }else if($userDetails->position == 9  || $userDetails->position == 5 || $userDetails->position == 11){
                 $oic_role = 2; // Quality OIC
-            }else if($userDetails->position == 10 || $userDetails->position == 11){
+            }else if($userDetails->position == 10){
                 $oic_role = 3; // Engineer\ OIC
             }
 

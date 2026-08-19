@@ -51,7 +51,7 @@ class ProductionRuncardController extends Controller
     { //ggmodify
         $runcards = ProductionRuncardStation::where("production_runcard_id", $request->id)->get();
         $device = Device::where("name", $request->deviceName)->get();
-        $is_final_visual_exist = ProductionRuncardStation::with('process_flow.processFlow')->where("production_runcard_id", $request->id)->orderBy('id',"DESC")->limit(1)->get();
+       $is_final_visual_exist = ProductionRuncardStation::with('process_flow.processFlow')->where("production_runcard_id", $request->id)->orderBy('id',"DESC")->limit(1)->get();
         $processFlow = [];
         if( count($device) > 0 ) {
             $processFlow = ProcessFlow::where("device_id", $device[0]->id)->where("status", 1)->get();
@@ -72,7 +72,7 @@ class ProductionRuncardController extends Controller
 
         return response()->json([
             // 'runcards' => $runcards,
-            'isFinalVisualExist' => (in_array($is_final_visual_exist[0]->process_flow['process'], [20,76,85,87,102])), //MIGZ 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
+            'isFinalVisualExist' => (in_array($is_final_visual_exist[0]->process_flow['process'], [20,76,85,87,102,90])), // 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
             // 'processFlow' => $processFlow,
             'isComplete' => $isComplete,
         ]);
@@ -5666,7 +5666,7 @@ class ProductionRuncardController extends Controller
 
 
     public function edit_prod_runcard_station(Request $request){
-        // return 'true';
+        return 'true'; DB::commit();
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
         $time = explode(':', $timeNow);
@@ -5963,6 +5963,7 @@ class ProductionRuncardController extends Controller
                                  * then set the $runcardRequiredFieldsArrayHasNull to false
                                  */
                                 if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
+                                    // return 'asd';
                                     if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
                                         DB::beginTransaction();
                                         try {
@@ -6013,6 +6014,8 @@ class ProductionRuncardController extends Controller
                                             ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                                 ->delete();
                                             // if has NG only // mdr 11/07/25
+
+                                            return 'otids';
                                             if($request->qty_ng > 0){
                                                 // Required to save MOD if has NG only
                                                 if(isset($request->mod)){
@@ -6030,7 +6033,8 @@ class ProductionRuncardController extends Controller
                                                             'created_at' => date('Y-m-d H:i:s'),
                                                             'updated_at' => date('Y-m-d H:i:s'),
                                                         ]);
-
+                                                        //mdr checking
+                                                        // return 1;
                                                         // DefectEscalationV2
                                                         DefectEscalationV2Rev::insert([
                                                             'po_number'                    => $request->po_number_with_defect,
@@ -6095,7 +6099,7 @@ class ProductionRuncardController extends Controller
                                                 }
                                             }
 
-                                            DB::commit();
+                                            // DB::commit();
                                             $result = 1;
 
                                         } catch (Exception $e) {
@@ -6109,6 +6113,7 @@ class ProductionRuncardController extends Controller
                                         return $return;
                                     }
                                 }else{
+                                    // return 'aaaa';
                                     DB::beginTransaction();
                                     try {
                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
@@ -7222,7 +7227,6 @@ class ProductionRuncardController extends Controller
                                                     }
                                                 }
 
-                                                // DB::commit();
                                                 // $result = true;
 
                                         }
@@ -7279,6 +7283,7 @@ class ProductionRuncardController extends Controller
 
     public function edit_prod_runcard_station_with_defect(Request $request){
         // return 'working function';
+        // //DB::commit(); mdr checking
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
         $time = explode(':', $timeNow);
@@ -7488,7 +7493,7 @@ class ProductionRuncardController extends Controller
                                 //     }
                                 // }
 
-                                // return 'dito';
+
                                 /**
                                  * Count of Scanned Materials vs Process Matrix(Materials) should be equal
                                  * 04-04-2023
@@ -7605,6 +7610,7 @@ class ProductionRuncardController extends Controller
                                  * then set the $runcardRequiredFieldsArrayHasNull to false
                                  */
                                 if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
+                                    // return 'here';
                                     if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
                                         DB::beginTransaction();
                                         try {
@@ -7655,55 +7661,299 @@ class ProductionRuncardController extends Controller
                                             ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                                 ->delete();
 
-                                                // return $request->qty_ng;
 
-                                            // if has NG only // mdr 11/07/25
+                                        $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
+                                            ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
+                                            ->first();
+
+                                            // return $request->txt_prod_runcard_station_id_query;
+                                            // return 'asd';
+                                            // return $existingDefect;450259238800010
+
+                                            $ts = "TSF1";
+                                            $lineWithDefect = $request->line_with_defect;
+                                            $de_occurence = 1;
+
+                                            // return $lineWithDefect;
+
+                                            $time = Carbon::now();
+                                            $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
+                                            $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
+
+                                            $isMorning = $time->between($todayStartA, $todayEndA);
+
+                                            $shift = $isMorning ? 1 : 2;
+                                            $mod = $request->mode_of_defect;
+
                                             if($request->qty_ng > 0){
                                                 // return 'here';
                                                 // Required to save MOD if has NG only
-                                                if(isset($request->mod)){
-                                                    for($index = 0; $index < count($request->mod); $index++){
-                                                        ProductionRuncardStationMOD::insert([
-                                                            'production_runcard_id' => $request->txt_prod_runcard_id_query,
-                                                            'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-                                                            'mod_id' => $request->mod[$index],
-                                                            'type_of_ng' => $request->type_of_ng[$index],
-                                                            'mod_qty' => $request->mod_qty[$index],
-                                                            'created_by' => Auth::user()->id,
-                                                            'last_updated_by' => Auth::user()->id,
-                                                            'update_version' => 1,
-                                                            'status' => 1,
-                                                            'created_at' => date('Y-m-d H:i:s'),
-                                                            'updated_at' => date('Y-m-d H:i:s'),
-                                                        ]);
+                                               $selectedMod = $request->mod ?? [];
+                                                if(count($selectedMod)){
+                                                    // return 'asdasdasd';
+                                                    try{
+                                                          for($index = 0; $index < count($selectedMod); $index++){
+                                                            ProductionRuncardStationMOD::insert([
+                                                                'production_runcard_id' => $request->txt_prod_runcard_id_query,
+                                                                'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
+                                                                'mod_id' => $request->mod[$index],
+                                                                'type_of_ng' => $request->type_of_ng[$index],
+                                                                'mod_qty' => $request->mod_qty[$index],
+                                                                'created_by' => Auth::user()->id,
+                                                                'last_updated_by' => Auth::user()->id,
+                                                                'update_version' => 1,
+                                                                'status' => 1,
+                                                                'created_at' => date('Y-m-d H:i:s'),
+                                                                'updated_at' => date('Y-m-d H:i:s'),
+                                                            ]);
 
-                                                        // DefectEscalationV2
+                                                            $current_class = $request->mod_classification[$index];
+
+                                                            if(str_contains($current_class,'1')){
+                                                                $defect_text = 'A1';
+                                                            }if(str_contains($current_class,'2')){
+                                                                $defect_text = 'A2';
+                                                            }else if(str_contains($current_class,'3')){
+                                                                $defect_text = 'A3';
+                                                            }else if(str_contains($current_class, '4')){
+                                                                $defect_text = 'A4';
+                                                            }else if(str_contains($current_class, '5')){
+                                                                $defect_text = 'A5';
+                                                            }
+
+                                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+
+                                                            // return $defectCtrltxt;
+
+                                                            // Logic to increment $defectCtrlNumber (example: finding the next sequence)
+                                                            // $lastRecord = DefectEscalationV2Rev::where('defect_ctrl_txt', $defectCtrltxt)->latest()->first();
+                                                            $lastRecord = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
+
+                                                            // return 'asd';
+                                                            // return $request->mod_classification; // MALAG
+
+                                                            $mod_classification = $request->mod_classification;
+
+                                                            // 1. Flatten the data: Convert ["1,2", "2"] into [1, 2, 2]
+                                                            $flattened = [];
+                                                            foreach ($mod_classification as $item) {
+                                                                // split by comma and merge into the flattened array
+                                                                $flattened = array_merge($flattened, explode(',', $item));
+                                                            }
+                                                            // 2. Remove duplicates (optional, but cleaner)
+                                                            $unique_classes = array_unique($flattened);
+
+                                                            // edit da
+                                                            // 3. Perform your Validation
+                                                            // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                            //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                            //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                            //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                            // }
+
+                                                            // return $lastRecord;
+
+                                                            // return $lastRecord;
+                                                            if($lastRecord == null || ''){
+                                                                // return 'asd';
+                                                                $defectCtrlNumber = '0001';
+                                                            }else{
+                                                                // return 'qwe';
+                                                                $nextSequence = $lastRecord ? (intval($lastRecord->defect_ctrl_number) + 1) : 1;
+                                                                $defectCtrlNumber = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+                                                            }
+
+                                                            // return [
+                                                            //     'po_number'                    => $request->po_number_with_defect,  //shadow  beast
+                                                            //     'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                            //     'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                            //     'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                            //     'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                            //     'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                            //     'defect_classification'        => $current_class,
+                                                            //     'defect_qty'                   => $request->mod_qty[$index],
+                                                            //     'mod_type'                     => $request->type_of_ng[$index],
+                                                            //     'mod_id'                       => $mod[$index],
+                                                            //     'de_occurence'                 => $de_occurence,
+                                                            //     'de_group'                     => 1,
+                                                            //     'defect_status'                => 0,
+                                                            //     'de_user'                      => $user[0]->id,
+                                                            //     'de_position'                  => $user[0]->position,
+                                                            //     'created_by'                   => Auth::user()->id,
+                                                            //     'created_at'                   => now(),
+                                                            //     'de_shift'                     => $shift,
+                                                            //     'de_date'                      => date('Y-m-d'),
+                                                            //     'de_time'                      => date('h:i:s A'),
+                                                            //     'line'                         => $lineWithDefect,
+                                                            //     'line_id'                      => $request->line_with_defect_id,
+                                                            // ];
+
+                                                            // return 'qweqweqwe';
+
+                                                            // edit da
+                                                            $inserted = DefectEscalationV2Rev::insert([
+                                                                'po_number'                    => $request->po_number_with_defect,
+                                                                'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                                'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                                'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                                'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                                // 'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                                'defect_classification'        => $current_class,
+                                                                'defect_qty'                   => $request->mod_qty[$index],
+                                                                'mod_type'                     => $request->type_of_ng[$index],
+                                                                'mod_id'                       => $mod[$index],
+                                                                'de_occurence'                 => $de_occurence,
+                                                                'de_group'                     => 1,
+                                                                'defect_status'                => 0,
+                                                                'de_user'                      => $user[0]->id,
+                                                                'de_position'                  => $user[0]->position,
+                                                                'created_by'                   => Auth::user()->id,
+                                                                'created_at'                   => now(),
+                                                                'de_shift'                     => $shift,
+                                                                'de_date'                      => date('Y-m-d'),
+                                                                'de_time'                      => date('h:i:s A'),
+                                                                'line'                         => $lineWithDefect,
+                                                                'line_id'                      => $request->line_with_defect_id,
+                                                            ]);
+
+                                                        // dd([
+                                                        //     'inserted' => $inserted,
+                                                        //     'queries' => DB::getQueryLog(),
+                                                        // ]);
+
+                                                        // $record = DefectEscalationV2Rev::where('defect_ctrl_number', $defectCtrlNumber)
+                                                        //     ->where('defect_ctrl_txt', $defectCtrltxt)
+                                                        //     ->first();
+
+                                                        // dd($record);
+
+                                                        }
+                                                    } catch (\Exception $e){
+                                                        DB::rollback();
+                                                        // return '1';
+                                                        // dd($e->getMessage());
+                                                        throw $e;
                                                     }
 
-                                                   DefectEscalationV2Rev::insert([
-                                                        'po_number'                    => $request->po_number_with_defect,
-                                                        'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
-                                                        'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
-                                                        'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
-                                                        'prod_runcard_station_id'      => $prod_runcard_station_id,
-                                                        // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
-                                                        'defect_classification'        => $current_class,
-                                                        'defect_qty'                   => $request->mod_qty[$index],
-                                                        'mod_type'                     => $request->type_of_ng[$index],
-                                                        'mod_id'                       => $mod[$index],
-                                                        'de_occurence'                 => $de_occurence,
-                                                        'de_group'                     => 1,
-                                                        'defect_status'                => 0,
-                                                        'de_user'                      => $user[0]->id,
-                                                        'de_position'                  => $user[0]->position,
-                                                        'created_by'                   => Auth::user()->id,
-                                                        'created_at'                   => now(),
-                                                        'de_shift'                     => $shift,
-                                                        'de_date'                      => date('Y-m-d'),
-                                                        'de_time'                      => date('h:i:s A'),
-                                                        'line'                         => $lineWithDefect,
-                                                        'line_id'                      => $request->line_with_defect_id,
-                                                    ]);
+
+                                                        // DefectEscalationV2
+                                                }else{
+                                                    $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                    $return_body = ' Please Fill-up MOD!';
+                                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
+                                                    return $return;
+                                                }
+
+
+                                                    if(blank($existingDefect)){
+
+                                                        if($request->qty_ng > 0){
+                                                            if(isset($mod)){
+                                                                for ($index=0; $index < count($mod) ; $index++) {
+
+
+                                                                }
+
+
+                                                            $mod_classification = $request->mod_classification;
+                                                            // return '> 0';
+                                                            // If it’s an array with a single string like "1,2", explode it
+                                                            if (is_array($mod_classification) && count($mod_classification) === 1) {
+
+                                                                $mod_classification = explode(',', $mod_classification[0]);
+
+                                                                if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                                                    $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
+                                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                                    $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                                                    return $return;
+                                                                }
+
+
+                                                            }
+                                                            // IF TWO OR MORE TOTAL NO of NG COUNT
+                                                            else{
+                                                                // return 'dito5';
+
+                                                                // return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                                            }
+                                                            // Generate control text
+                                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+                                                            $defectCtrlNumber = '0001';
+
+
+                                                        }
+                                                    // FOR EXISTING DEFECT
+                                                    }else{
+                                                        // return 'not';
+                                                        $nonCriticalDefects = DefectEscalationV2Rev::where('defect_classification', 2)
+                                                            ->orWhere('defect_classification', 3)
+                                                            ->orWhere('defect_classification', 4)
+                                                            ->orWhere('defect_classification', 5)
+                                                            ->where('de_shift', $shift)
+                                                            ->get();
+
+                                                        if (count($nonCriticalDefects) >= 5) {
+                                                                $de_occurence = 2;
+                                                                // $nonCriticalDefects = $nonCriticalDefects->de_group +1;
+                                                        } else {
+                                                            $de_occurence = 1;
+                                                            // $nonCriticalDefects = $nonCriticalDefects->de_group;
+                                                        }
+
+                                                        // return $de_occurence;
+
+                                                        $mod_classification = $request->mod_classification;
+
+                                                        if (is_array($mod_classification) && count($mod_classification) === 1) {
+                                                            $mod_classification = explode(',', $mod_classification[0]);
+
+                                                            // return $mod_classification;
+
+                                                            if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                                $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                                $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                                                // return $return; //edit da
+                                                            }else if(in_array('1', $mod_classification)){
+                                                                $defect_text = "A1";
+                                                                $defect_classification = 1;
+                                                            }else if (in_array('2', $mod_classification)){
+                                                                $defect_text = "A2";
+                                                                $defect_classification = 2;
+                                                            }else if (in_array('3', $mod_classification)){
+                                                                $defect_text = "A3";
+                                                                $defect_classification = 3;
+                                                            }else if (in_array('4', $mod_classification)){
+                                                                $defect_text = "A4";
+                                                                $defect_classification = 4;
+                                                            }
+
+                                                            // return $defect_text; qty_ng
+
+                                                        }
+                                                        // IF TWO OR MORE TOTAL NO of NG COUNT
+                                                        else{
+                                                            // return 'dito2';
+
+                                                            // return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                                        }
+
+                                                        // Generate control text
+                                                        $defectCtrltxt = $existingDefect->defect_ctrl_txt;
+
+                                                        // Increment the defect control number by 1
+                                                        $lastNumber = (int)$existingDefect->defect_ctrl_number;
+                                                        $newNumber = $lastNumber + 1;
+                                                        // Pad the number with leading zeros to ensure it is 4 digits
+                                                        $defectCtrlNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+                                                    }
+
+                                                    // return $defectCtrltxt;
 
                                                 }
                                                 else{
@@ -7715,6 +7965,11 @@ class ProductionRuncardController extends Controller
                                             }
                                             else{
                                                 // Don't save the MOD
+                                                // return 'adsasdasd';
+                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                    $return_body = ' Please Fill-up MOD!';
+                                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
+                                                    return $return;
                                             }
 
                                             /**
@@ -7756,8 +8011,9 @@ class ProductionRuncardController extends Controller
                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
                                         return $return;
                                     }
-                                }else{
-                                    // return 'dito';
+                                }
+                                else{
+
                                     DB::beginTransaction();
                                     try {
                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
@@ -7804,69 +8060,214 @@ class ProductionRuncardController extends Controller
                                                 ]);
                                             }
                                         }
+                                        $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
+                                            ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
+                                            ->first();
 
-                                    $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
-                                    ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
-                                    ->first();
+                                            // return $request->txt_prod_runcard_station_id_query;
+                                            // return 'asd';
+                                            // return $existingDefect;450259238800010
 
-                                    // return 'asd';
-                                    // return $existingDefect;450259238800010
+                                            $ts = "TSF1";
+                                            $lineWithDefect = $request->line_with_defect;
+                                            $de_occurence = 1;
 
-                                    $ts = "TSF1";
-                                    $lineWithDefect = $request->line_with_defect;
-                                    $de_occurence = 1;
+                                            // return $lineWithDefect;
 
-                                    $time = Carbon::now();
-                                    $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
-                                    $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
+                                            $time = Carbon::now();
+                                            $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
+                                            $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
 
-                                    $isMorning = $time->between($todayStartA, $todayEndA);
+                                            $isMorning = $time->between($todayStartA, $todayEndA);
 
-                                    $shift = $isMorning ? 1 : 2;
+                                            $shift = $isMorning ? 1 : 2;
+                                            $mod = $request->mode_of_defect;
 
                                     if(blank($existingDefect)){
-                                        if($request->ng_qty > 0){ //MIGZ - considered no defect or zero NG QTY - kada save kasi matik nanghihingi ng MOD even 0 NG QTY
-                                            $mod_classification = $request->mod_classification;
-                                            // If it’s an array with a single string like "1,2", explode it
-                                            if (is_array($mod_classification) && count($mod_classification) === 1) {
-                                                // return 'dito';
-                                                $mod_classification = explode(',', $mod_classification[0]);
+                                        // return 'aaaa';
+                                        if($request->qty_ng > 0){ //MIGZ - considered no defect or zero NG QTY - kada save kasi matik nanghihingi ng MOD even 0 NG QTY
+                                        // return 'ng_qty';
+                                            // $mod_classification = $request->mod_classification;
+                                            // // return 'asdd';
+                                            // // If it’s an array with a single string like "1,2", explode it
+                                            // if (is_array($mod_classification) && count($mod_classification) === 1) {
 
-                                                if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+                                            //     $mod_classification = explode(',', $mod_classification[0]);
 
-                                                    $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
-                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
-                                                    $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
-                                                    return $return;
-                                                }else if(in_array('1', $mod_classification)){
-                                                    $defect_text = "A1";
-                                                    $defect_classification = 1;
-                                                }else if (in_array('2', $mod_classification)){
-                                                    $defect_text = "A2";
-                                                    $defect_classification = 2;
-                                                }else if (in_array('3', $mod_classification)){
-                                                    $defect_text = "A3";
-                                                    $defect_classification = 3;
-                                                }else if (in_array('4', $mod_classification)){
-                                                    $defect_text = "A4";
-                                                    $defect_classification = 4;
+                                            //     if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                            //         $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
+                                            //         $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                            //         $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                            //         return $return;
+                                            //     }else if(in_array('1', $mod_classification)){
+                                            //         $defect_text = "A1";
+                                            //         $defect_classification = 1;
+                                            //     }else if (in_array('2', $mod_classification)){
+                                            //         $defect_text = "A2";
+                                            //         $defect_classification = 2;
+                                            //     }else if (in_array('3', $mod_classification)){
+                                            //         $defect_text = "A3";
+                                            //         $defect_classification = 3;
+                                            //     }else if (in_array('4', $mod_classification)){
+                                            //         $defect_text = "A4";
+                                            //         $defect_classification = 4;
+                                            //     }
+
+
+                                            // }
+                                            // // IF TWO OR MORE TOTAL NO of NG COUNT
+                                            // else{
+
+
+                                            //     return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                            // }
+                                            // // Generate control text
+                                            // $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+                                            // $defectCtrlNumber = '0001';
+
+                                            try{
+                                                for($index = 0; $index < count($request->mod); $index++){
+                                                ProductionRuncardStationMOD::insert([
+                                                    'production_runcard_id' => $request->txt_prod_runcard_id_query,
+                                                    'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
+                                                    'mod_id' => $request->mod[$index],
+                                                    'type_of_ng' => $request->type_of_ng[$index],
+                                                    'mod_qty' => $request->mod_qty[$index],
+                                                    'created_by' => Auth::user()->id,
+                                                    'last_updated_by' => Auth::user()->id,
+                                                    'update_version' => 1,
+                                                    'status' => 1,
+                                                    'created_at' => date('Y-m-d H:i:s'),
+                                                    'updated_at' => date('Y-m-d H:i:s'),
+                                                ]);
+
+                                                $current_class = $request->mod_classification[$index];
+
+                                                if(str_contains($current_class,'1')){
+                                                    $defect_text = 'A1';
+                                                }if(str_contains($current_class,'2')){
+                                                    $defect_text = 'A2';
+                                                }else if(str_contains($current_class,'3')){
+                                                    $defect_text = 'A3';
+                                                }else if(str_contains($current_class, '4')){
+                                                    $defect_text = 'A4';
+                                                }else if(str_contains($current_class, '5')){
+                                                    $defect_text = 'A5';
                                                 }
 
-                                                // return 'dito1';
-                                            }
-                                            // IF TWO OR MORE TOTAL NO of NG COUNT
-                                            else{
-                                                // return 'dito11';
+                                                $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
 
-                                                return 'TWO OR MORE TOTAL NO OF NG COUNT';
-                                            }
-                                            // Generate control text
-                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
 
-                                            $defectCtrlNumber = '0001';
+                                                // return $defectCtrltxt;
+
+                                                // Logic to increment $defectCtrlNumber (example: finding the next sequence)
+                                                // $lastRecord = DefectEscalationV2Rev::where('defect_ctrl_txt', $defectCtrltxt)->latest()->first();
+                                                $lastRecord = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
+
+                                                // return 'asd';
+                                                // return $request->mod_classification; // MALAG
+
+                                                $mod_classification = $request->mod_classification;
+
+                                                // 1. Flatten the data: Convert ["1,2", "2"] into [1, 2, 2]
+                                                $flattened = [];
+                                                foreach ($mod_classification as $item) {
+                                                    // split by comma and merge into the flattened array
+                                                    $flattened = array_merge($flattened, explode(',', $item));
+                                                }
+                                                // 2. Remove duplicates (optional, but cleaner)
+                                                $unique_classes = array_unique($flattened);
+
+                                                // 3. Perform your Validation
+                                                // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                // }
+                                                // return $lastRecord;
+
+                                                // return $lastRecord;
+                                                if($lastRecord == null || ''){
+                                                    $defectCtrlNumber = '0001';
+                                                }else{
+                                                    $nextSequence = $lastRecord ? (intval($lastRecord->defect_ctrl_number) + 1) : 1;
+                                                    $defectCtrlNumber = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+                                                }
+
+                                                // return [
+                                                //     'po_number'                    => $request->po_number_with_defect, //shadow  beast
+                                                //     'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                //     'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                //     'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                //     'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                //     // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                //     'defect_classification'        => $current_class,
+                                                //     'defect_qty'                   => $request->mod_qty[$index],
+                                                //     'mod_type'                     => $request->type_of_ng[$index],
+                                                //     'mod_id'                       => $mod[$index],
+                                                //     'de_occurence'                 => $de_occurence,
+                                                //     'de_group'                     => 1,
+                                                //     'defect_status'                => 0,
+                                                //     'de_user'                      => $user[0]->id,
+                                                //     'de_position'                  => $user[0]->position,
+                                                //     'created_by'                   => Auth::user()->id,
+                                                //     'created_at'                   => now(),
+                                                //     'de_shift'                     => $shift,
+                                                //     'de_date'                      => date('Y-m-d'),
+                                                //     'de_time'                      => date('h:i:s A'),
+                                                //     'line'                         => $lineWithDefect,
+                                                //     'line_id'                      => $request->line_with_defect_id,
+                                                // ];
+
+
+                                                $inserted = DefectEscalationV2Rev::insert([
+                                                    'po_number'                    => $request->po_number_with_defect,
+                                                    'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                    'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                    'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                    'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                    // 'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                    'defect_classification'        => $current_class,
+                                                    'defect_qty'                   => $request->mod_qty[$index],
+                                                    'mod_type'                     => $request->type_of_ng[$index],
+                                                    'mod_id'                       => $mod[$index],
+                                                    'de_occurence'                 => $de_occurence,
+                                                    'de_group'                     => 1,
+                                                    'defect_status'                => 0,
+                                                    'de_user'                      => $user[0]->id,
+                                                    'de_position'                  => $user[0]->position,
+                                                    'created_by'                   => Auth::user()->id,
+                                                    'created_at'                   => now(),
+                                                    'de_shift'                     => $shift,
+                                                    'de_date'                      => date('Y-m-d'),
+                                                    'de_time'                      => date('h:i:s A'),
+                                                    'line'                         => $lineWithDefect,
+                                                    'line_id'                      => $request->line_with_defect_id,
+                                                ]);
+
+                                                //                                                             dd([
+                                                //     'inserted' => $inserted,
+                                                //     'queries' => DB::getQueryLog(),
+                                                // ]);
+
+                                                // $record = DefectEscalationV2Rev::where('defect_ctrl_number', $defectCtrlNumber)
+                                                //     ->where('defect_ctrl_txt', $defectCtrltxt)
+                                                //     ->first();
+
+                                                // dd($record);
+
+                                                }
+                                            } catch (\Exception $e){
+                                                DB::rollback();
+                                                throw $e;
+                                                // dd($e->getMessage());
+                                            }
                                         }
-                                    // FOR EXISTING DEFECT
+
                                     }else{
+                                        // return 'qweqwe';
                                         $nonCriticalDefects = DefectEscalationV2Rev::where('defect_classification', 2)
                                             ->orWhere('defect_classification', 3)
                                             ->orWhere('defect_classification', 4)
@@ -7912,11 +8313,11 @@ class ProductionRuncardController extends Controller
                                             }
 
                                             // return $defect_text; qty_ng
-                                            // return 'dito2';
+
                                         }
                                         // IF TWO OR MORE TOTAL NO of NG COUNT
                                         else{
-                                            // return 'dito1';
+                                            // return 'dito4';
 
                                             return 'TWO OR MORE TOTAL NO OF NG COUNT';
                                         }
@@ -7959,6 +8360,7 @@ class ProductionRuncardController extends Controller
                                                     // Dito dapat insert
 
 
+
                                                 }
 
                                                 // return count($request->mod);
@@ -7979,6 +8381,7 @@ class ProductionRuncardController extends Controller
                                         * 08-16-2022
                                         * -JD
                                         */
+
                                         ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                         ->delete();
 
@@ -8039,6 +8442,7 @@ class ProductionRuncardController extends Controller
             }
             else{ // For Add Process, runcard station is not set on this state
                 // return "add process";
+                //add da
                 $validator = Validator::make($data, [
                     'txt_prod_runcard_id_query' => ['required'],
                     'qty_input' => ['required'],
@@ -8067,6 +8471,7 @@ class ProductionRuncardController extends Controller
                         if($user[0]->position == 4){ // 4-Operator
                             $processFlow = ProcessFlow::find($request->process_flow_id);
                             if( isset($processFlow->id) ){
+                                // return 'asd';
 
                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
@@ -8235,6 +8640,7 @@ class ProductionRuncardController extends Controller
                              * -JD
                              */
                             if(!isset($request->runcard_defect)){
+                                // return 'asdasd';
                                 $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
                                 // return $device;
                                 $deviceProcessFlowMaterialsArray = [];
@@ -8492,9 +8898,10 @@ class ProductionRuncardController extends Controller
                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
                                     return $return;
                                 }
+                                // return 'here';
                             }
                             else if($runcardRequiredFieldsArray['is_full_assembly'] == true){
-                                // return 'dito';
+
                                 if($runcardRequiredFieldsArray['work_week'] != null && ($runcardRequiredFieldsArray['qty_input'] != 0 || $runcardRequiredFieldsArray['qty_input'] !=  null) && ($runcardRequiredFieldsArray['qty_output'] != 0 || $runcardRequiredFieldsArray['qty_output'] != null)){
                                     DB::beginTransaction();
                                     try {
@@ -8730,15 +9137,11 @@ class ProductionRuncardController extends Controller
                                                 $unique_classes = array_unique($flattened);
 
                                                 // 3. Perform your Validation
-                                                if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
-                                                    $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
-                                                    return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
-                                                } else {
-                                                    // If validation passes, proceed to your loop
-                                                    // return 'Validation Passed';
-                                                }
-
+                                                // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                // }
                                                 // return $lastRecord;
 
                                                 // return $lastRecord;
@@ -8759,7 +9162,7 @@ class ProductionRuncardController extends Controller
                                                         'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
                                                         'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
                                                         'prod_runcard_station_id'      => $prod_runcard_station_id,
-                                                        // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                        // 'prod_runcard_station_mod_id'  => $request->mod[$index],
                                                         'defect_classification'        => $current_class,
                                                         'defect_qty'                   => $request->mod_qty[$index],
                                                         'mod_type'                     => $request->type_of_ng[$index],
@@ -8781,17 +9184,6 @@ class ProductionRuncardController extends Controller
                                         }
                                     } // BINI MLAG
 
-
-                                    // return gettype($request->mode_of_defect);
-                                    // return ($request->mod);
-
-                                    // return $request->mode_of_defect;
-
-                                    // $resulttest = explode(',', $request->mode_of_defect);
-
-                                    // return $resulttest;
-                                    // $implodedModeOfDefect = implode(',', $request->mod_of_defect);
-                                    // return $implodedModeOfDefect;
 
                                     if($request->qty_ng > 0){
                                         // Required to save MOD if has NG only
@@ -9186,10 +9578,6 @@ class ProductionRuncardController extends Controller
                                                         ]);
                                                     }
                                                 }
-
-                                                // DB::commit();
-                                                // $result = true;
-
                                         }
 
                                         // return $counter;
@@ -10215,7 +10603,7 @@ class ProductionRuncardController extends Controller
                         // DB::rollback();
                         // return response()->json(['auth' => 1, 'result' => 0, 'error' => "haha", "device" => $device, "processFlow" => $processFlow, "prod_runcard_station_id" => $prod_runcard_station_id]);
 
-                                // DB::commit();
+                                DB::commit();
                                 return response()->json(['auth' => 1, 'result' => 1, 'PFlow' => $PFlow, 'error' => null, 'prod_runcard_id' => $prod_runcard_id]); // Success
                             }
                             else{

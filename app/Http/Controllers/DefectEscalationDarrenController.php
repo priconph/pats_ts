@@ -617,7 +617,7 @@ class DefectEscalationDarrenController extends Controller{
                 // 'mod_type'              => 'required',
                 'runcard_id'            => 'required',
                 'runcard_station_id'    => 'required',
-                'runcard_station_mod_id'=> 'required',
+                // 'runcard_station_mod_id'=> 'required',
                 'd_classification'      => 'required',
                 'detailed_description'  => 'required',
                 'defect'                => 'required',
@@ -852,11 +852,36 @@ class DefectEscalationDarrenController extends Controller{
 
     public function add_defect_escalation_test(Request $request)
     {
+        // return 'asd';
         date_default_timezone_set('Asia/Manila');
         $data = $request->all();
 
-        // return $data;
         DB::beginTransaction();
+        $data = $request->all();
+            $validator = Validator::make($data, [
+                'po_number'             => 'required',
+                // 'mod_type'              => 'required',
+                'runcard_id'            => 'required',
+                'runcard_station_id'    => 'required',
+                // 'runcard_station_mod_id'=> 'required',
+                'd_classification'      => 'required',
+                'detailed_description'  => 'required',
+                'defect'                => 'required',
+                'date'                  => 'required|date',
+                'shift'                 => 'required|in:1,2',
+                'line'                  => 'required',
+                'd_mold_no'             => 'nullable|string|max:255',
+                'lot_no'                => 'nullable|string|max:255',
+                'pair_no'               => 'nullable|string|max:255',
+                'occurrence'            => 'nullable|string|max:255',
+                'station'               => 'nullable|string|max:255',
+                'select_user'           => 'required|exists:users,id',
+                'position'              => 'required|in:1,2,3,4',
+            ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         try {
             if ($request->defect_id) {
@@ -1554,7 +1579,7 @@ class DefectEscalationDarrenController extends Controller{
             ])
         ->where('id', $request->defect_id)
         ->first();
-        
+
 
 
         $manUserDetails = [];

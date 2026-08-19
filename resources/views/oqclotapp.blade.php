@@ -55,7 +55,7 @@
   </style>
 
   <div class="content-wrapper">
-    <?php 
+    <?php
       date_default_timezone_set('Asia/Manila');
     ?>
     <section class="content-header">
@@ -133,7 +133,7 @@
                     <table id="tblOQCLotApp" class="table table-bordered table-striped table-hover" style="width: 100%;">
                       <thead>
                         <tr align="center">
-                          <th>Action</th>
+                          <th>Action!</th>
                           <th>Status</th>
                           <th>Submission</th>
                           <th>Lot # / Batch #</th>
@@ -173,8 +173,8 @@
         <form method="post" id="formOQCLotApp">
           @csrf
           <div class="modal-body">
-            
-            <div class="row">             
+
+            <div class="row">
               <div class="col-sm-4 p-2">
                 <input type="hidden" class="form-control" id="hidden_position" value="{{ Auth::user()->position }}">
                 <input type="hidden" class="form-control" id="hidden_OQCLotApp_id" name="hidden_OQCLotApp_name">
@@ -268,7 +268,7 @@
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="row">
                     <div class="col">
                       <div class="input-group input-group-sm mb-3">
@@ -390,7 +390,7 @@
                         </div>
                           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                           <input class="form-control-sm" type="radio" id="id_GuaranteedLotWith" name="name_GuaranteedLot" value="1"> &nbsp; WITH &nbsp;&nbsp;
-                          <input class="form-control-sm" type="radio" id="id_GuaranteedLotWO" name="name_GuaranteedLot" value="2"> &nbsp; WITHOUT                         
+                          <input class="form-control-sm" type="radio" id="id_GuaranteedLotWO" name="name_GuaranteedLot" value="2"> &nbsp; WITHOUT
                       </div>
                     </div>
                   </div>
@@ -440,15 +440,15 @@
                         <textarea class="form-control form-control-sm" rows="3" id="id_OQCRemarks" name="name_OQCRemarks"></textarea>
                       </div>
                     </div>
-                  </div>             
+                  </div>
               </div>
             </div>
 
             <div class="row">
               <div class="col-sm-12 p-2">
                 <span class="fa fa-list"></span> OQC Lot Application Summary
-                <br> 
-                <br> 
+                <br>
+                <br>
                   <div class="table-responsive">
                     <table id="tbl_LotApp_summary" class="table table-bordered table-striped table-hover" style="min-width: 1500px!important;">
                       <thead style="font-size:85%;">
@@ -500,7 +500,7 @@
             <br><br>
             <h1><i class="fa fa-qrcode fa-lg"></i></h1>
           </div>
-              <input type="hidden" class="form-control" id="hidden_OQCLotApp_id_query" name="hidden_OQCLotApp_id_query">             
+              <input type="hidden" class="form-control" id="hidden_OQCLotApp_id_query" name="hidden_OQCLotApp_id_query">
               <input type="text" class="form-control hidden_scanner_input" id="id_prodn_supv_id" name="name_prodn_supv_id" >
         </div>
         </form>
@@ -800,7 +800,7 @@
     let lbl_rdrawing;
 
     $(document).ready(function () {
-      
+
       GetAssemblyLines($(".selectAssyLine"));
 
       dataTableOQCLotApp = $("#tblOQCLotApp").DataTable({
@@ -812,7 +812,7 @@
                 param.po_no = $("#txt_search_po_number").val();
               }
           },
-          
+
           "columns":[
             { "data" : "action", orderable:false, searchable:false },
             { "data" : "status_raw" },
@@ -825,20 +825,20 @@
             { "data" : "oqc_details.supervisor_prod_info.name" },
             { "data" : "oqc_details.supervisor_qc_info.name" }
           ],
-          
-          "columnDefs": [ 
+
+          "columnDefs": [
             {
               // "targets": [1,7,8,9,10],
               "targets": [1,4,6,7,8,9],
               // "targets": [1,5,6],
               "data": null,
               "defaultContent": "---"
-            } 
+            }
           ],
 
           order:[[3,'asc']]
 
-        }); //end of dataTable 
+        }); //end of dataTable
 
         dataTableOQCLotAppSummary = $("#tbl_LotApp_summary").DataTable({
           "processing"    : false,
@@ -849,7 +849,7 @@
                   param.lot_batch_no = $("#id_LotBatch").val();
                 }
             },
-            
+
             "columns":[
               { "data" : "sub_raw" },
               { "data" : "guar_lot_raw" },
@@ -860,14 +860,14 @@
               { "data" : "fvo_raw" },
               { "data" : "remarks" }
             ],
-            
+
             order:[[0,'asc']]
 
-          }); //end of dataTable 
+          }); //end of dataTable
 
       $("#id_btn_close_oqcla").click(function(){
         dataTableOQCLotApp.ajax.reload();
-      }); 
+      });
 
       // Add
       $("#formOQCLotApp").submit(function(event){
@@ -890,13 +890,13 @@
           } else if ($('#id_PrintLotNo').val() == ''){
               alert('Print Lot # is required.');
               return;
-          } 
+          }
 
-          var name_GuaranteedLot = $("input[name='name_GuaranteedLot']:checked").val(); 
+          var name_GuaranteedLot = $("input[name='name_GuaranteedLot']:checked").val();
           if ( !$("input[name='name_GuaranteedLot']:checked").val()){
                 alert('Guaranteed Lot is required.');
                 return;
-          } else if ( name_GuaranteedLot == 1 ){ 
+          } else if ( name_GuaranteedLot == 1 ){
               if($('#id_Problem').val() == '' && $('#id_DocNo').val() == ''){
                 alert('Problem & Document no. is required.');
                 return;
@@ -910,13 +910,13 @@
 
           AddOQCLotApp();
       });
-      
+
       // View/Update
       $(document).on('click', '.btn_update_lot', function(){
 
           $('#modalOQCLotApp').modal({
             backdrop: 'static',
-            keyboard: false, 
+            keyboard: false,
             show: true
           });
 
@@ -924,7 +924,7 @@
             var data = {
                 "id"  :  id
             }
-    
+
             data = $.param(data);
             $.ajax({
                 data        : data,
@@ -932,10 +932,10 @@
                 dataType    : 'json',
                 url         : "get_runcard_details",
                 success     : function (data) {
-                  console.log(data);                   
-                     
-                  $('#hidden_require_oqc_before_emboss').val( data[0]['require_oqc_before_emboss'] );                   
-                  $('#hidden_runcard_status').val( data[0]['status'] );                   
+                  console.log(data);
+
+                  $('#hidden_require_oqc_before_emboss').val( data[0]['require_oqc_before_emboss'] );
+                  $('#hidden_runcard_status').val( data[0]['status'] );
                   $('#hidden_sub_lot').val( data[0]['sub_lot_no'] );
 
                   //- Runcard
@@ -947,11 +947,11 @@
 
                   $('#id_ADrawing').val( data[0]['a_drawing_no'] +'-'+ data[0]['a_drawing_rev']);
                   $('#id_GDrawing').val( data[0]['g_drawing_no'] +'-'+ data[0]['g_drawing_rev']);
-                
-                  $("input[name='name_GuaranteedLot']").click(function() { 
+
+                  $("input[name='name_GuaranteedLot']").click(function() {
                         name_GuaranteedLot = this.value;
 
-                        if ( name_GuaranteedLot == 1 ){ 
+                        if ( name_GuaranteedLot == 1 ){
                           $('#id_Problem').attr('readonly',false);
                           $('#id_DocNo').attr('readonly',false);
                         }else{
@@ -963,7 +963,7 @@
 
                   });
 
-                  $('.txt_arr_names').val('').change();   
+                  $('.txt_arr_names').val('').change();
 
                   dataTableOQCLotAppSummary.draw();
 
@@ -972,12 +972,12 @@
 
                       hidden_sub = (data[0]['oqc_details']['submission'] * 1 + 1);
                       $('#hidden_sub').val(hidden_sub);
-                      
-                      $('#id_OutputQty').val( data[0]['oqc_details']['output_qty'] ); 
+
+                      $('#id_OutputQty').val( data[0]['oqc_details']['output_qty'] );
 
                       $('#id_select_Device').val( data[0]['oqc_details']['device_cat'] );
                       $('#id_CertLot').val( data[0]['oqc_details']['cert_lot'] );
-                      $('#id_AssyLine').val( data[0]['oqc_details']['assy_line'] ); 
+                      $('#id_AssyLine').val( data[0]['oqc_details']['assy_line'] );
                       $('#id_ReelNo').val( data[0]['oqc_details']['reel_lot'] );
                       $('#id_PrintLotNo').val( data[0]['oqc_details']['print_lot'] );
                       $('#id_UrgentDirection').val( data[0]['oqc_details']['direction'] );
@@ -1002,15 +1002,15 @@
                       $('#id_TtlNoReels').attr('readonly',true);
                       $('#id_Problem').attr('readonly',true);
                       $('#id_DocNo').attr('readonly',true);
-                      
-                      $('.txt_arr_names').val('').change();        
 
-                      $('#hidden_OQCLotApp_id').val(data[0]['oqc_details']['id']);     
-                      $('#hidden_OQCLotApp_id_query').val(data[0]['oqc_details']['id']);     
+                      $('.txt_arr_names').val('').change();
+
+                      $('#hidden_OQCLotApp_id').val(data[0]['oqc_details']['id']);
+                      $('#hidden_OQCLotApp_id_query').val(data[0]['oqc_details']['id']);
                       $('#hidden_OQCLotApp_id_query_oqc').val(data[0]['oqc_details']['id']);
                       $('#hidden_status').val(data[0]['oqc_details']['status']);
-                      
-                      //- Validation   
+
+                      //- Validation
                       if ( $('#hidden_status').val() == '0'){ // For prodn approval
                         if( $('#hidden_position').val() == '1' ){ // prodn supervisor
                           $('#id_btn_ApprovedProdn').show();
@@ -1031,7 +1031,7 @@
                           $('#id_btn_ApprovedOQC').hide();
                           $('#id_btn_AddOQCLotApp').hide();
                         }
-                      }else if ( $('#hidden_status').val() == '2'){ //Done  
+                      }else if ( $('#hidden_status').val() == '2'){ //Done
                         if( $('#hidden_position').val() == '2' || $('#hidden_position').val() == '5'){ // inspector
                           $('#id_btn_ApprovedProdn').hide();
                           $('#id_btn_ApprovedOQC').hide();
@@ -1040,7 +1040,7 @@
                           $('#id_btn_ApprovedProdn').hide();
                           $('#id_btn_ApprovedOQC').hide();
                           $('#id_btn_AddOQCLotApp').show();
-                        }                          
+                        }
                       }
 
                       if ( data[0]['oqc_details']['oqcvir_details'] != null){
@@ -1055,7 +1055,7 @@
                       }else{
                         $('#id_btn_AddOQCLotApp').hide();
                       }
-   
+
                   } else {
 
                       $('#id_GuaranteedLotWith').prop('checked', false);
@@ -1084,13 +1084,13 @@
 
                       }
 
-                      $('#id_OutputQty').val( qty_temp );  
+                      $('#id_OutputQty').val( qty_temp );
 
-                      $('.txt_arr_names').val('').change();      
+                      $('.txt_arr_names').val('').change();
 
                       if ( $('#id_OutputQty').val() != $('#id_LotQty').val() ){
                           alert('Output Quantity is not equal to Lot Quantity.\nNeeds approval from Prodn. Supervisor & OQC Supervisor!');
-                      }  
+                      }
 
                       if ( $('#hidden_position').val() == '2' || $('#hidden_position').val() == '5'){
                           $('#id_btn_ApprovedProdn').hide();
@@ -1121,7 +1121,7 @@
                           // $('#id_btn_AddOQCLotApp').show();
                       }
 
-                     
+
 
                       $('#id_select_Device').attr('readonly',false);
                       $('#id_select_Device').val('');
@@ -1141,13 +1141,13 @@
 
 
                   }
-                    
+
                 }, error    : function (data) {
                 alert('ERROR: '+data);
                 }
             });
       });
-    }); 
+    });
 
     //- search PO no.
     $(document).on('keypress','#txt_search_po_number',function(e){
@@ -1161,8 +1161,8 @@
         $('#txt_po_qty').val('');
         $('#id_currentPONo').val('');
 
-        dataTableOQCLotApp.draw();  
-      
+        dataTableOQCLotApp.draw();
+
         data = $.param(data);
         $.ajax({
           type      : "get",
@@ -1170,12 +1170,12 @@
           data      : data,
           url       : "get_po_details",
           success : function(data){
-            
+
             if ( data['po_details'].length > 0 ){
               $('#txt_po_no').val( data['po_details'][0]['po_no'] );
               $('#txt_device_name').val( data['po_details'][0]['wbs_kitting']['device_name'] );
               $('#txt_po_qty').val( data['po_details'][0]['wbs_kitting']['po_qty'] );
-              $('#id_currentPONo').val( data['po_details'][0]['po_no'] );        
+              $('#id_currentPONo').val( data['po_details'][0]['po_no'] );
             }
 
           },error : function(data){
@@ -1205,7 +1205,7 @@
             $('#modalApprovedByProd').modal('hide');
           }
         }
-    }); 
+    });
 
     //- Approval OQC
     $("#formApprovedByOQC").submit(function(event){
@@ -1227,7 +1227,7 @@
             $('#modalApprovedByOQC').modal('hide');
           }
         }
-    }); 
+    });
 
     //- Search employee
     $(".txt_search_name").on("keyup", function(e){
@@ -1244,11 +1244,11 @@
           url       : "get_user_details_lotapp",
         success       : function(data){
           var list    = "";
-         
+
           if ($.trim(data['user_details'])){
             for(var ctr=0;ctr<data['user_details'].length;ctr++){
               list+="<option value='"+data['user_details'][ctr]['id']+"'>"+data['user_details'][ctr]['employee_id']+' '+data['user_details'][ctr]['name']+"</option>";
-            }        
+            }
           }
 
           $(parent).find(".dl_search_name").html(list);
@@ -1350,32 +1350,32 @@
             url         : "get_lot_app_by_id",
             success     : function (data) {
               console.log(data);
-                 
+
                 $("#modal_LotApp_QRcode").modal('show');
-                
+
                 //- Lot/Batch# 1
                 $("#img_barcode_lotno1").attr('src', data['lot_app_code']);
-                $('#lbl_device_name').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
-                $('#lbl_po_no').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_lot_batch_no').text( data['lot_app_by_id'][0]['lot_batch_no'] );        
-                $('#lbl_reel_lot_no').text( data['lot_app_by_id'][0]['reel_lot'] );        
+                $('#lbl_device_name').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
+                $('#lbl_po_no').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_lot_batch_no').text( data['lot_app_by_id'][0]['lot_batch_no'] );
+                $('#lbl_reel_lot_no').text( data['lot_app_by_id'][0]['reel_lot'] );
                 $('#lbl_lot_qty').text( data['lot_app_by_id'][0]['lot_qty'] );
-                
+
                 $("#img_barcode_lotno2").attr('src', data['lot_app_code']);
-                $('#lbl_device_name2').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
-                $('#lbl_po_no2').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_lot_batch_no2').text( data['lot_app_by_id'][0]['lot_batch_no'] );        
-                $('#lbl_reel_lot_no2').text( data['lot_app_by_id'][0]['reel_lot'] );        
+                $('#lbl_device_name2').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
+                $('#lbl_po_no2').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_lot_batch_no2').text( data['lot_app_by_id'][0]['lot_batch_no'] );
+                $('#lbl_reel_lot_no2').text( data['lot_app_by_id'][0]['reel_lot'] );
                 $('#lbl_lot_qty2').text( data['lot_app_by_id'][0]['lot_qty'] );
 
-                img_barcode_lotno  = data['lot_app_code'];    
-                lbl_device_name     = data['lot_app_by_id'][0]['wbs_kitting']['device_name']; 
-                lbl_po_no           = data['lot_app_by_id'][0]['po_no']; 
-                lbl_lot_batch_no    = data['lot_app_by_id'][0]['lot_batch_no']; 
-                lbl_reel_lot_no     = data['lot_app_by_id'][0]['reel_lot']; 
-                lbl_lot_qty         = data['lot_app_by_id'][0]['lot_qty']; 
-                lbl_output_qty      = data['lot_app_by_id'][0]['output_qty']; 
-                
+                img_barcode_lotno  = data['lot_app_code'];
+                lbl_device_name     = data['lot_app_by_id'][0]['wbs_kitting']['device_name'];
+                lbl_po_no           = data['lot_app_by_id'][0]['po_no'];
+                lbl_lot_batch_no    = data['lot_app_by_id'][0]['lot_batch_no'];
+                lbl_reel_lot_no     = data['lot_app_by_id'][0]['reel_lot'];
+                lbl_lot_qty         = data['lot_app_by_id'][0]['lot_qty'];
+                lbl_output_qty      = data['lot_app_by_id'][0]['output_qty'];
+
                 if ( lbl_output_qty < lbl_lot_qty){
                   // alert('not equal');
                   new_lot_qty1 = (120);
@@ -1412,48 +1412,48 @@
                 //- PO
                 $("#img_barcode_PO").attr('src', data['po_no']);
                 $("#img_barcode_PO2").attr('src', data['po_no']);
-                $('#lbl_po_no_PO').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_device_name_PO').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
-                $('#lbl_po_no_PO2').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_device_name_PO2').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
+                $('#lbl_po_no_PO').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_device_name_PO').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
+                $('#lbl_po_no_PO2').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_device_name_PO2').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
 
-                img_barcode_PO      = data['po_no'];    
+                img_barcode_PO      = data['po_no'];
 
                 //- A Drawing
                 $("#img_A_drawing").attr('src', data['A_drawing']);
-                $('#lbl_adrawing').text( data['lot_app_by_id'][0]['Adrawing'] );  
-                $('#lbl_po_Adrawing').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_device_name_Adrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
+                $('#lbl_adrawing').text( data['lot_app_by_id'][0]['Adrawing'] );
+                $('#lbl_po_Adrawing').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_device_name_Adrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
 
-                img_A_drawing   = data['A_drawing'];    
-                lbl_adrawing    = data['lot_app_by_id'][0]['Adrawing']; 
+                img_A_drawing   = data['A_drawing'];
+                lbl_adrawing    = data['lot_app_by_id'][0]['Adrawing'];
 
                 //- Inspection Standard
                 $("#img_IS_drawing").attr('src', data['IS_drawing']);
                 $("#lbl_isdrawing").text( data['inspection_standard'][0]['doc_no']+'-'+data['inspection_standard'][0]['rev_no']);
-                $('#lbl_po_isdrawing').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_device_name_isdrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
+                $('#lbl_po_isdrawing').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_device_name_isdrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
 
-                img_IS_drawing   = data['IS_drawing'];    
+                img_IS_drawing   = data['IS_drawing'];
                 lbl_isdrawing    = data['inspection_standard'][0]['doc_no']+'-'+data['inspection_standard'][0]['rev_no'];
 
                 //- R Drawing
                 $("#img_R_drawing").attr('src', data['R_drawing']);
                 $("#lbl_rdrawing").text( data['rdrawing'][0]['doc_no']+'-'+data['rdrawing'][0]['rev_no']);
-                $('#lbl_po_rdrawing').text( data['lot_app_by_id'][0]['po_no'] );        
-                $('#lbl_device_name_rdrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );        
+                $('#lbl_po_rdrawing').text( data['lot_app_by_id'][0]['po_no'] );
+                $('#lbl_device_name_rdrawing').text( data['lot_app_by_id'][0]['wbs_kitting']['device_name'] );
 
-                img_R_drawing   = data['R_drawing'];    
+                img_R_drawing   = data['R_drawing'];
                 lbl_rdrawing    = data['rdrawing'][0]['doc_no']+'-'+data['rdrawing'][0]['rev_no'];
 
 
                 $('#modal_LotApp_QRcode').modal({
                   backdrop: 'static',
-                  keyboard: false, 
+                  keyboard: false,
                   show: true
                 });
 
-                
+
             }, error    : function (data) {
             alert('ERROR: '+data);
             }
@@ -1465,12 +1465,12 @@
     $("#btn_print_barcode").click(function(){
       popup = window.open();
         let content = '';
-        
+
         content += '<html>';
         content += '<head>';
         content += '<title></title>';
         content += '<style type="text/css">';
-        
+
         content += '.rotated {';
         content += 'width: 180px;';
         content += 'position: absolute;';
@@ -1502,7 +1502,7 @@
         content += '<body>';
 
         content += '<table>';
-        
+
         //- 1st sticker QR
         content += '<div class="rotated">';
         content += '<tr>';
@@ -1533,7 +1533,7 @@
             content += '</td>';
 
             content += '<td style="font-family: Arial; font-size: 5px; text-align: center; vertical-align:top;">';
-            content += '<label>' + lbl_device_name + '</label>'; 
+            content += '<label>' + lbl_device_name + '</label>';
             content += '<br>';
             content += '<label>' + lbl_po_no + '</label>';
             content += '<br>';
@@ -1546,7 +1546,7 @@
             content += '<label>' + lbl_sticker_page_no + '</label>';
             content += '</td>';
         content += '</tr>';
-        
+
         content += '<div class="rotated">';
         //- 2nd sticker
         content += '<tr>';
@@ -1646,7 +1646,7 @@
             content += '</table>';
         content += '</div>';
 
-        content += '</table>';     
+        content += '</table>';
 
 
         content += '</body>';
@@ -1671,7 +1671,7 @@
             $('#modalScan_PO').modal('hide');
           }
         }
-    }); 
+    });
 
   </script>
   @endsection
