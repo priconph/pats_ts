@@ -123,7 +123,7 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         // return $prodn_runcard_tsppts;
 
 
-        $materialprocess = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $prodn_runcard_tsppts[0]->device_name, 'barcode' => '', 'get_or_first' => '']);
+        $materialprocess = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $po_number_susbtr, 'name' => $prodn_runcard_tsppts[0]->device_name, 'barcode' => '', 'get_or_first' => '']);
         // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
         // // ->where('status', 1)
         // ->get();

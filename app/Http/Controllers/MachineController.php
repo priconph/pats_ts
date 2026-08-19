@@ -212,10 +212,10 @@ class MachineController extends Controller
      */
     public function get_machines_for_runcard_station(Request $request){
         $process_flow_array = [];
-        return 'TODO get_machines_for_runcard_station';
+        // return 'TODO get_machines_for_runcard_station';
 
         $device = CommonController::getInstance()->getMatrixByPoNo([
-            'po_no'=> $po_number,
+            'po_no'=> '',
             'name'=>  $request->txt_device_name_lbl,
             'barcode'=> '',
             'get_or_first'=> '',
@@ -270,9 +270,9 @@ class MachineController extends Controller
 
     public function get_machines_test(Request $request){
         $process_flow_material_ids_array = [];
-        return 'TODO get_machines_test';
+        // return 'TODO get_machines_test';
          $device = CommonController::getInstance()->getMatrixByPoNo([
-            'po_no'=> $po_number,
+            'po_no'=> '',
             'name'=>  $request->txt_device_name_lbl,
             'barcode'=> '',
             'get_or_first'=> '',

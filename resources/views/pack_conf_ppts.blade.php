@@ -1,6 +1,6 @@
 @auth
   @php
-    if(Auth::user()->position == 1){ 
+    if(Auth::user()->position == 1){
       $layout = 'layouts.super_user_layout';
     }
     else if(Auth::user()->position == 2){
@@ -96,12 +96,12 @@
 
             <!-- Start Page Content -->
 
-            <?php 
+            <?php
               // $_SESSION["sample"] = "hahah";
               // echo $_SESSION["sample"];
             ?>
 
-              <iframe style="border: none;" src="http://rapidx/pats_ts_ppts/packing_pts" no-border height="850" width="1900"></iframe>
+              <iframe style="border: none;" src="http://rapidx/pats_ts_ppts_new/packing_pts" no-border height="850" width="1900"></iframe>
 
               <!-- !-- End Page Content -->
 
