@@ -80,8 +80,112 @@ class MaterialController extends Controller
         ]);
     }
 
-
     public function getMaterialsFromRecieving(Request $request)
+    { //nmodify
+        $deviceName = $request->deviceName;
+
+        $arrayListSakidashi = [];
+        $arrayListMatterial = [];
+        $materials = [];
+
+        // 1. Optimized mapping: Pluck directly from the query if needed,
+        // and notice $lot_ids wasn't being used, so we only keep what's required.
+        $subkitting_collect_obj = DB::select('
+            select sum( case when (c.status = 1) then b.sub_kit_qty else 0 end ) as sub_kit_qty, a.kit_issuance_id
+            from kittings a
+            inner join sub_kittings b on a.id = b.pats_kitting_id
+            inner join parts_preps_sub_kitting c on b.id = c.sub_kittings_id
+            where a.status = 1 and b.status = 1
+            group by a.kit_issuance_id
+        ');
+
+        $subkitting_collect = collect($subkitting_collect_obj)->pluck('sub_kit_qty', 'kit_issuance_id')->toArray();
+
+        // 2. Use pluck() to get issuance numbers instantly without manual looping
+        $issuance_numbers = DB::connection('mysql_subsystem')
+            ->table('tbl_wbs_material_kitting')
+            ->where('device_name', $deviceName)
+            ->pluck('issuance_no')
+            ->toArray();
+
+       // 3. Let the database handle uniqueness by fetching the minimum ID for each distinct item
+        $distinctItemIds = DB::connection('mysql_subsystem')
+            ->table('tbl_wbs_kit_issuance')
+            ->whereIn('issue_no', $issuance_numbers)
+            ->groupBy('item')
+            ->select(DB::raw('MIN(id) as id'))
+            ->pluck('id');
+
+        // Now pull the full rows for only those distinct IDs
+        $lot_numbers = DB::connection('mysql_subsystem')
+            ->table('tbl_wbs_kit_issuance')
+            ->whereIn('id', $distinctItemIds)
+            ->get();
+
+        // NOTE: The PartsPrep query inside your first loop was removed because its result ($parts_preps)
+        // was never being used to filter or modify the array. This saves massive processing time.
+        foreach ($lot_numbers as $lot_number) {
+            $materials[] = [
+                "isKitting" => 1,
+                "po" => $lot_number->po,
+                "id" => $lot_number->id,
+                "materialCode" => $lot_number->item,
+                "material" => $lot_number->item_desc,
+                "lotNo" => $lot_number->lot_no,
+            ];
+            $arrayListMatterial[] = $lot_number;
+        }
+
+        // 4. Eager load the relation to prevent N+1 queries during the Sakidashi loop
+        $tbl_wbs_sakidashi_issuances = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')
+            ->where('device_name', $deviceName)
+            ->distinct()
+            ->get();
+
+        // 5. Fetch all PartsPrep matching these IDs in ONE query instead of inside the loop
+        $sakidashiIds = $tbl_wbs_sakidashi_issuances->pluck('id')->toArray();
+        $partsPrepsGrouped = PartsPrep::whereIn('wbs_kit_issuance_id', $sakidashiIds)
+            ->where('wbs_table', 2)
+            ->whereNull('deleted_at')
+            ->get()
+            ->groupBy('wbs_kit_issuance_id');
+
+        $temp_item_description_array = [];
+
+        foreach ($tbl_wbs_sakidashi_issuances as $tbl_wbs_sakidashi_issuance) {
+            $status = 0;
+
+            // Grab pre-loaded parts_preps from our memory collection map instead of querying the DB
+            $parts_preps = $partsPrepsGrouped->get($tbl_wbs_sakidashi_issuance->id, collect());
+
+            if ($parts_preps->isNotEmpty() && $parts_preps->first()->status == 1) {
+                $status = 1;
+            }
+
+            if ($status == 1 && isset($tbl_wbs_sakidashi_issuance->tbl_wbs_sakidashi_issuance_item)) {
+                $item = $tbl_wbs_sakidashi_issuance->tbl_wbs_sakidashi_issuance_item;
+
+                if (!in_array($item->item, $temp_item_description_array)) {
+                    $temp_item_description_array[] = $item->item;
+
+                    $materials[] = [
+                        "isKitting" => 0,
+                        "id" => $item->id,
+                        "materialCode" => $item->item,
+                        "material" => $item->item_desc,
+                        "lotNo" => $item->lot_no,
+                    ];
+                    $arrayListSakidashi[] = $tbl_wbs_sakidashi_issuance;
+                }
+            }
+        }
+
+        return response()->json([
+            'count' => count($materials),
+            'materials' => $materials,
+        ]);
+    }
+    public function getMaterialsFromRecievingRev1(Request $request)
     {
         $deviceName = $request->deviceName;
 
@@ -118,6 +222,8 @@ class MaterialController extends Controller
             ->get()
             ->flatten(1);
 
+            // return $collectIssuanceNoByDeviceName;
+
         $issuance_numbers = [];
         for ($i=0; $i < count($collectIssuanceNoByDeviceName); $i++) {
             array_push($issuance_numbers, $collectIssuanceNoByDeviceName[$i]->issuance_no);
@@ -129,6 +235,8 @@ class MaterialController extends Controller
             // ->get();
             // ->get()->unique('item_desc')->flatten(1);
             ->get()->unique('item')->flatten(1); // added by nesa 01-26-2023
+
+            // return $lot_numbers;
 
         for ($i=0; $i < count($lot_numbers); $i++) {
             $lot_number = $lot_numbers[$i];
@@ -198,6 +306,8 @@ class MaterialController extends Controller
                 }
             }
         }
+
+        // return $materials;
 
         return response()->json([
             'count' => count($materials),

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
+// use Auth;
+use Illuminate\Support\Facades\Auth;
 use Mail;
 use QrCode;
 use App\User;
@@ -135,7 +136,7 @@ class DefectEscalationDarrenController extends Controller{
         ->where('po_number', $request->po_num)
         ->get();
 
-        // return $defectRuncardDetails;
+        // return $defectRuncardDetails; data-type
 
         return DataTables::of($defectRuncardDetails)
             ->addColumn('action', function($defectRuncardDetails){
@@ -298,7 +299,13 @@ class DefectEscalationDarrenController extends Controller{
                 $defectCtrlNo = $defectRuncardDetails->defect_ctrl_txt ."-". $defectRuncardDetails->defect_ctrl_number;
                 $result = "";
                 $result .= "<center>";
-                $result .= '<button style="width:30px; margin-top: 3px;" title="View" class="btn_view_defect_details btn btn-info btn-sm" data-defect-id="' . $defectRuncardDetails->id . '"><i class="fa fa-eye"></i></button>';
+                $result .= '<button style="width:30px; margin-top: 3px;" title="View" class="btn_view_defect_details btn btn-info btn-sm" data-defect-id="' . $defectRuncardDetails->id . '"
+                data-status="' . $defectRuncardDetails->defect_status . '"
+                data-verification="' . $defectRuncardDetails->de_verification_status . '"
+                data-description="' . $defectRuncardDetails->detailed_description . '"
+                data-occurence="' . $defectRuncardDetails->de_occurence . '"
+                data-type="' . $defectRuncardDetails->defect_classification . '"
+                ><i class="fa fa-eye"></i></button>';
                 $result .= '<button style="width:30px; margin-top: 3px; margin-left: 3px;" title="Edit" class="btn_edit_defect_details btn btn-warning btn-sm"
                 data-defect-id="' . $defectRuncardDetails->id . '"
                 data-status="' . $defectRuncardDetails->defect_status . '"
@@ -363,7 +370,7 @@ class DefectEscalationDarrenController extends Controller{
                     || $defectRuncardDetails->defect_status == 6
                     || $defectRuncardDetails->defect_status == 7
                     || $defectRuncardDetails->defect_status == 8)
-                    {
+                {
                     $result .= '<span class="badge bg-success text-white">Verified</span>';
                 }
 
@@ -489,7 +496,7 @@ class DefectEscalationDarrenController extends Controller{
             //     // 2. Loop through each string and split them manually
             //     foreach ($rawModIds as $idString) {
             //         $ids = explode(',', $idString); // Split "6,10" into ["6", "10"]
-                    
+
             //         foreach ($ids as $id) {
             //             $trimmedId = trim($id);
             //             if ($trimmedId !== '') {
@@ -610,7 +617,7 @@ class DefectEscalationDarrenController extends Controller{
                 // 'mod_type'              => 'required',
                 'runcard_id'            => 'required',
                 'runcard_station_id'    => 'required',
-                'runcard_station_mod_id'=> 'required',
+                // 'runcard_station_mod_id'=> 'required',
                 'd_classification'      => 'required',
                 'detailed_description'  => 'required',
                 'defect'                => 'required',
@@ -680,7 +687,7 @@ class DefectEscalationDarrenController extends Controller{
                 ]);
 
 
-                DefectProblemVerification::updateOrCreate(
+                DefectProblemVerificationV2::updateOrCreate(
                     // 🔎 Search condition
                     ['de_id' => $request->defect_id],
 
@@ -724,7 +731,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $user_man;
 
                 DefectImmediateActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'at_man_action_details'         => $request->action_details_man,
                         'at_machine_action_details'     => $request->action_details_machine,
@@ -747,7 +754,7 @@ class DefectEscalationDarrenController extends Controller{
                 );
 
                 DefectContainmentActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'wip_total_qty' => $request->wip_total_qty,
                         'wip_ok_qty'    => $request->wip_ok_qty,
@@ -845,95 +852,36 @@ class DefectEscalationDarrenController extends Controller{
 
     public function add_defect_escalation_test(Request $request)
     {
+        // return 'asd';
         date_default_timezone_set('Asia/Manila');
         $data = $request->all();
 
-        // return $data;
-
-        // return $data;
-
-        $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
-
-        // $ts = "TSF1";
-        // $line = $request->line_t;
-        // preg_match('/\(([^)]+)\)/', $line, $matches);
-        // $defectLine = $matches[1] ?? '';
-
-        // // if( $existingDefect == NULL) {
-        // //         if($request->d_classification == 1){
-        // //             $defect_text = "A1";
-        // //         }
-        // //         else if($request->d_classification == 2){
-        // //             $defect_text = "A2";
-        // //         }
-        // //         else if($request->d_classification == 3){
-        // //             $defect_text = "A3";
-        // //         }
-        // //         else if($request->d_classification == 4){
-        // //             $defect_text = "A4";
-        // //         }
-        // //         else if($request->d_classification == 5){
-        // //             $defect_text = "A5";
-        // //         }
-        // //         $defectCtrltxt = $ts.'-'.$defectLine.'-'.$defect_text ."-". date('m') . date('y');
-
-        // //     $defectCtrlNumber = '0001';
-
-        // // }else{
-        // //         if($request->d_classification == 1){
-        // //             $defect_text = "A1";
-        // //         }
-        // //         else if($request->d_classification == 2){
-        // //             $defect_text = "A2";
-        // //         }
-        // //         else if($request->d_classification == 3){
-        // //             $defect_text = "A3";
-        // //         }
-        // //         else if($request->d_classification == 4){
-        // //             $defect_text = "A4";
-        // //         }
-        // //         else if($request->d_classification == 5){
-        // //             $defect_text = "A5";
-        // //         }
-        // //         $defectCtrltxt = $ts.'-'.$defectLine.'-'.$defect_text ."-". date('m') . date('y');
-        // //     // }
-        // //     $lastCtrlNumber = $existingDefect->defect_ctrl_number;
-        // //     $lastDefectCtrlNumber = explode('-', $lastCtrlNumber);
-        // //     $lastDefectCtrlNumberSuffix = end($lastDefectCtrlNumber);
-        // //     $nextCtrlNumberSuffix = str_pad((int)$lastDefectCtrlNumberSuffix + 1, 4, '0', STR_PAD_LEFT);
-        // //     $defectCtrlNumber = $nextCtrlNumberSuffix;
-        // // }
-
-        // return $defectCtrltxt."-".$defectCtrlNumber;
-
-            // $validator = Validator::make($data, [
-            //     'po_number'             => 'required',
-            //     // 'mod_type'              => 'required',
-            //     'runcard_id'            => 'required',
-            //     'runcard_station_id'    => 'required',
-            //     'runcard_station_mod_id'=> 'required',
-            //     'd_classification'      => 'required',
-            //     'detailed_description'  => 'required',
-            //     'defect'                => 'required',
-            //     'date'                  => 'required|date',
-            //     'shift'                 => 'required|in:1,2',
-            //     'line'                  => 'required',
-            //     'd_mold_no'             => 'nullable|string|max:255',
-            //     'lot_no'                => 'nullable|string|max:255',
-            //     'pair_no'               => 'nullable|string|max:255',
-            //     'occurrence'            => 'nullable|string|max:255',
-            //     'station'               => 'nullable|string|max:255',
-            //     'select_user'           => 'required|exists:users,id',
-            //     'position'              => 'required|in:1,2,3,4',
-            // ]);
-        // }
-
-
-        // if ($validator->fails()) {
-        //     return response()->json(['errors' => $validator->errors()], 422);
-        // }
-
         DB::beginTransaction();
+        $data = $request->all();
+            $validator = Validator::make($data, [
+                'po_number'             => 'required',
+                // 'mod_type'              => 'required',
+                'runcard_id'            => 'required',
+                'runcard_station_id'    => 'required',
+                // 'runcard_station_mod_id'=> 'required',
+                'd_classification'      => 'required',
+                'detailed_description'  => 'required',
+                'defect'                => 'required',
+                'date'                  => 'required|date',
+                'shift'                 => 'required|in:1,2',
+                'line'                  => 'required',
+                'd_mold_no'             => 'nullable|string|max:255',
+                'lot_no'                => 'nullable|string|max:255',
+                'pair_no'               => 'nullable|string|max:255',
+                'occurrence'            => 'nullable|string|max:255',
+                'station'               => 'nullable|string|max:255',
+                'select_user'           => 'required|exists:users,id',
+                'position'              => 'required|in:1,2,3,4',
+            ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         try {
             if ($request->defect_id) {
@@ -959,6 +907,7 @@ class DefectEscalationDarrenController extends Controller{
                 $replacedPartname = is_array($request->r_part_name) ? implode(",", $request->r_part_name) : $request->r_part_name;
                 $replacedPartLotNo = is_array($request->r_lot_no) ? implode(",", $request->r_lot_no) : $request->r_lot_no;
 
+                // return $request->other_station;
 
                 $defectEscalation->update([
                     'po_number'               => $request->po_number,
@@ -987,6 +936,8 @@ class DefectEscalationDarrenController extends Controller{
                     'updated_by'              => Auth::user()->id,
                     'updated_at'              => now()
                 ]);
+
+                // return $defectEscalation->id;
 
                     $dpv = DefectProblemVerificationV2::updateOrCreate(
                         ['de_id' => $request->defect_id],
@@ -1031,6 +982,12 @@ class DefectEscalationDarrenController extends Controller{
                         ]
                     );
 
+//                     dd([
+//     'id' => $dpv->id,
+//     'de_id' => $dpv->de_id,
+//     'wasRecentlyCreated' => $dpv->wasRecentlyCreated,
+// ]);
+
                 $dpv = DefectProblemVerificationV2::where('de_id', $request->defect_id)->first();
 
                 $dpvRequiredFields = [
@@ -1068,7 +1025,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $user_man;
 
                 DefectImmediateActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'at_man_action_details'         => $request->action_details_man,
                         'at_machine_action_details'     => $request->action_details_machine,
@@ -1116,7 +1073,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                   DefectContainmentActionV2::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'wip_total_qty' => $request->wip_total_qty,
                         'wip_ok_qty'    => $request->wip_ok_qty,
@@ -1182,7 +1139,7 @@ class DefectEscalationDarrenController extends Controller{
                 // return $defectEscalation->defect_status;
 
                 DefectReworkDetails::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'reworker_user_id1'         => $request->reworker_operator_id1,
                         'reworker_user_id2'         => $request->reworker_operator_id2,
@@ -1229,7 +1186,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DefectFinalDispositionDetails::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'f_disposition'                 => $request->f_dispostion_result,
                         'engr_manager_id'               => $request->d_engr_manager_id,
@@ -1274,7 +1231,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DefectVerifyCauseAndEscapeeCause::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'rc_ec'                         => $request->root_cause_escapee,
                         'updated_by'                    => Auth::id(),
@@ -1313,7 +1270,7 @@ class DefectEscalationDarrenController extends Controller{
                 $capa_due_date = is_array($request->capa_due_date) ? implode(",", $request->capa_due_date) : $request->capa_due_date;
 
                 DefectCapa::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'de_capa'            => $capa_action,
                         'de_pic'             => $capa_user,
@@ -1348,7 +1305,7 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
                 DEVerificationAndConfirmationResult::updateOrCreate(
-                    ['de_id' => $request->defect_id], 
+                    ['de_id' => $request->defect_id],
                     [
                         'action_stated'                  => $request->action_stated,
                         'prodblem_reoccur'               => $request->problem_reoccur,
@@ -1395,11 +1352,8 @@ class DefectEscalationDarrenController extends Controller{
                 }
 
 
-
-            }
-
-            else {
-
+            }else {
+            // return 'true';
                 $modeOfDefect = is_array($request->defect) ? implode(",", $request->defect) : $request->defect;
                 $area1 = is_array($request->area1) ? implode(",", $request->area1) : $request->area1;
                 $area2 = is_array($request->area2) ? implode(",", $request->area2) : $request->area2;
@@ -1456,7 +1410,7 @@ class DefectEscalationDarrenController extends Controller{
     }
 
     public function view_defect_details(Request $request){
-        // return $request->defect_id;
+        return $request->defect_id;
         $defectDetails = DefectEscalationV2Rev::with([
             'operator_info',
             'defect_description',
@@ -1627,6 +1581,7 @@ class DefectEscalationDarrenController extends Controller{
         ->first();
 
 
+
         $manUserDetails = [];
         $machineUserDetails = [];
         $materialUserDetails = [];
@@ -1635,7 +1590,7 @@ class DefectEscalationDarrenController extends Controller{
         $capaUserDetails = [];
         $getCapaDetails = [];
 
-        $defectImmediateActionDetails = DefectImmediateAction::where('de_id', $request->defect_id)->first();
+        $defectImmediateActionDetails = DefectImmediateActionV2::where('de_id', $request->defect_id)->first();
 
         // return $defectImmediateActionDetails;
 
@@ -1817,12 +1772,12 @@ class DefectEscalationDarrenController extends Controller{
                 ->pluck('mod_id');
 
             $tally = [];
-            
+
             // 3. Split and Tally IDs for THIS Shift/Line only
             foreach ($rawModIds as $idString) {
                 if (empty($idString)) continue;
 
-                $ids = explode(',', $idString); 
+                $ids = explode(',', $idString);
                 foreach ($ids as $id) {
                     $trimmedId = trim($id);
                     if ($trimmedId !== '') {
@@ -1834,11 +1789,11 @@ class DefectEscalationDarrenController extends Controller{
             // 4. Map IDs to Names for this specific Group
             if (!empty($tally)) {
                 $names = ModeOfDefect::whereIn('id', array_keys($tally))->pluck('name', 'id');
-                
+
                 $formattedDefects = [];
                 foreach ($tally as $id => $qty) {
                     $name = isset($names[$id]) ? $names[$id] : "Unknown (#$id)";
-                    
+
                     $formattedDefects[] = [
                         'mod_details_count' => $name.'-'.$qty,
                     ];

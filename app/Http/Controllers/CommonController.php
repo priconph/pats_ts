@@ -2,24 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Model\APilotRun;
-use App\Model\DefectEscalationV2Rev;
-use App\Model\Device;
 use Auth;
+use QrCode;
 use DataTables;
+use App\Model\APilotRun;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Model\DefectEscalationV2Rev;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use QrCode;
 
 class CommonController extends Controller
 {
     //
     private static $instance = null;
-
-
 
 	public static function getInstance() {
 		if(!self::$instance instanceof self)
@@ -234,7 +231,7 @@ class CommonController extends Controller
             'critical_notif' => $critical_notif,
             'non_crit_notif' => $non_crit_notif
         ]);
-
-
+       
+        
     }
 }

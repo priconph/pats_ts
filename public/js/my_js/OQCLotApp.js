@@ -1,4 +1,4 @@
-// Add AddOQCLotApp 
+// Add AddOQCLotApp
 function AddOQCLotApp(){
     toastr.options = {
       "closeButton": false,
@@ -43,7 +43,7 @@ function AddOQCLotApp(){
             //     toastr.error('Output Quantity is not equal to Lot Quantity!');
             // }
             else{
-                toastr.error('Saving lot application failed!');
+                toastr.error('Saving lot application failed! Please check the MATRIX!');
             }
         },
         error: function(data, xhr, status){

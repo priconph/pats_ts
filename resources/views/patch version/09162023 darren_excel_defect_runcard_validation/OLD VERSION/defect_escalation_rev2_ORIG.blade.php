@@ -22,7 +22,7 @@
       $layout = 'layouts.ppc_layout';
     }
     else if(Auth::user()->position == 8){
-      $layout = 'layouts.clerk_layout';
+      $layout = 'layouts.clerk_layout';2
     }
     else if(Auth::user()->position == 9){
       $layout = 'layouts.super_user_layout';
@@ -5679,7 +5679,7 @@ function OutputDataCounter(api) {
                         alert(`Invalid Runcard Number: ${val} Please try again !`);
                         return;
                     }
-/* 
+/*
     nmodify NOTE: Runcard must be same as the PO
     Ex: PO = 450245666 so the Runcard # = 450245666, PO = ES23 then Runcard# = ES23
 */
@@ -5700,7 +5700,7 @@ function OutputDataCounter(api) {
                     }else{
                         alert(`Invalid Input: ${val}`);
                         return;
-                    } 
+                    }
                     $.ajax({
                         type: "GET",
                         url: "fn_is_prod_runcard_num_is_ng",

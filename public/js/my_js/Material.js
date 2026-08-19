@@ -444,6 +444,7 @@ const getMaterialKittingSakidashiList = (cboElement, deviceName, idAndValueForEd
             cboElement.html(result);
         },
         success: function(JsonObject){
+            // console.log('success');
             result = '';
             if(JsonObject['materials'].length > 0){
                 result = '<option value="0" selected disabled> -- Select Material -- </option>';
@@ -493,7 +494,7 @@ function SaveProcessFlowMaterial(materialArray){
         success(data){
             btnSaveProcessFlow.prop('disabled', false);
             btnSaveProcessFlow.html('Save');
-            
+
             if(data['auth'] == 1){
                 if(data['result'] == 1){
                     toastr.success('Record Saved!');

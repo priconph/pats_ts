@@ -723,8 +723,7 @@
                         <div class="input-group input-group-prepend w-50">
                             <span class="input-group-text w-100" id="basic-addon1">Line</span>
                         </div>
-                        <select class="form-control select2 select2bs4 sel-assembly-lines" id="txtAssemblyLineId" name="assembly_line">
-                            <option value=""> N/A </option>
+                          <select class="form-control select2 select2bs4 sel-assembly-lines" id="txtAssemblyLineId" name="assembly_line">
                           </select>
                       </div>
                     </div>
@@ -5032,6 +5031,16 @@
       $(document).on('click','.btn_edit_prod_runcard_station',function(e){
         var data_arr = [];
 
+        let poNumber = $('#txt_po_number_lbl').val();
+			$('#txtPoNumberWithDefect').val(poNumber);
+			let assemblyLine = $('#txtAssemblyLineId option:selected').text();
+			let assemblyLineId = $('#txtAssemblyLineId').val();
+			// console.log('assemblyLine',assemblyLine);
+			let lineWithDefect = assemblyLine.replace(/^Line\s*\d+\s*\(|\)$/g, '');
+			// console.log('lineWithDefect',lineWithDefect);
+			$('#txtLineWithDefect').val(lineWithDefect);
+			$('#txtLineWithDefectId').val(assemblyLineId);
+
 
 
         $('#frm_edit_prod_runcard_station_details')[0].reset();
@@ -5401,6 +5410,121 @@
           },
         });
       }
+
+    function GetMaterialKitting(){
+      $.ajax({
+        url: "get_wbs_material_kitting",
+        method: 'get',
+        dataType: 'json',
+        data: {
+          po_number: currentPoNo
+        },
+        beforeSend: function(){
+          boxing = "";
+          assessment = "";
+          aDrawing = "";
+          aDrawingRev = "";
+          gDrawing = "";
+          gDrawingRev = "";
+        },
+        success: function(data){
+          if(data['material_kitting'] != null){
+            $("#txt_po_number_lbl").val(data['material_kitting']['po_no']);
+            $("#txt_device_name_lbl").val(data['material_kitting']['device_name']);
+            $("#txt_device_code_lbl").val(data['material_kitting']['device_code']);
+            $("#txt_po_qty_lbl").val(data['material_kitting']['po_qty']);
+
+            /* 03172023*/
+            $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
+
+            boxing = data['matrix'][0]['ship_boxing'];
+
+            // alert(data['matrix'][0]['ship_boxing'])
+            // if(data['material_kitting']['matrix'] != null){
+            //   $("#txt_lot_qty").val(data['matrix'][0]['ship_boxing']);
+            //   //boxing = data['material_kitting']['device_info']['boxing'];
+
+
+            //   // alert(boxing);
+            // }
+            // else{
+            //   boxing = "";
+            //   // $("#txt_lot_qty").val("");
+            // }
+
+            if(data['material_kitting']['assessment'] != null){
+              assessment = data['material_kitting']['device_info']['assessment'];
+            }
+            else{
+              assessment = "";
+            }
+
+            $("#txt_ct_supplier").val('YEC');
+
+            // TEMP REMOVE Due to Request of operatr to fix it in "YEC"
+            // if(data['material_kitting']['material_issuance_details'].length > 0){
+            //     $("#txt_ct_supplier").val(data['material_kitting']['material_issuance_details'][0]['supplier']);
+            // }
+            // else{
+            //     $("#txt_ct_supplier").val('');
+            // }
+            // ..TEMP REMOVE Due to Request of operatr to fix it in "YEC"
+
+            // if(data['material_kitting']['documents_details'].length > 0){
+            //   for(let index = 0; index < data['material_kitting']['documents_details'].length; index++){
+            //     if(data['material_kitting']['documents_details'][index]['doc_no'].charAt(0).toUpperCase() == "A"){
+            //       aDrawing = data['material_kitting']['documents_details'][index]['doc_no'];
+            //       aDrawingRev = data['material_kitting']['documents_details'][index]['rev_no'];
+            //     }
+            //     else if(data['material_kitting']['documents_details'][index]['doc_no'].charAt(0).toUpperCase() == "G"){
+            //       gDrawing = data['material_kitting']['documents_details'][index]['doc_no'];
+            //       gDrawingRev = data['material_kitting']['documents_details'][index]['rev_no'];
+            //     }
+            //   }
+
+            //   $("#txt_a_drawing_no").val(aDrawing);
+            //   $("#txt_a_drawing_rev").val(aDrawingRev);
+            //   $("#txt_g_drawing_no").val(gDrawing);
+            //   $("#txt_g_drawing_rev").val(gDrawingRev);
+            // }
+            if(data['doc_a_drawing_query'].length > 0){
+              aDrawing = data['doc_a_drawing_query'][0].doc_no;
+              aDrawingRev = data['doc_a_drawing_query'][0].rev_no;
+            }
+            else{
+              aDrawing = "";
+              aDrawingRev = "";
+            }
+            $("#txt_a_drawing_no").val(aDrawing);
+            $("#txt_a_drawing_rev").val(aDrawingRev);
+
+            if(data['doc_g_drawing_query'].length > 0){
+              gDrawing = data['doc_g_drawing_query'][0].doc_no;
+              gDrawingRev = data['doc_g_drawing_query'][0].rev_no;
+            }
+            else{
+              gDrawing = "";
+              gDrawingRev = "";
+            }
+            $("#txt_g_drawing_no").val(gDrawing);
+            $("#txt_g_drawing_rev").val(gDrawingRev);
+
+            // materialKitTransferSlip = data['material_kitting']['issuance_no'];
+            // $("#txt_material_transfer_slip_lbl").val(materialKitTransferSlip);
+            // dt_materials.draw();
+
+            // $("#txt_lot_qty").val(boxing);
+          }
+          else{
+            $("#txt_po_number_lbl").val('');
+            $("#txt_device_name_lbl").val('');
+            $("#txt_device_code_lbl").val('');
+            $("#txt_po_qty_lbl").val('');
+            $("#txt_lot_qty").val("");
+          }
+        }
+      });
+    }
 
     function GetSakidashiIssuance(){
       $.ajax({
@@ -5936,6 +6060,8 @@
         dataType : 'json',
         success     : function(data){
         //MIGZ 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
+        console.log();
+
         //   if(data['isFinalVisualExist'] && $("#txt_from_prod_runcard_num").val() == "N/A"){
           if(data['isFinalVisualExist']){
             $("#btnSubmitToOQCLotApp").attr('disabled', false);
@@ -6438,20 +6564,35 @@
                 appendHTML += '</td>';
                 appendHTML += '<td>';
                 appendHTML += '<select class="form-control" name="type_of_ng[]">';
-                    if(modeOfDefect[index]['type_of_ng'] == 1){
-                       appendHTML += '<option value="1">MAT\'L NG.</option>';
-                        appendHTML += '<option value="2">PROD\'N NG.</option>';
-                        appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
-                        appendHTML += '<option value="4">Auto Inserter</option>';
-                        appendHTML += '<option value="5">NG Samples</option>';
+                    // if(modeOfDefect[index]['type_of_ng'] == 1){
+                    //    appendHTML += '<option value="1">MAT\'L NG.</option>';
+                    //     appendHTML += '<option value="2">PROD\'N NG.</option>';
+                    //     appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
+                    //     appendHTML += '<option value="4">Auto Inserter</option>';
+                    //     appendHTML += '<option value="5">NG Samples</option>';
+
+                    // }
+                    // else{
+                    //   appendHTML += '<option value="1">MAT\'L NG.</option>';
+                    //   appendHTML += '<option value="2" selected="true">PROD\'N NG.</option>';
+                    //    appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
+                    //     appendHTML += '<option value="4">Auto Inserter</option>';
+                    //     appendHTML += '<option value="5">NG Samples</option>';
+                    // }
+                      if(modeOfDefect[index]['type_of_ng'] == 1){
+                       appendHTML += '<option value="1">Critical</option>';
+                        appendHTML += '<option value="2">Non-Critical</option>';
+                        appendHTML += '<option value="3">Auto-Insert Defects</option>';
+                        appendHTML += '<option value="4">NG Samples</option>';
+                        // appendHTML += '<option value="5">NG Samples</option>';
 
                     }
                     else{
-                      appendHTML += '<option value="1">MAT\'L NG.</option>';
-                      appendHTML += '<option value="2" selected="true">PROD\'N NG.</option>';
-                       appendHTML += '<option value="3">Setup / Adjustment / Repair</option>';
-                        appendHTML += '<option value="4">Auto Inserter</option>';
-                        appendHTML += '<option value="5">NG Samples</option>';
+                      appendHTML += '<option value="1">Critical</option>';
+                      appendHTML += '<option value="2">Non-Critical</option>';
+                       appendHTML += '<option value="3">Auto-Insert Defects</option>';
+                        appendHTML += '<option value="4">NG Samples</option>';
+                        // appendHTML += '<option value="5">NG Samples</option>';
                     }
                   appendHTML += '</select>';
                 appendHTML += '<td>';
@@ -7755,26 +7896,41 @@ Ex: PO = 450245666 so the DE # = 450245666, PO = ES23 then Runcard# = ES23
     // added 11/05/2025 - mdr
     GetAssemblyLines($(".sel-assembly-lines"));
 
-    $(document).on('click', '.btn_go_to_defect_escalation', function (e) {
-      e.preventDefault();
+//     $(document).on('click', '.btn_go_to_defect_escalation', function (e) {
+//       e.preventDefault();
 
-      let poNumber = $('#txt_po_number_lbl').val();
-      let deviceName = $('#txt_device_name_lbl').val();
-      let deviceCode = $('#txt_device_code_lbl').val();
-      let poQty = $('#txt_po_qty_lbl').val();
+//       let poNumber = $('#txt_po_number_lbl').val();
+//       let deviceName = $('#txt_device_name_lbl').val();
+//       let deviceCode = $('#txt_device_code_lbl').val();
+//       let poQty = $('#txt_po_qty_lbl').val();
 
-      let dieNo = $('#txt_die_no').val();
-      let pairNo = $('#txt_pair_no').val();
+//       let dieNo = $('#txt_die_no').val();
+//       let pairNo = $('#txt_pair_no').val();
 
-      sessionStorage.setItem('po_number_for_defect_escalation', poNumber);
-      sessionStorage.setItem('device_name_for_defect_escalation', deviceName);
-      sessionStorage.setItem('device_code_for_defect_escalation', deviceCode);
-      sessionStorage.setItem('po_qty_for_defect_escalation', poQty);
-      sessionStorage.setItem('die_no_for_defect_escalation', dieNo);
-      sessionStorage.setItem('pair_no_for_defect_escalation', pairNo);
+//       sessionStorage.setItem('po_number_for_defect_escalation', poNumber);
+//       sessionStorage.setItem('device_name_for_defect_escalation', deviceName);
+//       sessionStorage.setItem('device_code_for_defect_escalation', deviceCode);
+//       sessionStorage.setItem('po_qty_for_defect_escalation', poQty);
+//       sessionStorage.setItem('die_no_for_defect_escalation', dieNo);
+//       sessionStorage.setItem('pair_no_for_defect_escalation', pairNo);
 
-      window.open('http://rapidx/pats_ts/defect_escalation_v2_old', '_blank');
-  });
+//       window.open('http://rapidx/pats_ts/defect_escalation_v2_old', '_blank');
+//   });
+
+$(document).on('click', '.btn_go_to_defect_escalation', function(e) {
+    e.preventDefault();
+
+    let poNumber = $('#txt_po_number').val();
+    let deviceName = $('#txt_device_name_lbl').val();
+    let deviceCode = $('#txt_device_code_lbl').val();
+    let poQty = $('#txt_po_qty_lbl').val();
+    let dieNo = $('#txt_die_no').val();
+    let pairNo = $('#txt_pair_no').val();
+
+    let url = `http://rapidx/pats_ts/defect_escalation_v2_old?po_number=${encodeURIComponent(poNumber)}&device_name=${encodeURIComponent(deviceName)}&device_code=${encodeURIComponent(deviceCode)}&po_qty=${encodeURIComponent(poQty)}&die_no=${encodeURIComponent(dieNo)}&pair_no=${encodeURIComponent(pairNo)}`;
+
+    window.open(url, '_blank');
+});
 
 
   </script>

@@ -80,7 +80,7 @@ class DefectEscalationV2Controller extends Controller{
     }
 
     public function get_runcard_with_defects_v2(Request $request){
-            $runcard_no = DB::select("SELECT 
+            $runcard_no = DB::select("SELECT
             TRIM(UPPER(a.runcard_no)) as runcard_no,
             a.id as runcard_id,
             a.pair_no,
@@ -91,14 +91,14 @@ class DefectEscalationV2Controller extends Controller{
             c.mod_qty,
             d.name as defect_name
             FROM production_runcards a
-            INNER JOIN production_runcard_stations2 b 
+            INNER JOIN production_runcard_stations2 b
                 ON a.id = b.production_runcard_id
-            INNER JOIN prod_runcard_station_mods c 
+            INNER JOIN prod_runcard_station_mods c
                 ON b.id = c.production_runcard_station_id
-            INNER JOIN mode_of_defects d 
+            INNER JOIN mode_of_defects d
                 ON c.mod_id = d.id
             WHERE a.po_no = ?
-            AND b.qty_ng != 0  
+            AND b.qty_ng != 0
             AND NOT EXISTS (
                 SELECT 1
                 FROM defect_escalation_v2 e
@@ -110,12 +110,12 @@ class DefectEscalationV2Controller extends Controller{
             return response()->json(['data' => $runcard_no, 'status' => 'success']);
     }
 
-    
+
 
     public function get_assembly_line_with_defect(Request $request){
         $assembly_line = AssemblyLine::where('id', $request->assembly_line_id)
         ->first();
-        
+
         return $assembly_line;
     }
 
@@ -153,8 +153,8 @@ class DefectEscalationV2Controller extends Controller{
                 // else if ($defectRuncardDetails->defect_status == 3) {
                 //     $result .= '<span class="badge bg-info text-dark">For Containment Action</span>';
                 // }
-                
-                
+
+
                 return $result;
             })
             ->addColumn('defect_ctrl', function($defectRuncardDetails){
@@ -281,7 +281,7 @@ class DefectEscalationV2Controller extends Controller{
         date_default_timezone_set('Asia/Manila');
 
         $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
-        
+
         // return  $existingDefect;
 
         $ts = "TSF1";
@@ -316,7 +316,7 @@ class DefectEscalationV2Controller extends Controller{
                 $defectCtrltxt = $ts.'-'.$defectLine.'-'.$defect_text ."-". date('m') . date('y');
             // }
             $defectCtrlNumber = '0001';
-            
+
         }else{
             // if($request->mod_type == 1){
             //     $defectCtrltxt = $ts.'-'."EM"."-". date('m') . date('y');
@@ -347,7 +347,7 @@ class DefectEscalationV2Controller extends Controller{
         }
 
         // return $defectCtrltxt."-".$defectCtrlNumber;
-    
+
         $data = $request->all();
             $validator = Validator::make($data, [
                 'po_number'             => 'required',
@@ -370,19 +370,19 @@ class DefectEscalationV2Controller extends Controller{
                 'position'              => 'required|in:1,2,3,4',
             ]);
         // }
-   
-    
+
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-    
+
         DB::beginTransaction();
-    
+
         try {
             if ($request->defect_id) {
                 // return 'update';
                 // UPDATE
-                $defectEscalation = DefectEscalationV2Rev::find($request->defect_id);                
+                $defectEscalation = DefectEscalationV2Rev::find($request->defect_id);
                 // return $DEproblemverificationDetails;
 
                 if (!$defectEscalation) {
@@ -394,7 +394,7 @@ class DefectEscalationV2Controller extends Controller{
                 $DEcontainmentActionDetails   = DefectContainmentAction::where('de_id', $request->defect_id)->first();
 
                 $modeOfDefect = is_array($request->defect) ? implode(",", $request->defect) : $request->defect;
-    
+
                 $defectEscalation->update([
                     'po_number'               => $request->po_number,
                     'defect_classification'   => $request->d_classification,
@@ -423,11 +423,11 @@ class DefectEscalationV2Controller extends Controller{
                     'updated_at'              => now()
                 ]);
 
-                
-                DefectProblemVerification::updateOrCreate(
+
+                DefectProblemVerificationV2::updateOrCreate(
                     // 🔎 Search condition
                     ['de_id' => $request->defect_id],
-                
+
                     // 📝 Values to update (or insert if not found)
                     [
                         'vr_prod_result'        => $request->p_verification_result,
@@ -441,7 +441,7 @@ class DefectEscalationV2Controller extends Controller{
                         'vr_qc_result'          => $request->q_verification_result,
                         'vr_qc_user'            => $request->q_verification_user_id,
                         'vr_qc_date'            => $request->q_verification_date,
-                        'vr_qc_remarks'         => $request->q_verification_remarks, 
+                        'vr_qc_remarks'         => $request->q_verification_remarks,
                         'd_prod_result'         => $request->p_disposition,
                         'd_prod_user'           => $request->p_disposition_user_id,
                         'd_prod_date'           => $request->p_disposition_date,
@@ -498,38 +498,38 @@ class DefectEscalationV2Controller extends Controller{
                         'wip_ng_qty'    => $request->wip_ng_qty,
                         'wip_mod'       => $request->wip_mod,
                         'wip_remarks'   => $request->wip_remarks,
-                
+
                         'pf_total_qty'  => $request->pf_total_qty,
                         'pf_ok_qty'     => $request->pf_ok_qty,
                         'pf_ng_qty'     => $request->pf_ng_qty,
                         'pf_mod'        => $request->pf_mod,
                         'pf_remarks'    => $request->pf_remarks,
-                
+
                         'qc_total_qty'  => $request->oqc_total_qty,
                         'qc_ok_qty'     => $request->oqc_ok_qty,
                         'qc_ng_qty'     => $request->oqc_ng_qty,
                         'qc_mod'        => $request->oqc_mod,
                         'qc_remarks'    => $request->oqc_remarks,
-                
+
                         'p_total_qty'   => $request->packing_total_qty,
                         'p_ok_qty'      => $request->packing_ok_qty,
                         'p_ng_qty'      => $request->packing_ng_qty,
                         'p_mod'         => $request->packing_mod,
                         'p_remarks'     => $request->packing_remarks,
-                
+
                         's_total_qty'   => $request->shipped_total_qty,
                         's_ok_qty'      => $request->shipped_ok_qty,
                         's_ng_qty'      => $request->shipped_ng_qty,
                         's_mod'         => $request->shipped_mod,
                         's_remarks'     => $request->shipped_remarks,
-                
+
                         'updated_by'    => Auth::id(),
                         'updated_at'    => now(),
                     ]
                 );
 
-            } 
-            
+            }
+
             else {
 
                 $modeOfDefect = is_array($request->defect) ? implode(",", $request->defect) : $request->defect;
@@ -565,14 +565,14 @@ class DefectEscalationV2Controller extends Controller{
                         'area3'                   => $request->area3,
                         'area4'                   => $request->area4,
                         'area5'                   => $request->area5,
-                        'defect_status'               => 0, // For Problem Verification        
+                        'defect_status'               => 0, // For Problem Verification
                         'created_by'              => Auth::user()->id,
                         'created_at'              => now()
                     ]);
                 // }
-              
+
             }
-    
+
             DB::commit();
             return response()->json(['result' => "1"]);
 
@@ -601,7 +601,7 @@ class DefectEscalationV2Controller extends Controller{
             'production_runcard' => function($query) {
                 $query->select('id', 'runcard_no', 'assembly_line_id');
             },
-            
+
             ])
         ->where('id', $request->defect_id)
         ->first();
@@ -611,35 +611,35 @@ class DefectEscalationV2Controller extends Controller{
         $materialUserDetails = [];
         $methodUserDetails = [];
         $environmentUserDetails = [];
-    
+
         $defectImmediateActionDetails = DefectImmediateAction::where('de_id', $request->defect_id)->first();
-    
+
         if ($defectImmediateActionDetails) {
             $manUserDetails = User::whereIn('id', explode(',', $defectImmediateActionDetails->at_man_user))
                 ->pluck('name', 'id')
                 ->toArray();
-    
+
             $machineUserDetails = User::whereIn('id', explode(',', $defectImmediateActionDetails->at_machine_user))
                 ->pluck('name', 'id')
                 ->toArray();
-    
+
             $materialUserDetails = User::whereIn('id', explode(',', $defectImmediateActionDetails->at_material_user))
                 ->pluck('name', 'id')
                 ->toArray();
-    
+
             $methodUserDetails = User::whereIn('id', explode(',', $defectImmediateActionDetails->at_method_user))
                 ->pluck('name', 'id')
                 ->toArray();
-    
+
             $environmentUserDetails = User::whereIn('id', explode(',', $defectImmediateActionDetails->at_environment_user))
                 ->pluck('name', 'id')
                 ->toArray();
         }
-    
+
         if($defectDetails){
             return response()->json([
-                'data' => $defectDetails, 
-                'status' => 'success', 
+                'data' => $defectDetails,
+                'status' => 'success',
                 'manUserDetails' => $manUserDetails,
                 'machineUserDetails' => $machineUserDetails,
                 'materialUserDetails' => $materialUserDetails,
@@ -675,7 +675,7 @@ class DefectEscalationV2Controller extends Controller{
 
             $defect_ctrl_qrcode = "data:image/png;base64," . base64_encode($defect_ctrl_qrcode);
         }
-        
+
         // return $defect_ctrl_qrcode;
 
         $product_name = MaterialIssuanceSubSystem::where('po_no', $data->po_number)->get();
@@ -705,7 +705,7 @@ class DefectEscalationV2Controller extends Controller{
         // return response()->json(['data' => $data]);
     }
 
-    
+
 }
 
 

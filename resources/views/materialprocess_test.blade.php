@@ -1,6 +1,6 @@
 @auth
   @php
-    if(Auth::user()->position == 1){ 
+    if(Auth::user()->position == 1){
       $layout = 'layouts.super_user_layout';
     }
     else if(Auth::user()->position == 2){
@@ -435,7 +435,7 @@
             <div class="row">
               <div class="col-sm-12">
                 <input type="hidden" name="device_id" id="txtAddMatProcDevId">
-                
+
                 <div class="form-group">
                   <label>Device Name</label>
                     <input type="text" class="form-control" name="device_name" id="txtAddMatProcDeviceName" readonly>
@@ -456,7 +456,7 @@
                     </div>
                     <div class="col-sm-5">
                       <label><input type="checkbox" name="require_oqc_before_emboss" value="1" id="chkAddMatProcReqOQCBeforeEmboss" disabled="true"> Require OQC Before Emboss</label>
-                    </div> 
+                    </div>
                   </div>
 
                   <select class="form-control select2bs4 selectSubStation" name="station_sub_station_id" id="selAddMatProcSubStationId" style="width: 100%;">
@@ -588,7 +588,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                        
+
                     </tbody>
                   </table>
                 </div>
@@ -676,7 +676,7 @@
               <div class="col-sm-12">
                 <input type="text" class="form-control" name="process_flow_id" style="display: none;">
                 <input type="text" class="form-control" name="device_id" style="display: none;">
-                
+
                 <div class="form-group">
                   <label>Device Name</label>
                     <input type="text" class="form-control" name="device_name" readonly>
@@ -875,7 +875,7 @@
                     </tbody>
                   </table>
                 </div>
-                
+
               </div>
             </div>
           </div>
@@ -918,7 +918,7 @@
 
                     <input type="text" class="form-control mb-3" readonly placeholder="material name" name="material_name" id="material_name">
                     <input type="text" class="form-control mb-3" readonly placeholder="material type" name="material_type" id="material_type">
-                    
+
                     {{-- <input type="text" class="form-control mb-3" readonly name="material_type" id="material_type"> --}}
                 </div>
 
@@ -961,7 +961,7 @@
             <div class="row">
               <div class="col-sm-12">
                 <input type="text" class="form-control" name="device_id" style="display: none;">
-                
+
                 <div class="form-group">
                   <label>Device Name</label>
                     <input type="text" class="form-control" name="device_name" readonly>
@@ -1060,7 +1060,7 @@
     // Device
     let dataTableDevices;
     let materialListData
-    
+
     // Material Process
     let dataTableMatProcess;
     let selectedDeviceId = 0;
@@ -1101,7 +1101,7 @@
 
       // GetMaterialKittingList($(".selWBSMatKitItem"));
       // GetSakidashiList($(".selWBSSakIssuItem"));
-      GetEmbossList($(".selWBSEmbossIssuItem")); 
+      GetEmbossList($(".selWBSEmbossIssuItem"));
 
       // GetCboMaterialByStat($('.selMaterial'), 1)
 
@@ -1125,7 +1125,7 @@
           $("#chkAddMatProcReqOQCBeforeEmboss").prop('checked', false);
         }
         else{
-          $("#chkAddMatProcReqOQCBeforeEmboss").prop('disabled', true); 
+          $("#chkAddMatProcReqOQCBeforeEmboss").prop('disabled', true);
           $("#chkAddMatProcReqOQCBeforeEmboss").prop('checked', false);
         }
       });
@@ -1177,7 +1177,7 @@
           // "scrollCollapse": true,
         });//end of dataTableDevices
 
-        // Add Device 
+        // Add Device
         $("#formAddDevice").submit(function(event){
           event.preventDefault();
           AddDevice();
@@ -1310,7 +1310,7 @@
           $("#txtChangeDeviceStatDeviceStat").val(deviceStat);
 
           if(deviceStat == 1){
-            $("#lblChangeDeviceStatLabel").text('Are you sure to activate?'); 
+            $("#lblChangeDeviceStatLabel").text('Are you sure to activate?');
             $("#h4ChangeDeviceTitle").html('<i class="fa fa-user"></i> Activate Device');
           }
           else{
@@ -1341,7 +1341,7 @@
                 param.status = $("#selFilterMatProcStat").val();
             }
           },
-          
+
           "columns":[
             { "data" : "step" },
             { "data" : "processInfo" },
@@ -1355,7 +1355,7 @@
             { "data" : "chk_for_prod", orderable:false, searchable:false },
           ],
           "columnDefs": [
-              
+
           ],
           "order": [[ 0, 'asc' ]],
           "displayLength": 10,
@@ -1448,9 +1448,9 @@
 
           $('#selEditMatProcMachine').prop('disabled', false);
           $('#btnEditMatProcScanMachineCode').prop('disabled', false);
-          
-          
-          if(selectedDeviceId != 0){ 
+
+
+          if(selectedDeviceId != 0){
 
             frmSaveProcessFlow[0].reset();
             $("#addEditModalTitle").html('Add Process Flow');
@@ -1462,7 +1462,7 @@
             console.log('step ',step);
             $("input[name='step_holder']", frmSaveProcessFlow).val(step);
             $("input[name='step']", frmSaveProcessFlow).val(step);
-            
+
             // $("input[name='sakidashi_item']", frmSaveProcessFlow).val('');
 
             // GetUserList($(".selUser"));
@@ -1496,7 +1496,7 @@
         });
 
         $("#btnShowImportProcessFlow").click(function(){
-          
+
           toastr.options = {
             "closeButton": false,
             "debug": false,
@@ -1514,7 +1514,7 @@
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut",
           };
-          
+
           if(selectedDeviceId != 0){
 
             mdlImportProcessFlow.modal('show');
@@ -1553,11 +1553,11 @@
 
           $('#selEditMatProcMachine').prop('disabled', true); // 01-16-2023 -JD
           $('#btnEditMatProcScanMachineCode').prop('disabled', true); // 01-16-2023 -JD
-          
+
           if(selectedDeviceId != 0){
             $("#txtEditMatProcId").val(matProcId);
             // $("#modalEditMatProc").modal('show');
-            frmSaveProcessFlow[0].reset(); 
+            frmSaveProcessFlow[0].reset();
             $("#addEditModalTitle").html('Edit Process Flow');
             $("#addEditModalMode").val(1);
             $("input[name='device_id']", frmSaveProcessFlow).val(selectedDeviceId);
@@ -1614,10 +1614,10 @@
 
                             mdlSaveProcessFlow.modal('show');
                             getMaterialKittingSakidashiList(
-                              $('.selMaterial'), 
-                              selectedDeviceName, 
-                              { 
-                                id: $("#selEditMatProcMateial"), 
+                              $('.selMaterial'),
+                              selectedDeviceName,
+                              {
+                                id: $("#selEditMatProcMateial"),
                                 value: material_ids
                               }
                             )
@@ -1631,7 +1631,7 @@
                             // if(data['process_flow_info']['process_flow_substation_details'].length > 0){
                             //   let processFlowSubstationDetails = data['process_flow_info']['process_flow_substation_details'];
                             //   // console.table(processFlowSubstationDetails);
-                              
+
                             //   i = processFlowSubstationDetails.length; // i - variable at the top
                             //   console.log('i now ',i);
                             //   for (let index = 0; index < processFlowSubstationDetails.length; index++) {
@@ -1649,7 +1649,7 @@
                             //     }else{
                             //       material_type_holder = "Sakidashi Issuance";
                             //     }
-                                
+
                             //     var html = '';
                             //       html += '<tr>';
                             //         html += '<td>';
@@ -1721,11 +1721,11 @@
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut",
           };
-          
+
           if(selectedDeviceId != 0){
             $("#txtEditMatProcId").val(matProcId);
             // $("#modalEditMatProc").modal('show');
-            frmSaveProcessFlowMachine[0].reset(); 
+            frmSaveProcessFlowMachine[0].reset();
             $("#addEditModalMode").val(1);
 
             $.ajax({
@@ -1782,11 +1782,11 @@
           let deviceId = $(this).attr('device-id'); // -JD
           let subStationId = $(this).attr('sub-station-id'); // -JD
           // getMaterialKittingSakidashiList($('.selMaterial'), selectedDeviceName)
-          
+
           let btnSaveProcessFlowMaterialCode = $('#btnSaveProcessFlowMaterialCode');
           let frmSaveProcessFlowMaterial = $('#frmSaveProcessFlowMaterial');
-          
-          
+
+
           toastr.options = {
             "closeButton": false,
             "debug": false,
@@ -1804,11 +1804,11 @@
             "showMethod": "fadeIn",
             "hideMethod": "fadeOut",
           };
-          
+
           if(selectedDeviceId != 0){
             $("#txtEditMatProcId").val(matProcId);
             // $("#modalEditMatProc").modal('show');
-            frmSaveProcessFlowMaterial[0].reset(); 
+            frmSaveProcessFlowMaterial[0].reset();
             $("#addEditModalMode").val(1);
 
             $.ajax({
@@ -1838,7 +1838,7 @@
                             $('#mdlSaveProcessFlowMaterialCode').modal('show');
                             $('input[name="device_id"]', frmSaveProcessFlowMaterial).val(deviceId); // -JD
                             $('input[name="sub_station_id"]', frmSaveProcessFlowMaterial).val(subStationId); // -JD
-                            
+
 
                             /**
                              * 08-11-2022
@@ -1849,7 +1849,7 @@
                             if(data['process_flow_info']['process_flow_substation_details'].length > 0){
                               let processFlowSubstationDetails = data['process_flow_info']['process_flow_substation_details'];
                               // console.table(processFlowSubstationDetails);
-                              
+
                               i = processFlowSubstationDetails.length; // i - variable at the top
                               console.log('i now ',i);
                               for (let index = 0; index < processFlowSubstationDetails.length; index++) {
@@ -1868,7 +1868,7 @@
                                 }else{
                                   material_type_holder = "Sakidashi Issuance";
                                 }
-                                
+
                                 var html = '';
                                     html += '<tr>';
                                       html += '<td>';
@@ -1887,7 +1887,7 @@
                                         html += material_type_holder;
                                       html += '</td>';
                                     html += '</tr>';
-                                    
+
                                   $('#tbl_materials tbody').append(html);
                                 if(i > 0){
                                   $('#removeLastMaterial').removeAttr('disabled');
@@ -1920,13 +1920,13 @@
           }
         });
 
-        // Add Material Process 
+        // Add Material Process
         $("#formAddMatProc").submit(function(event){
           event.preventDefault();
           AddMaterialProcess();
         });
 
-        // Edit Material Process 
+        // Edit Material Process
         $("#formEditMatProc").submit(function(event){
           event.preventDefault();
           EditMaterialProcess();
@@ -1947,7 +1947,7 @@
           $("#txtChangeMatProcStatMatProcStat").val(matProcStat);
 
           if(matProcStat == 1){
-            $("#lblChangeMatProcStatLabel").text('Are you sure to activate?'); 
+            $("#lblChangeMatProcStatLabel").text('Are you sure to activate?');
             $("#h4ChangeMatProcTitle").html('<i class="fa fa-default"></i> Activate Material Process');
           }
           else{
@@ -2005,7 +2005,7 @@
                       let trFailedResults = '';
 
                       for(let index = 0; index < JsonObject['failed_barcode'].length; index++){
-                        trFailedResults += '<tr><td colspan="2" style="color: red;"><center>' + JsonObject['failed_barcode'][index] + '</center></td></tr>';                 
+                        trFailedResults += '<tr><td colspan="2" style="color: red;"><center>' + JsonObject['failed_barcode'][index] + '</center></td></tr>';
                       }
 
                       $("#tblImportResult tbody").html(trFailedResults);
@@ -2072,7 +2072,7 @@
                   default:
                   break;
                 }
-              }            
+              }
             }//key
           }
         });
@@ -2125,13 +2125,13 @@
             const material_type = $('#material_type', $('#frmAddMaterial')).val();
             // const material_type_holder = $('#material_type_holder', $('#frmAddMaterial')).val();
             materialArray.push([material_id, lot_no, material_no, material_name, material_type]);
-            
+
             let material_type_holder = "";
             if( material_type == 1 ){
               material_type_holder = "Material Issuance";
             }
             else{
-              material_type_holder = "Sakidashi";         
+              material_type_holder = "Sakidashi";
             }
 
             var html = '';
@@ -2172,7 +2172,7 @@
         /* Remove */
         $('#removeLastMaterial').click(function(e){
           e.preventDefault();
-          
+
           i--;
           if(i <= 0){
             $('#removeLastMaterial').prop('disabled', true);
@@ -2210,7 +2210,7 @@
             toastr.warning('Please add 1 or more material');
           }else{
             console.log('JSON.stringify ', typeof materialArray);
-            SaveProcessFlowMaterial(materialArray); 
+            SaveProcessFlowMaterial(materialArray);
           }
         });
 
@@ -2221,13 +2221,13 @@
           // console.log(frmSaveProcessFlow.serializeArray())
         });
 
-        
+
         $('#frmSaveProcessFlowMachine').submit(function(e){
           e.preventDefault();
-          SaveProcessFlowMachine(); 
+          SaveProcessFlowMachine();
         });
 
-         
+
 
         frmImportProcessFlow.submit(function(e){
           e.preventDefault();
@@ -2258,7 +2258,7 @@
           $("#divRemarks").addClass('d-none');
         }
       });
-      
+
       $(document).ready(function(){
         $("#formChangeApprovalStatus").submit(function(event){
           event.preventDefault();
@@ -2268,7 +2268,7 @@
         $("#modalChangeApprovalStatus").on('hidden.bs.modal', function () {
           console.log('modalChangeApprovalStatus is closed');
           $("#formChangeApprovalStatus")[0].reset();
-    
+
           // Remove invalid & title validation
           $('div').find('input').removeClass('is-invalid');
           $("div").find('input').attr('title', '');

@@ -2,45 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\CommonController;
-use App\Model\BPilotRun;
-use App\Model\DefectEscalationV2Rev;
+use Auth;
+use QrCode;
+use App\User;
+use DataTables;
+use Carbon\Carbon;
 use App\Model\Device;
-use App\Model\DeviceProcessFlowMaterial;
 use App\Model\Machine;
-use App\Model\MaterialIssuance;
-use App\Model\MaterialIssuanceDetails;
-use App\Model\MaterialIssuanceSubSystem;//tbl_wbs_material_kitting
-use App\Model\MaterialProcess;
+use App\Model\Station;
+use App\Model\BPilotRun;
 use App\Model\oqcLotApp;
 use App\Model\PartsPrep;
+use App\Model\SubStation;
 use App\Model\ProcessFlow;
-use App\Model\ProdRuncardMaterialList;
+use App\Model\SampleTable;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Model\WBSKitIssuance;
+use App\Model\MaterialProcess;
+use App\Model\RapidActiveDocs;
+use App\Model\MaterialIssuance;
 use App\Model\ProductionRuncard;
-use App\Model\ProductionRuncardMaterial;
+use App\Model\StationSubStation;
+use Illuminate\Support\Facades\DB;
+use App\Model\WBSSakidashiIssuance;
+use App\Model\DefectEscalationV2Rev;
+use Illuminate\Support\Facades\Cache;
+use App\Model\MaterialIssuanceDetails;
+use App\Model\ProdRuncardMaterialList;
 use App\Model\ProductionRuncardStation;
+use App\Model\WBSSakidashiIssuanceItem;
+use App\Model\DeviceProcessFlowMaterial;
+
+// use App\Model\DefectEscalation;
+use App\Model\ProductionRuncardMaterial;
+
+use Illuminate\Support\Facades\Validator;
+use App\Model\ProductionRuncardStationMOD;
 use App\Model\ProductionRuncardStationMachine;
 use App\Model\ProductionRuncardStationMaterial;
-use App\Model\ProductionRuncardStationMOD;
 use App\Model\ProductionRuncardStationOperator;
-use App\Model\RapidActiveDocs;
-use App\Model\SampleTable;
-use App\Model\Station;
-use App\Model\StationSubStation;
-use App\Model\SubStation;
-use App\Model\WBSKitIssuance;
-use App\Model\WBSSakidashiIssuance;
-use App\Model\WBSSakidashiIssuanceItem;
-use App\User;
-use Auth;
-use Carbon\Carbon;
-use DataTables;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use QrCode;
+use App\Model\MaterialIssuanceSubSystem;//tbl_wbs_material_kitting
 
 class ProductionRuncardController extends Controller
 {
@@ -71,7 +73,7 @@ class ProductionRuncardController extends Controller
 
         return response()->json([
             // 'runcards' => $runcards,
-            'isFinalVisualExist' => (in_array($is_final_visual_exist[0]->process_flow['process'], [20,76,85,87,102])), //MIGZ 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
+            'isFinalVisualExist' => (in_array($is_final_visual_exist[0]->process_flow['process'], [20,76,85,87,102,90])), // 08202024 - Add condition if Final Visual is true and txt_from_prod_runcard_num is N/A, it means NO REWORK/NG
             // 'processFlow' => $processFlow,
             'isComplete' => $isComplete,
         ]);
@@ -765,13 +767,15 @@ class ProductionRuncardController extends Controller
 
                 $disabled = 'disabled';
                 // if(Auth::user()->position == 1 || Auth::user()->position == 4 || Auth::user()->position == 12){
-                if(Auth::user()->position == 1 || Auth::user()->position == 2 || Auth::user()->position == 12){
+                if(Auth::user()->position == 1 || Auth::user()->position == 2 || Auth::user()->position == 12 ){
                     $disabled = '';
                 }
 
                 if ($prod_runcardstation->process_flow->step == 1){
                     $disabled = '';
                 }
+
+
 
 
                 $result='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Edit" class="btn_material_action btn_edit_prod_runcard_station btn btn-info btn-sm py-0" mat-proc-id="' . $prod_runcardstation->mat_proc_id . '"><i class="fa fa-edit"></i></button>';
@@ -794,8 +798,14 @@ class ProductionRuncardController extends Controller
                  * -mdr
                  */
                 if($request->page_source != 'prod_runcard_manual_live'){
+                    // return Auth::user();
                     if($prod_runcardstation->qty_ng != 0){
-                        $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        if(Auth::user()->username == 'bgafp'){
+                            $disabled ='';
+                            $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        }else{
+                            $result .='<button '.$disabled.' style="width:30px; margin-top: 3px;" title="Go to Defect" class=" btn_go_to_defect_escalation btn btn-warning btn-sm py-0"><i class="fa fa-arrow-right"></i></button>';
+                        }
                     }
                 }
 
@@ -3519,7 +3529,7 @@ class ProductionRuncardController extends Controller
     }
     public function get_prod_runcard_by_po_per_runcard(Request $request){
         date_default_timezone_set('Asia/Manila');
-        // return 'workingfunction';
+
         $prod_runcards = ProductionRuncard::with([
             'wbs_kitting',
 
@@ -3943,7 +3953,6 @@ class ProductionRuncardController extends Controller
 
     public function get_wbs_material_kitting(Request $request){
         date_default_timezone_set('Asia/Manila');
-
         $material_kitting = MaterialIssuanceSubSystem::with([
                                             'device_info',
                                             'documents_details',
@@ -3965,12 +3974,7 @@ class ProductionRuncardController extends Controller
             $doc_a_drawing_query = collect($doc_details_query)->where('doc_type', 'A Drawing')->flatten(1);
             $doc_g_drawing_query = collect($doc_details_query)->where('doc_type', 'G Drawing')->flatten(1);
 
-            $matrix = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $request->po_number,
-                'name'=> $material_kitting->device_name,
-                'get_or_first'=> '',
-            ]);
-            // $matrix = Device::where('name', $material_kitting->device_name)->get();
+            $matrix = Device::where('name', $material_kitting->device_name)->get();
 
         }
         if(blank($request->po_number)){
@@ -4157,13 +4161,7 @@ class ProductionRuncardController extends Controller
         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
         $lot_no_machine_code = '0';
 
-        // $device_info = Device::where('name', $request->device_name)->first();
-        $device_info = CommonController::getInstance()->getMatrixByPoNo([
-                'po_no'=> $request->txt_po_number,
-                'name'=> $request->device_name,
-                'get_or_first'=> 'first',
-        ]);
-
+        $device_info = Device::where('name', $request->device_name)->first();
 
         if($device_info != null){
             if($device_info->lot_no_machine_code != null){
@@ -4656,7 +4654,6 @@ class ProductionRuncardController extends Controller
                                         $query->where('item_desc', $item_desc);
                                     },
                                 ])
-                                ->where('po_no', $request->po_number) //getMatrixByPoNo
                                 ->where('name', $request->device_name)
                                 ->first();
 
@@ -4705,12 +4702,7 @@ class ProductionRuncardController extends Controller
                     $material_process = [];
 
                     if($validator->passes()){
-                        $device = CommonController::getInstance()->getMatrixByPoNo([
-                                'po_no'=> $request->po_number,
-                                'name'=> $request->device_name,
-                                'get_or_first'=> 'first',
-                        ]);
-                        //  $device = Device::where('name', $request->device_name)->first();
+                         $device = Device::where('name', $request->device_name)->first();
 
                          if($device != null){
                             $material_process = MaterialProcess::with([
@@ -4761,12 +4753,7 @@ class ProductionRuncardController extends Controller
                                         $serial_no = str_pad(1,2,"0", STR_PAD_LEFT);
                                         $lot_no_machine_code = '0';
 
-                                        // $device_info = Device::where('name', $request->device_name)->first();
-                                        $device = CommonController::getInstance()->getMatrixByPoNo([
-                                                'po_no'=> $request->po_number,
-                                                'name'=> $request->device_name,
-                                                'get_or_first'=> 'first',
-                                        ]);
+                                        $device_info = Device::where('name', $request->device_name)->first();
 
                                         if($device_info != null){
                                             if($device_info->lot_no_machine_code != null){
@@ -4994,7 +4981,6 @@ class ProductionRuncardController extends Controller
                                     },
                                 ]);
 
-
                             if($mat_proc_materials != null){
                                 $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
                                 $certified_mat_proc_id = $col_mat_proc_materials->pluck('id');
@@ -5187,9 +5173,9 @@ class ProductionRuncardController extends Controller
                                             // $query->where('item_desc', $item_desc);
                                         },
                                     ])
-                                    ->where('po_no',$request->po_number) //getMatrixByPoNo
                                     ->where('name', $request->device_name)
                                     ->first();
+
                     if($mat_proc_device != null){
                         if(count($mat_proc_device->material_process) > 0){
                             $material_certified = true;
@@ -5489,84 +5475,6 @@ class ProductionRuncardController extends Controller
                     $certified_status = false;
                     $certified_status_label = 'Not Certified';
                 }
-
-                // if(count($prod_runcard_station_detail_ids) > 0){
-                //     $final_prod_runcard_station_details = $prod_runcard_station_details->whereIn('id', $prod_runcard_station_detail_ids);
-
-                //     DB::beginTransaction();
-                //     try {
-                //         $certified_counter = 0;
-                //         for($index = 0; $index < count($final_prod_runcard_station_details); $index++){
-                //             if($final_prod_runcard_station_details[$index]->operator == null){
-                //                 ProductionRuncardStation::where('id', $final_prod_runcard_station_details[$index]->id)->update([
-                //                     'operator' => $user->id
-                //                 ]);
-                //                 $certified_counter++;
-                //             }
-                //             else{
-                //                 $operators = explode(',', $final_prod_runcard_station_details[$index]->operator);
-
-                //                 $searched_operator = array_search($user->id, $operators);
-
-                //                 if($searched_operator == "" || $searched_operator == null){
-                //                     ProductionRuncardStation::where('id', $final_prod_runcard_station_details[$index]->id)->update([
-                //                         'operator' => DB::raw('operator') . ',' . $user->id,
-                //                     ]);
-                //                 }
-                //                 else{
-                //                     $final_result = 0;
-                //                 }
-
-                //                 // return $operators;
-                //                 // for($index2 = 0; $index2 < count($operators); $index2++){
-                //                 //     if($operators[$index2] == $user->id){
-
-                //                 //     }
-                //                 // }
-
-                //             }
-                //         }
-
-                //         if($certified_counter > 0){
-                //             DB::commit();
-                //             $final_result = true;
-                //             $certified_status = true;
-                //             $certified_status_label = 'Operator Saved';
-                //         }
-                //         else{
-                //             $final_result = false;
-                //             $certified_status = false;
-                //             $certified_status_label = 'Already Exist';
-                //         }
-                //         // return $certified_counter;
-                //     } catch (Exception $e) {
-                //         $final_result = 0;
-                //     }
-                //     // return $final_prod_runcard_station_details;
-                // }
-                // else{
-                //     $certified_status = false;
-                //     $certified_status_label = 'Not Certified';
-                // }
-
-                // $device_mat_proc = Device::with([
-                //                         'material_process' => function($query){
-                //                             $query->where('status', 1);
-                //                         },
-                //                         'material_process.manpowers_details' => function($query) use($user){
-                //                             $query->where('manpower_id', $user->id);
-                //                         },
-                //                     ])
-                //                     ->where('name', $request->device_name)
-                //                     ->first();
-
-                // if($device_mat_proc != null){
-                //     $col_mat_proc_materials = collect($device_mat_proc)->flatten(1)->where('material_details', '!=', null);
-                //     $certified_mat_proc_id = $col_mat_proc_materials->pluck('id');
-                // }
-                // $material_process = collect($device_mat_proc)->where('material_process.manpowers_details', '!=', null)->flatten(1);
-
-                // return $device_mat_proc;
             }
             else{
                 $user_status_label = 'Invalid Operator';
@@ -5678,60 +5586,6 @@ class ProductionRuncardController extends Controller
 
                                 // if has NG only
                                 if($request->txt_edit_prod_runcard_station_ng > 0){
-                                    // Increment all above station input
-                                    // $step_num = $request->txt_edit_prod_runcard_station_step;
-
-                                    // $step_num = explode('-', $step_num)[0];
-
-                                    // $prod_runcard_stations = ProductionRuncardStation::orderBy(\DB::raw('CONVERT(SUBSTRING_INDEX(step_num,"-", 1), UNSIGNED INTEGER)', 'ASC'))
-                                    //                         ->orderBy(\DB::raw('right(step_num,LOCATE("-",step_num) - 1)', 'ASC'))
-                                    //                         ->where('production_runcard_id', $request->txt_prod_runcard_id_query)
-                                    //                         ->get();
-
-                                    // $prod_runcard_station_step_num = [];
-                                    // $prod_runcard_station_id = [];
-
-                                    // if(count($prod_runcard_stations) > 0){
-                                    //     for($index = 0; $index < count($prod_runcard_stations); $index++){
-                                    //         $prod_runcard_station_step_num[] = explode('-', $prod_runcard_stations[$index]->step_num)[0];
-                                    //         $prod_runcard_station_id[] = $prod_runcard_stations[$index]->id;
-                                    //     }
-                                    // }
-
-                                    // $prod_runcard_station_step_num = array_unique($prod_runcard_station_step_num);
-
-                                    // $station_unique = [];
-                                    // $station_unique_key = [];
-
-                                    // foreach ($prod_runcard_station_step_num as $prod_runcard_station_step_num_unique => $value) {
-                                    //     if($step_num > $value){
-                                    //         $station_unique_key[] = $prod_runcard_station_step_num_unique;
-                                    //         $station_unique[] = $value;
-                                    //     }
-                                    // }
-
-                                    // $final_station_id = [];
-
-                                    // if(count($prod_runcard_station_id) > 0){
-                                    //     for($index = 0; $index < count($prod_runcard_station_id); $index++){
-                                    //         for($index2 = 0; $index2 < count($station_unique_key); $index2++){
-                                    //             if($station_unique_key[$index2] == $index){
-                                    //                 $final_station_id[] = $prod_runcard_station_id[$index];
-                                    //             }
-                                    //         }
-                                    //     }
-                                    // }
-
-                                    // ProductionRuncardStation::whereIn('id', $final_station_id)
-                                    //     ->where('qty_output', '!=', null)
-                                    //     // ->increment('qty_output', $request->txt_edit_prod_runcard_station_ng);
-                                    //     // ->increment('qty_input', $request->txt_edit_prod_runcard_station_ng);
-                                    //     ->increment('qty_input', $request->txt_edit_prod_runcard_station_ng,
-                                    //         [
-                                    //             'qty_output' => DB::raw('qty_output + ' . $request->txt_edit_prod_runcard_station_ng),
-                                    //         ]);
-                                    // // end of increment
-
                                     // Required to save MOD if has NG only
                                     if(isset($request->mod)){
                                         for($index = 0; $index < count($request->mod); $index++){
@@ -5825,6777 +5679,9 @@ class ProductionRuncardController extends Controller
         }
     }
 
-    /**
-     * Orig Code
-     */
-    // public function edit_prod_runcard_station(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-    //     $timeNow = date('H:i');
-    //     $time = explode(':', $timeNow);
-    //     $hour = (int)$time[0];
-    //     $min = (int)$time[1];
 
-    //     // 7:30AM to 19:29PM A shift (Morning)
-    //     // 19:30PM to 7:29AM B shift (Evening)
-    //     $isMorning = false;
-    //     if( $hour >= 7 && $hour <= 19 ) {
-    //         $isMorning = true;
-    //         if( $hour == 7 && $min < 30 )
-    //             $isMorning = false;
-    //         if( $hour == 19 && $min >= 30 )
-    //             $isMorning = false;
-    //     }
-    //     $processFlow = ProcessFlow::find($request->process_flow_id);
-    //     // return response()->json(['processFlow' => $processFlow]);
-    //     // return response()->json([
-    //     //     'request' => $request->all(),
-    //     //     'processFlow' => $processFlow,
-    //     //     'timeNow' => $timeNow,
-    //     //     'hour' => $hour,
-    //     //     'min' => $min,
-    //     //     'isMorning' => $isMorning,
-    //     // ]);
-
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> Saved';
-    //     $return_body = 'Record has been saved.';
-    //     $result = 1;
-
-    //     $data = $request->all();
-
-    //      // For Edit of Station
-    //     if((isset($request->txt_prod_runcard_id_query) || $request->txt_prod_runcard_id_query != null || $request->txt_prod_runcard_id_query != '')){
-    //         // For Edit Process and runcard is set
-    //         if(isset($request->txt_prod_runcard_station_id_query)){
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'txt_prod_runcard_station_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-
-    //                 // 'sub_station_id' => ['required'], // 08-16-2022 -JD
-    //                 // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'],
-    //             ]);
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         if( $request->txt_prod_runcard_station_id_query ){
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Orig 09-14-2022
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-    //                                 if(isset($machinesIDSToCompare)){
-    //                                     for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                         if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                             $machineCountDetected++;
-    //                                     }
-
-    //                                     if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = " Invalid Selected Machine's.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             // if($validator->passes()){
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                         ->update(
-    //                                             [
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 // 'status' => 1,
-    //                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                             ]
-    //                                         );
-
-    //                                     // angelo
-    //                                     // Save Operators
-    //                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // angelo
-    //                                     // Save Machines
-    //                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-    //                                     /**
-    //                                      * Multiple insert for Prod Runcard Station Materials
-    //                                      * 08-16-2022
-    //                                      * -JD
-    //                                      */
-    //                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                     ->delete();
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //         else{ // For Add Process but runcard is not set
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-    //                 'sub_station_id' => ['required'],
-    //                 // 'lot_no' => ['required's], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 2.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * For the validation of the Scanned Material vs Matrix Material
-    //                              * -JD
-    //                              */
-    //                             // $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
-    //                             // $materialList = [];
-    //                             // $process_flow_ids = [];
-    //                             // // return $device;
-    //                             // if( count($device) > 0 ) {
-    //                             //     $process_flows = $device[0]->process_flow;
-    //                             //     for ($i=0; $i < count($process_flows); $i++) {
-    //                             //         $process_flow_ids[] = $process_flows[$i]->id;
-    //                             //     }
-    //                             // }
-
-    //                             // $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
-    //                             // // return $deviceProcessFlowMaterials;
-    //                             // for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
-    //                             //     if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
-    //                             //         $materialList[] = $deviceProcessFlowMaterials[$i];
-    //                             //     }
-    //                             // }
-    //                             // return $materialList;
-
-    //                             // if(isset($request->materialArray)){
-    //                             //     for($index = 0; $index < count($request->materialArray); $index++){
-    //                             //         ProductionRuncardStationMaterial::insert([
-    //                             //             'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                             //             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                             //             'sub_station_id' => $request->process_flow_id,
-    //                             //             'material_id' => $request->materialArray[$index][0],
-    //                             //             'material_name' => $request->materialArray[$index][1],
-    //                             //             'lot_no' => $request->materialArray[$index][2],
-    //                             //             'material_type' => $request->materialArray[$index][3],
-    //                             //             'status' => 1,
-    //                             //             'created_by' => Auth::user()->id,
-    //                             //             'last_updated_by' => Auth::user()->id,
-    //                             //             'updated_at' => date('Y-m-d H:i:s'),
-    //                             //             'created_at' => date('Y-m-d H:i:s')
-    //                             //         ]);
-    //                             //     }
-    //                             // }
-
-
-    //                             // if($validator->passes()){
-    //                                 DB::beginTransaction();
-    //                                 // $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $request->txt_prod_runcard_id_query)->orderBy('id', 'desc')->first();
-
-    //                                 // $step_num = 1;
-
-    //                                 // if($last_prod_runcard_station != null){
-    //                                 //     $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                 // }
-
-    //                                 try {
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                      * Multiple insert for Prod Runcard Station Materials
-    //                                      * 08-16-2022
-    //                                      * -JD
-    //                                      */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->process_flow_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                         // }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //     }
-
-    //     // For Insert of Station
-    //     else{ // For Multiple Runcard
-    //         $validator = Validator::make($data, [
-    //             // 'txt_prod_runcard_id_query' => ['required'],
-    //             'selected_prod_runcard' => ['required'],
-    //             'qty_input' => ['required'],
-    //             'qty_output' => ['required'],
-    //             'qty_ng' => ['required'],
-    //             'txt_employee_number_scanner' => ['required'],
-    //             // 'step_num' => ['required'],
-    //             'sub_station_id' => ['required'],
-    //             // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //             // 'material_id' => ['required'], // 08-11-2022 -JD
-    //             // 'material_type' => ['required'], // 08-16-2022 -JD
-    //             'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //             $return_body = 'Please complete required fields.';
-    //             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //             return $return;
-    //         }
-    //         else{
-
-    //             $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //             if($user->count() > 0){
-    //                 if($user[0]->position == 4){
-    //                     // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 if( $processFlow->id != (int)$request->sub_station_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 3.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Lot No. 1.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                         // if($validator->passes()){
-    //                             DB::beginTransaction();
-
-    //                             $selected_prod_runcard = explode(',', $request->selected_prod_runcard);
-    //                             // return count($selected_prod_runcard);
-    //                             if(count($selected_prod_runcard) > 0){
-    //                                 // return $selected_prod_runcard;
-    //                                 $counter = 0;
-    //                                 try {
-    //                                     ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                         ->update(
-    //                                             [
-    //                                                 'status'=> 3,
-    //                                                 'last_updated_by' => $user[0]->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s')
-    //                                             ]
-    //                                         );
-
-
-    //                                     // return $selected_prod_runcard;
-    //                                     for ($outer_index = 0; $outer_index < count($selected_prod_runcard); $outer_index++) {
-    //                                         $counter++;
-
-    //                                             $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $selected_prod_runcard[$outer_index])->orderBy('id', 'desc')->first();
-
-    //                                             $step_num = 1;
-
-    //                                             if($last_prod_runcard_station != null){
-    //                                                 $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                             }
-
-
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $selected_prod_runcard[$outer_index],
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                              * Multiple insert for Prod Runcard Station Materials(INSERT)
-    //                                              * 08-16-2022
-    //                                              * -JD
-    //                                              */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'sub_station_id' => $request->process,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // DB::commit();
-    //                                             // $result = true;
-
-    //                                     }
-
-    //                                     // return $counter;
-    //                                     DB::commit();
-    //                                     // ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                     //     ->update(
-    //                                     //         [
-    //                                     //             'status'=> 3,
-    //                                     //             'last_updated_by' => $user[0]->id,
-    //                                     //             'updated_at' => date('Y-m-d H:i:s')
-    //                                     //         ]
-    //                                     //     );
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-
-    //                             }
-    //                             else{
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                     // }
-
-    //                     if( $result == 0 ){
-    //                         $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                         $return_body = 'An error occured. The record not saved.';
-    //                     }
-    //                     $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Scanned QR Code is not Operator.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //             }
-    //             else{
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = ' Invalid Employee No.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                 return $return;
-    //                 // return '0';
-    //             }
-    //         }
-    //     }
-
-    // }
-    // ../USED IN AUTOMATIC PRODUCTION RUNCARD
-
-
-    /**
-     * Old Code
-     * Due to modification of Production Runcard, Prod Runcard Station and Material Process(Matrix)
-     * Commented on 10-24-2022
-     * -JD
-     */
-    // public function edit_prod_runcard_station(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-    //     $timeNow = date('H:i');
-    //     $time = explode(':', $timeNow);
-    //     $hour = (int)$time[0];
-    //     $min = (int)$time[1];
-
-    //     // 7:30AM to 19:29PM A shift (Morning)
-    //     // 19:30PM to 7:29AM B shift (Evening)
-    //     $isMorning = false;
-    //     if( $hour >= 7 && $hour <= 19 ) {
-    //         $isMorning = true;
-    //         if( $hour == 7 && $min < 30 )
-    //             $isMorning = false;
-    //         if( $hour == 19 && $min >= 30 )
-    //             $isMorning = false;
-    //     }
-    //     $processFlow = ProcessFlow::find($request->process_flow_id);
-    //     // return response()->json(['processFlow' => $processFlow]);
-    //     // return response()->json([
-    //     //     'request' => $request->all(),
-    //     //     'processFlow' => $processFlow,
-    //     //     'timeNow' => $timeNow,
-    //     //     'hour' => $hour,
-    //     //     'min' => $min,
-    //     //     'isMorning' => $isMorning,
-    //     // ]);
-
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> Saved';
-    //     $return_body = 'Record has been saved.';
-    //     $result = 1;
-
-    //     $data = $request->all();
-
-    //      // For Edit of Station
-    //     if((isset($request->txt_prod_runcard_id_query) || $request->txt_prod_runcard_id_query != null || $request->txt_prod_runcard_id_query != '')){
-    //         // For Edit Process, runcard should be set on this state
-    //         if(isset($request->txt_prod_runcard_station_id_query)){
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'txt_prod_runcard_station_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-
-    //                 // 'sub_station_id' => ['required'], // 08-16-2022 -JD
-    //                 // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'],
-    //             ]);
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         if( $request->txt_prod_runcard_station_id_query ){
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-15-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-
-    //                                         if($hasOneMachine){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-
-
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-
-    //                             /**
-    //                              * For the validation of the Scanned Material vs Matrix Material
-    //                              * -JD
-    //                              */
-    //                             $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
-    //                             $deviceProcessFlowMaterialsArray = [];
-    //                             $process_flow_ids = [];
-    //                             // return $device;
-    //                             if( count($device) > 0 ) {
-    //                                 $process_flows = $device[0]->process_flow;
-    //                                 for ($i=0; $i < count($process_flows); $i++) {
-    //                                     $process_flow_ids[] = $process_flows[$i]->id;
-    //                                 }
-    //                             }
-    //                             // return "count " . count($device[0]->process_flow);
-
-    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
-    //                             /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
-    //                             for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
-    //                                 if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
-    //                                     $deviceProcessFlowMaterialsArray[] = $deviceProcessFlowMaterials[$i]->material_name;
-    //                                 }
-    //                             }
-
-    //                             /* If no materials added then execute below code */
-    //                             // if(!isset($request->materialArray)){
-    //                             //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                             //     $return_body = ' Please add materials.';
-    //                             //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                             //     return $return;
-    //                             // }
-
-    //                             if(count($deviceProcessFlowMaterialsArray) == 0){
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                         ->update(
-    //                                             [
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'partial'=>$request->qty_partial,
-    //                                                 'remarks'=>$request->remarks,
-    //                                                 // 'status' => 1,
-    //                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                             ]
-    //                                         );
-
-    //                                     // angelo
-    //                                     // Save Operators
-    //                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // angelo
-    //                                     // Save Machines
-    //                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-    //                                     /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                     ->delete();
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-
-    //                             if(count($deviceProcessFlowMaterialsArray) > 0){
-    //                                 if(isset($request->materialArray)){
-    //                                     if(count($request->materialArray) == count($deviceProcessFlowMaterialsArray)){
-    //                                         for ($k=0; $k < count($request->materialArray); $k++) {
-    //                                             // $replacedYutaka = str_replace("(YUTAKA)","",$request->materialArray[$k][1]);
-    //                                             // if(!in_array(trim($replacedYutaka), $deviceProcessFlowMaterialsArray)){
-    //                                             if(!in_array($request->materialArray[$k][1], $deviceProcessFlowMaterialsArray)){
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Materials are not found on the matrix.';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }else{
-    //                                                 DB::beginTransaction();
-    //                                                 try {
-    //                                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                                         ->update(
-    //                                                             [
-    //                                                                 'qty_input'=>$request->qty_input,
-    //                                                                 'qty_output'=>$request->qty_output,
-    //                                                                 'qty_ng'=>$request->qty_ng,
-    //                                                                 'partial'=>$request->qty_partial,
-    //                                                                 'remarks'=>$request->remarks,
-    //                                                                 // 'status' => 1,
-    //                                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                                             ]
-    //                                                         );
-
-    //                                                     // angelo
-    //                                                     // Save Operators
-    //                                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                                         ->delete();
-
-    //                                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                             ProductionRuncardStationOperator::insert([
-    //                                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                             ]);
-    //                                                         }
-    //                                                     }
-
-    //                                                     // angelo
-    //                                                     // Save Machines
-    //                                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                                         ->delete();
-
-    //                                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                             ProductionRuncardStationMachine::insert([
-    //                                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                             ]);
-    //                                                         }
-    //                                                     }
-
-    //                                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                                         ->delete();
-    //                                                     // if has NG only
-    //                                                     if($request->qty_ng > 0){
-    //                                                         // Required to save MOD if has NG only
-    //                                                         if(isset($request->mod)){
-    //                                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                                 ProductionRuncardStationMOD::insert([
-    //                                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                                     'mod_id' => $request->mod[$index],
-    //                                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                                     'created_by' => Auth::user()->id,
-    //                                                                     'last_updated_by' => Auth::user()->id,
-    //                                                                     'update_version' => 1,
-    //                                                                     'status' => 1,
-    //                                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                                 ]);
-    //                                                             }
-    //                                                         }
-    //                                                         else{
-    //                                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                             $return_body = ' Please Fill-up MOD!';
-    //                                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                             return $return;
-    //                                                         }
-    //                                                     }
-    //                                                     else{
-    //                                                         // Don't save the MOD
-    //                                                     }
-
-    //                                                     /**
-    //                                                      * Multiple insert for Prod Runcard Station Materials
-    //                                                      * 08-16-2022
-    //                                                      * -JD
-    //                                                      */
-    //                                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                                     ->delete();
-    //                                                     if(isset($request->materialArray)){
-    //                                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                             ProductionRuncardStationMaterial::insert([
-    //                                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                                 'status' => 1,
-    //                                                                 'created_by' => Auth::user()->id,
-    //                                                                 'last_updated_by' => Auth::user()->id,
-    //                                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                                             ]);
-    //                                                         }
-    //                                                     }
-
-    //                                                     DB::commit();
-    //                                                     $result = 1;
-
-    //                                                 } catch (Exception $e) {
-    //                                                     DB::rollback();
-    //                                                     $result = 0;
-    //                                                 }
-    //                                             }
-    //                                         }
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = ' Please check materials if match based on the matrix.';
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                         return $return;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please scan materials based on the matrix.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-    //                             }
-
-    //                             // if($validator->passes()){
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //         else{ // For Add Process, runcard is not set on this state
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-    //                 'sub_station_id' => ['required'],
-    //                 // 'lot_no' => ['required's], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-
-    //                                         if($hasOneMachine){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 2.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-
-    //                             /**
-    //                              * For the validation of the Scanned Material vs Matrix Material
-    //                              * -JD
-    //                              */
-    //                             $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
-    //                             $deviceProcessFlowMaterialsArray = [];
-    //                             $process_flow_ids = [];
-    //                             // return $device;
-    //                             if( count($device) > 0 ) {
-    //                                 $process_flows = $device[0]->process_flow;
-    //                                 for ($i=0; $i < count($process_flows); $i++) {
-    //                                     $process_flow_ids[] = $process_flows[$i]->id;
-    //                                 }
-    //                             }
-    //                             // return count($device[0]->process_flow);
-
-    //                             $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
-    //                             /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
-    //                             // return $deviceProcessFlowMaterials;
-    //                             for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
-    //                                 if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
-    //                                     $deviceProcessFlowMaterialsArray[] = $deviceProcessFlowMaterials[$i]->material_name;
-    //                                 }
-    //                             }
-    //                             // return $deviceProcessFlowMaterialsArray;
-    //                             /**
-    //                              * if(count($deviceProcessFlowMaterialsArray) ==){
-    //                              * }
-    //                              */
-
-    //                             /* If no materials added then execute below code */
-    //                             // if(!isset($request->materialArray)){
-    //                             //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                             //     $return_body = ' Please add materials.';
-    //                             //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                             //     return $return;
-    //                             // }
-
-    //                             // return count($deviceProcessFlowMaterialsArray);
-    //                             if(count($deviceProcessFlowMaterialsArray) == 0){
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     // return 'Success';
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'partial'=>$request->qty_partial,
-    //                                         'remarks'=>$request->remarks,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->process_flow_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     DB::commit();
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-
-    //                             if(count($deviceProcessFlowMaterialsArray) > 0){
-    //                                 if(isset($request->materialArray)){
-    //                                     if(count($request->materialArray) == count($deviceProcessFlowMaterialsArray)){
-    //                                         for ($k=0; $k < count($request->materialArray); $k++) {
-    //                                             // $replacedYutaka = str_replace("(YUTAKA)","",$request->materialArray[$k][1]);
-    //                                             if(!in_array($request->materialArray[$k][1], $deviceProcessFlowMaterialsArray)){
-    //                                             // if(!in_array(trim($replacedYutaka), $deviceProcessFlowMaterialsArray)){
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Materials are not found on the matrix.';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-
-    //                                         DB::beginTransaction();
-    //                                         try {
-    //                                             // return 'Success';
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'partial'=>$request->qty_partial,
-    //                                                 'remarks'=>$request->remarks,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                             * Multiple insert for Prod Runcard Station Materials
-    //                                             * 08-16-2022
-    //                                             * -JD
-    //                                             */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'sub_station_id' => $request->process_flow_id,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             DB::commit();
-    //                                             $result = 1;
-
-    //                                         } catch (Exception $e) {
-    //                                             DB::rollback();
-    //                                             $result = 0;
-    //                                         }
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = ' Please check materials if match based on the matrix.';
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                         return $return;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please scan materials based on the matrix.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-    //                             }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //     }
-
-    //     // For Insert of Station
-    //     else{ // For Multiple Runcard
-    //         $validator = Validator::make($data, [
-    //             // 'txt_prod_runcard_id_query' => ['required'],
-    //             'selected_prod_runcard' => ['required'],
-    //             'qty_input' => ['required'],
-    //             'qty_output' => ['required'],
-    //             'qty_ng' => ['required'],
-    //             'txt_employee_number_scanner' => ['required'],
-    //             // 'step_num' => ['required'],
-    //             'sub_station_id' => ['required'],
-    //             // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //             // 'material_id' => ['required'], // 08-11-2022 -JD
-    //             // 'material_type' => ['required'], // 08-16-2022 -JD
-    //             'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //             $return_body = 'Please complete required fields.';
-    //             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //             return $return;
-    //         }
-    //         else{
-
-    //             $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //             if($user->count() > 0){
-    //                 if($user[0]->position == 4){
-    //                     // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 if( $processFlow->id != (int)$request->sub_station_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 3.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Lot No. 1.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                         // if($validator->passes()){
-    //                             DB::beginTransaction();
-
-    //                             $selected_prod_runcard = explode(',', $request->selected_prod_runcard);
-    //                             // return count($selected_prod_runcard);
-    //                             if(count($selected_prod_runcard) > 0){
-    //                                 // return $selected_prod_runcard;
-    //                                 $counter = 0;
-    //                                 try {
-    //                                     ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                         ->update(
-    //                                             [
-    //                                                 'status'=> 3,
-    //                                                 'last_updated_by' => $user[0]->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s')
-    //                                             ]
-    //                                         );
-
-
-    //                                     // return $selected_prod_runcard;
-    //                                     for ($outer_index = 0; $outer_index < count($selected_prod_runcard); $outer_index++) {
-    //                                         $counter++;
-
-    //                                             $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $selected_prod_runcard[$outer_index])->orderBy('id', 'desc')->first();
-
-    //                                             $step_num = 1;
-
-    //                                             if($last_prod_runcard_station != null){
-    //                                                 $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                             }
-
-
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $selected_prod_runcard[$outer_index],
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                              * Multiple insert for Prod Runcard Station Materials(INSERT)
-    //                                              * 08-16-2022
-    //                                              * -JD
-    //                                              */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'sub_station_id' => $request->process,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // DB::commit();
-    //                                             // $result = true;
-
-    //                                     }
-
-    //                                     // return $counter;
-    //                                     DB::commit();
-    //                                     // ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                     //     ->update(
-    //                                     //         [
-    //                                     //             'status'=> 3,
-    //                                     //             'last_updated_by' => $user[0]->id,
-    //                                     //             'updated_at' => date('Y-m-d H:i:s')
-    //                                     //         ]
-    //                                     //     );
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-
-    //                             }
-    //                             else{
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                     // }
-
-    //                     if( $result == 0 ){
-    //                         $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                         $return_body = 'An error occured. The record not saved.';
-    //                     }
-    //                     $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Scanned QR Code is not Operator.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //             }
-    //             else{
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = ' Invalid Employee No.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                 return $return;
-    //                 // return '0';
-    //             }
-    //         }
-    //     }
-
-    // }
-
-
-    /**
-     * Old Code
-     * Due to modification of Production Runcard, Prod Runcard Station and Material Process(Matrix)
-     * Added on 10-24-2022
-     * -JD
-     */
-    // public function edit_prod_runcard_station(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-    //     $timeNow = date('H:i');
-    //     $time = explode(':', $timeNow);
-    //     $hour = (int)$time[0];
-    //     $min = (int)$time[1];
-
-    //     // 7:30AM to 19:29PM A shift (Morning)
-    //     // 19:30PM to 7:29AM B shift (Evening)
-    //     $isMorning = false;
-    //     if( $hour >= 7 && $hour <= 19 ) {
-    //         $isMorning = true;
-    //         if( $hour == 7 && $min < 30 )
-    //             $isMorning = false;
-    //         if( $hour == 19 && $min >= 30 )
-    //             $isMorning = false;
-    //     }
-    //     $processFlow = ProcessFlow::find($request->process_flow_id);
-    //     // return response()->json(['processFlow' => $processFlow]);
-    //     // return response()->json([
-    //     //     'request' => $request->all(),
-    //     //     'processFlow' => $processFlow,
-    //     //     'timeNow' => $timeNow,
-    //     //     'hour' => $hour,
-    //     //     'min' => $min,
-    //     //     'isMorning' => $isMorning,
-    //     // ]);
-
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> Saved';
-    //     $return_body = 'Record has been saved.';
-    //     $result = 1;
-
-    //     /**
-    //      * For checking of process if "Auto Insertion / #MO Installation"
-    //      * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //      * -JD
-    //      */
-    //     $runcardRequiredFieldsArray = [
-    //         'mold'                  =>null,
-    //         'ct_supplier'           =>null,
-    //         'die_no'                =>null,
-    //         'pair_no'               =>null,
-    //         'is_auto_insertion'     =>false,
-    //         'is_full_assembly'      =>false,
-    //         'work_week'             =>null,
-    //         'qty_input'             =>null,
-    //         'qty_output'            =>null,
-    //     ];
-    //     $runcardRequiredFieldsArrayHasNull = true;
-    //     $fullAssemblyRequiredFieldsArrayHasNull = true;
-
-    //     $data = $request->all();
-
-    //      // For Edit of Station
-    //     if((isset($request->txt_prod_runcard_id_query) || $request->txt_prod_runcard_id_query != null || $request->txt_prod_runcard_id_query != '')){
-    //         // For Edit Process, runcard should be set on this state
-    //         if(isset($request->txt_prod_runcard_station_id_query)){
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'txt_prod_runcard_station_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-
-    //                 // 'sub_station_id' => ['required'], // 08-16-2022 -JD
-    //                 // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'],
-    //             ]);
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         if( $request->txt_prod_runcard_station_id_query ){
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-15-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $hasDefectEscalation = false; // -JD 11-28-2022
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }elseif(isset($request->runcard_for_defect)){
-    //                                                 $hasDefectEscalation = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-    //                                         // return "has def = $hasDefectEscalation";
-    //                                         if($hasOneMachine || $hasDefectEscalation){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-    //                                 // return "tama lahat";
-
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Check the process if "Auto Insertion / #MO Installation"
-    //                              * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                              * -JD
-    //                              */
-    //                             $process = ProductionRuncardStation::with('process_flow.processFlow')
-    //                             ->where('id',$request->txt_prod_runcard_station_id_query)
-    //                             ->where('process_flow_id', $processFlow->id)
-    //                             ->get();
-    //                             // echo "prod runcard station id ". $request->txt_prod_runcard_station_id_query;
-    //                             // echo "\r\n";
-    //                             // echo "process_flow_id ". $processFlow->id;
-    //                             // echo "\r\n";
-    //                             // return $process[0]->process_flow->processFlow->name;
-
-    //                             if($process[0]->process_flow->processFlow->name == "Auto Insertion / #MO Installation"){
-    //                                 $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                     $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                     $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                     $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                     $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-    //                             /**
-    //                              * If "Auto Insertion / #MO Installation" is true and has no null values on the required fields (Mold, C/T Supplier, etc.)
-    //                              * then set the $runcardRequiredFieldsArrayHasNull to false
-    //                              */
-    //                             if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                                 if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                             ->update(
-    //                                                 [
-    //                                                     'qty_input'=>$request->qty_input,
-    //                                                     'qty_output'=>$request->qty_output,
-    //                                                     'qty_ng'=>$request->qty_ng,
-    //                                                     'partial'=>$request->qty_partial,
-    //                                                     'runcard_defect'=>$request->runcard_defect,
-    //                                                     'remarks'=>$request->remarks,
-    //                                                     // 'status' => 1,
-    //                                                     // 'sub_station_id' => $request->sub_station_id,
-    //                                                 ]
-    //                                             );
-
-    //                                         // angelo
-    //                                         // Save Operators
-    //                                         ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // angelo
-    //                                         // Save Machines
-    //                                         ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         DB::commit();
-    //                                         $result = 1;
-
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }else{
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                         ->update(
-    //                                             [
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'partial'=>$request->qty_partial,
-    //                                                 'runcard_defect'=>$request->runcard_defect,
-    //                                                 'remarks'=>$request->remarks,
-    //                                                 // 'status' => 1,
-    //                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                             ]
-    //                                         );
-
-    //                                     // angelo
-    //                                     // Save Operators
-    //                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // angelo
-    //                                     // Save Machines
-    //                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                     ->delete();
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         /* Main Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //         else{ // For Add Process, runcard is not set on this state
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-    //                 'sub_station_id' => ['required'],
-    //                 // 'lot_no' => ['required's], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $hasDefectEscalation = false; // -JD 11-28-22
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }elseif(isset($request->runcard_for_defect)){
-    //                                                 $hasDefectEscalation = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-
-    //                                         // return "hasDefectEscalation: $hasDefectEscalation";
-    //                                         if($hasOneMachine || $hasDefectEscalation){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 2.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Check the process if "Auto Insertion / #MO Installation"
-    //                              * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                              * -JD
-    //                              */
-    //                             $process = SubStation::where('id',$request->sub_station_id)->get();
-    //                             // return $process[0]->name;
-    //                             // echo $process[0]->name;
-    //                             // echo "\r\n";
-
-    //                             if($process[0]->name == "Auto Insertion / #MO Installation"){
-    //                                 $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                     $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                     $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                     $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                     $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-
-    //                             /**
-    //                              * Check the process if "Full Assembly"
-    //                              * then add validation for Workweek, Input, Output in Print / Curing(Process)
-    //                              * -JD
-    //                              * 10-17-2022
-    //                              */
-    //                             if($process[0]->name == "Full Assembly"){
-    //                                 $runcardRequiredFieldsArray['is_full_assembly'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::with('prod_runcard_station_many_details')->where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 // return $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                                 if($prodRuncard[0]->work_week != null || $prodRuncard[0]->work_week != ''){
-    //                                     $runcardRequiredFieldsArray['work_week'] = $prodRuncard[0]->work_week;
-    //                                 }
-
-    //                                 $qty_input = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_input;
-    //                                 $qty_output = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                                 if($qty_input != 0 || $qty_input != null){
-    //                                     $runcardRequiredFieldsArray['qty_input'] = $qty_input;
-    //                                 }
-
-    //                                 if($qty_output != 0 || $qty_output != null){
-    //                                     $runcardRequiredFieldsArray['qty_output'] = $qty_output;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-    //                             if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                                 if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                     // $runcardRequiredFieldsArrayHasNull = false;
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         // return 'Success';
-    //                                         $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                             'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                             // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                             // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                             // 'sub_station_id'=> $request->sub_station_id,
-    //                                             // 'step_num'=> $step_num,
-    //                                             'process_flow_id'=> $request->process_flow_id,
-    //                                             'qty_input'=>$request->qty_input,
-    //                                             'qty_output'=>$request->qty_output,
-    //                                             'qty_ng'=>$request->qty_ng,
-    //                                             'partial'=>$request->qty_partial,
-    //                                             'runcard_defect'=>$request->runcard_defect,
-    //                                             'remarks'=>$request->remarks,
-    //                                             'status' => 1,
-    //                                             'created_by'=> Auth::user()->id,
-    //                                             'last_updated_by'=> Auth::user()->id,
-    //                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                         ]);
-
-    //                                         // Save Operators
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // Save Machines
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         DB::commit();
-    //                                         $result = 1;
-
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields(For Auto Insertion)';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }
-    //                             else if($runcardRequiredFieldsArray['is_full_assembly'] == true){
-    //                                 if($runcardRequiredFieldsArray['work_week'] != null && ($runcardRequiredFieldsArray['qty_input'] != 0 || $runcardRequiredFieldsArray['qty_input'] !=  null) && ($runcardRequiredFieldsArray['qty_output'] != 0 || $runcardRequiredFieldsArray['qty_output'] != null)){
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         // return 'Success';
-    //                                         $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                             'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                             // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                             // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                             // 'sub_station_id'=> $request->sub_station_id,
-    //                                             // 'step_num'=> $step_num,
-    //                                             'process_flow_id'=> $request->process_flow_id,
-    //                                             'qty_input'=>$request->qty_input,
-    //                                             'qty_output'=>$request->qty_output,
-    //                                             'qty_ng'=>$request->qty_ng,
-    //                                             'partial'=>$request->qty_partial,
-    //                                             'runcard_defect'=>$request->runcard_defect,
-    //                                             'remarks'=>$request->remarks,
-    //                                             'status' => 1,
-    //                                             'created_by'=> Auth::user()->id,
-    //                                             'last_updated_by'=> Auth::user()->id,
-    //                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                         ]);
-
-    //                                         // Save Operators
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // Save Machines
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         DB::commit();
-    //                                         $result = 1;
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields(For Full Assembly)';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRe uiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }
-    //                             else{
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     // return 'Success';
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'partial'=>$request->qty_partial,
-    //                                         'runcard_defect'=>$request->runcard_defect,
-    //                                         'remarks'=>$request->remarks,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     DB::commit();
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-
-
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->get();
-
-
-    //                         /* Maint Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray, 'prodRuncard' => $prodRuncard);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //     }
-
-    //     // For Insert of Station
-    //     else{ // For Multiple Runcard
-    //         $validator = Validator::make($data, [
-    //             // 'txt_prod_runcard_id_query' => ['required'],
-    //             'selected_prod_runcard' => ['required'],
-    //             'qty_input' => ['required'],
-    //             'qty_output' => ['required'],
-    //             'qty_ng' => ['required'],
-    //             'txt_employee_number_scanner' => ['required'],
-    //             // 'step_num' => ['required'],
-    //             'sub_station_id' => ['required'],
-    //             // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //             // 'material_id' => ['required'], // 08-11-2022 -JD
-    //             // 'material_type' => ['required'], // 08-16-2022 -JD
-    //             'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //             $return_body = 'Please complete required fields.';
-    //             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //             return $return;
-    //         }
-    //         else{
-
-    //             $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //             if($user->count() > 0){
-    //                 if($user[0]->position == 4){
-    //                     // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 if( $processFlow->id != (int)$request->sub_station_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 3.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Lot No. 1.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                         // if($validator->passes()){
-    //                             DB::beginTransaction();
-
-    //                             $selected_prod_runcard = explode(',', $request->selected_prod_runcard);
-    //                             // return count($selected_prod_runcard);
-    //                             if(count($selected_prod_runcard) > 0){
-    //                                 // return $selected_prod_runcard;
-    //                                 $counter = 0;
-    //                                 try {
-    //                                     ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                         ->update(
-    //                                             [
-    //                                                 'status'=> 3,
-    //                                                 'last_updated_by' => $user[0]->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s')
-    //                                             ]
-    //                                         );
-
-
-    //                                     // return $selected_prod_runcard;
-    //                                     for ($outer_index = 0; $outer_index < count($selected_prod_runcard); $outer_index++) {
-    //                                         $counter++;
-
-    //                                             $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $selected_prod_runcard[$outer_index])->orderBy('id', 'desc')->first();
-
-    //                                             $step_num = 1;
-
-    //                                             if($last_prod_runcard_station != null){
-    //                                                 $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                             }
-
-
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $selected_prod_runcard[$outer_index],
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                              * Multiple insert for Prod Runcard Station Materials(INSERT)
-    //                                              * 08-16-2022
-    //                                              * -JD
-    //                                              */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'sub_station_id' => $request->process,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // DB::commit();
-    //                                             // $result = true;
-
-    //                                     }
-
-    //                                     // return $counter;
-    //                                     DB::commit();
-    //                                     // ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                     //     ->update(
-    //                                     //         [
-    //                                     //             'status'=> 3,
-    //                                     //             'last_updated_by' => $user[0]->id,
-    //                                     //             'updated_at' => date('Y-m-d H:i:s')
-    //                                     //         ]
-    //                                     //     );
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-
-    //                             }
-    //                             else{
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                     // }
-
-    //                     if( $result == 0 ){
-    //                         $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                         $return_body = 'An error occured. The record not saved.';
-    //                     }
-    //                     $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Scanned QR Code is not Operator.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //             }
-    //             else{
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = ' Invalid Employee No.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                 return $return;
-    //                 // return '0';
-    //             }
-
-    //         }
-    //     }
-
-    // }
-
-    /**
-     * Old
-     * Additional validation for Matrix if Process Flow already approved
-     * 01-06-2023
-     * -JD
-     */
-    // public function edit_prod_runcard_station(Request $request){
-    //     // return "edit_prod_runcard_station";
-
-    //     date_default_timezone_set('Asia/Manila');
-    //     $timeNow = date('H:i');
-    //     $time = explode(':', $timeNow);
-    //     $hour = (int)$time[0];
-    //     $min = (int)$time[1];
-
-    //     // 7:30AM to 19:29PM A shift (Morning)
-    //     // 19:30PM to 7:29AM B shift (Evening)
-    //     $isMorning = false;
-    //     if( $hour >= 7 && $hour <= 19 ) {
-    //         $isMorning = true;
-    //         if( $hour == 7 && $min < 30 )
-    //             $isMorning = false;
-    //         if( $hour == 19 && $min >= 30 )
-    //             $isMorning = false;
-    //     }
-    //     $processFlow = ProcessFlow::find($request->process_flow_id);
-    //     // return response()->json(['processFlow' => $processFlow]);
-    //     // return response()->json([
-    //     //     'request' => $request->all(),
-    //     //     'processFlow' => $processFlow,
-    //     //     'timeNow' => $timeNow,
-    //     //     'hour' => $hour,
-    //     //     'min' => $min,
-    //     //     'isMorning' => $isMorning,
-    //     // ]);
-
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> Saved';
-    //     $return_body = 'Record has been saved.';
-    //     $result = 1;
-
-    //     /**
-    //      * For checking of process if "Auto Insertion / #MO Installation"
-    //      * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //      * -JD
-    //      */
-    //     $runcardRequiredFieldsArray = [
-    //         'mold'                  =>null,
-    //         'ct_supplier'           =>null,
-    //         'die_no'                =>null,
-    //         'pair_no'               =>null,
-    //         'is_auto_insertion'     =>false,
-    //         'is_full_assembly'      =>false,
-    //         'work_week'             =>null,
-    //         'qty_input'             =>null,
-    //         'qty_output'            =>null,
-    //     ];
-    //     $runcardRequiredFieldsArrayHasNull = true;
-    //     $fullAssemblyRequiredFieldsArrayHasNull = true;
-
-    //     $data = $request->all();
-
-    //      // For Edit of Station
-    //     if((isset($request->txt_prod_runcard_id_query) || $request->txt_prod_runcard_id_query != null || $request->txt_prod_runcard_id_query != '')){
-    //         // For Edit Process, runcard station should be set on this state
-    //         if(isset($request->txt_prod_runcard_station_id_query)){
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'txt_prod_runcard_station_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-
-    //                 // 'sub_station_id' => ['required'], // 08-16-2022 -JD
-    //                 // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'],
-    //             ]);
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         if( $request->txt_prod_runcard_station_id_query ){
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-15-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /**
-    //                                  * Operator is required to scan their id
-    //                                  * 01-20-2023
-    //                                  * -JD
-    //                                  */
-    //                                 if(!isset($request->txt_edit_prod_runcard_operator)){
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Operator/s is required";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $hasDefectEscalation = false; // -JD 11-28-2022
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }elseif(isset($request->runcard_for_defect)){
-    //                                                 $hasDefectEscalation = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-    //                                         // return "has def = $hasDefectEscalation";
-    //                                         if($hasOneMachine || $hasDefectEscalation){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-    //                                 // return "tama lahat";
-
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /* Commented by -JD */
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Check the process if "Auto Insertion / #MO Installation"
-    //                              * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                              * -JD
-    //                              */
-    //                             $process = ProductionRuncardStation::with('process_flow.processFlow')
-    //                             ->where('id',$request->txt_prod_runcard_station_id_query)
-    //                             ->where('process_flow_id', $processFlow->id)
-    //                             ->get();
-    //                             // echo "prod runcard station id ". $request->txt_prod_runcard_station_id_query;
-    //                             // echo "\r\n";
-    //                             // echo "process_flow_id ". $processFlow->id;
-    //                             // echo "\r\n";
-    //                             // return $process[0]->process_flow->processFlow->name;
-
-    //                             if($process[0]->process_flow->processFlow->name == "Auto Insertion / #MO Installation"){
-    //                                 $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                     $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                     $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                     $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                     $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-    //                             /**
-    //                              * If "Auto Insertion / #MO Installation" is true and has no null values on the required fields (Mold, C/T Supplier, etc.)
-    //                              * then set the $runcardRequiredFieldsArrayHasNull to false
-    //                              */
-    //                             if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                                 if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                             ->update(
-    //                                                 [
-    //                                                     'qty_input'=>$request->qty_input,
-    //                                                     'qty_output'=>$request->qty_output,
-    //                                                     'qty_ng'=>$request->qty_ng,
-    //                                                     'partial'=>$request->qty_partial,
-    //                                                     'runcard_defect'=>$request->runcard_defect,
-    //                                                     'remarks'=>$request->remarks,
-    //                                                     // 'status' => 1,
-    //                                                     // 'sub_station_id' => $request->sub_station_id,
-    //                                                 ]
-    //                                             );
-
-    //                                         // angelo
-    //                                         // Save Operators
-    //                                         ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // angelo
-    //                                         // Save Machines
-    //                                         ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         DB::commit();
-    //                                         $result = 1;
-
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }else{
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                         ->update(
-    //                                             [
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'partial'=>$request->qty_partial,
-    //                                                 'runcard_defect'=>$request->runcard_defect,
-    //                                                 'remarks'=>$request->remarks,
-    //                                                 // 'status' => 1,
-    //                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                             ]
-    //                                         );
-
-    //                                     // angelo
-    //                                     // Save Operators
-    //                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // angelo
-    //                                     // Save Machines
-    //                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                     ->delete();
-
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         /* Main Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //         else{ // For Add Process, runcard station is not set on this state
-    //             // return "add process";
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-    //                 'sub_station_id' => ['required'],
-    //                 // 'lot_no' => ['required's], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 /**
-    //                                  * Operator is required to scan their id
-    //                                  * 01-20-2023
-    //                                  * -JD
-    //                                  */
-    //                                 if(!isset($request->txt_edit_prod_runcard_operator)){
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Operator/s is required";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $hasDefectEscalation = false; // -JD 11-28-22
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }elseif(isset($request->runcard_for_defect)){
-    //                                                 $hasDefectEscalation = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-
-    //                                         // return "hasDefectEscalation: $hasDefectEscalation";
-    //                                         if($hasOneMachine || $hasDefectEscalation){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 2.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 1.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // Commented by -JD
-    //                                 // $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 //     ->where("material_name", $request->material_id)
-    //                                 //     ->where("lot_no", $request->lot_no)
-    //                                 //     ->get();
-    //                                 // if( count($material) == 0 ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             $processFlowApprovalStatus = ProcessFlow::where('id',$request->process_flow_id)->get();
-    //                             // return $processFlowApprovalStatus;
-
-    //                             // if($processFlowApprovalStatus[0]->approval_status != 3){
-    //                             if($processFlowApprovalStatus[0]->approval_status == 1 || $processFlowApprovalStatus[0]->approval_status == 2){ // added by nessa 01/22/2023
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Step is not yet approved. <br> Please check the matrix.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Check the process if "Auto Insertion / #MO Installation"
-    //                              * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                              * -JD
-    //                              */
-    //                             $process = SubStation::where('id',$request->sub_station_id)->get();
-    //                             // return $process[0]->name;
-    //                             // echo $process[0]->name;
-    //                             // echo "\r\n";
-
-    //                             if($process[0]->name == "Auto Insertion / #MO Installation"){
-    //                                 $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                     $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                     $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                     $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                     $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-
-    //                             /**
-    //                              * Check the process if "Full Assembly"
-    //                              * then add validation for Workweek, Input, Output in Print / Curing(Process)
-    //                              * -JD
-    //                              * 10-17-2022
-    //                              */
-    //                             if($process[0]->name == "Full Assembly"){
-    //                                 $runcardRequiredFieldsArray['is_full_assembly'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::with('prod_runcard_station_many_details')->where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 // return $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                                 if($prodRuncard[0]->work_week != null || $prodRuncard[0]->work_week != ''){
-    //                                     $runcardRequiredFieldsArray['work_week'] = $prodRuncard[0]->work_week;
-    //                                 }
-
-    //                                 $qty_input = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_input;
-    //                                 $qty_output = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                                 if($qty_input != 0 || $qty_input != null){
-    //                                     $runcardRequiredFieldsArray['qty_input'] = $qty_input;
-    //                                 }
-
-    //                                 if($qty_output != 0 || $qty_output != null){
-    //                                     $runcardRequiredFieldsArray['qty_output'] = $qty_output;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-    //                             if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                                 if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                     // $runcardRequiredFieldsArrayHasNull = false;
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         // return 'Success';
-    //                                         $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                             'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                             // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                             // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                             // 'sub_station_id'=> $request->sub_station_id,
-    //                                             // 'step_num'=> $step_num,
-    //                                             'process_flow_id'=> $request->process_flow_id,
-    //                                             'qty_input'=>$request->qty_input,
-    //                                             'qty_output'=>$request->qty_output,
-    //                                             'qty_ng'=>$request->qty_ng,
-    //                                             'partial'=>$request->qty_partial,
-    //                                             'runcard_defect'=>$request->runcard_defect,
-    //                                             'remarks'=>$request->remarks,
-    //                                             'status' => 1,
-    //                                             'created_by'=> Auth::user()->id,
-    //                                             'last_updated_by'=> Auth::user()->id,
-    //                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                         ]);
-
-    //                                         // Save Operators
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // Save Machines
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         DB::commit();
-    //                                         $result = 1;
-
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields(For Auto Insertion)';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }
-    //                             else if($runcardRequiredFieldsArray['is_full_assembly'] == true){
-    //                                 if($runcardRequiredFieldsArray['work_week'] != null && ($runcardRequiredFieldsArray['qty_input'] != 0 || $runcardRequiredFieldsArray['qty_input'] !=  null) && ($runcardRequiredFieldsArray['qty_output'] != 0 || $runcardRequiredFieldsArray['qty_output'] != null)){
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         // return 'Success';
-    //                                         $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                             'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                             // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                             // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                             // 'sub_station_id'=> $request->sub_station_id,
-    //                                             // 'step_num'=> $step_num,
-    //                                             'process_flow_id'=> $request->process_flow_id,
-    //                                             'qty_input'=>$request->qty_input,
-    //                                             'qty_output'=>$request->qty_output,
-    //                                             'qty_ng'=>$request->qty_ng,
-    //                                             'partial'=>$request->qty_partial,
-    //                                             'runcard_defect'=>$request->runcard_defect,
-    //                                             'remarks'=>$request->remarks,
-    //                                             'status' => 1,
-    //                                             'created_by'=> Auth::user()->id,
-    //                                             'last_updated_by'=> Auth::user()->id,
-    //                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                         ]);
-
-    //                                         // Save Operators
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // Save Machines
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         DB::commit();
-    //                                         $result = 1;
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields(For Full Assembly)';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRe uiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }
-    //                             else{
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     // return 'Success';
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'partial'=>$request->qty_partial,
-    //                                         'runcard_defect'=>$request->runcard_defect,
-    //                                         'remarks'=>$request->remarks,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     DB::commit();
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-
-
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->get();
-
-
-    //                         /* Maint Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray, 'prodRuncard' => $prodRuncard);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //     }
-
-    //     // For Insert of Station
-    //     else{ // For Multiple Runcard
-    //         $validator = Validator::make($data, [
-    //             // 'txt_prod_runcard_id_query' => ['required'],
-    //             'selected_prod_runcard' => ['required'],
-    //             'qty_input' => ['required'],
-    //             'qty_output' => ['required'],
-    //             'qty_ng' => ['required'],
-    //             'txt_employee_number_scanner' => ['required'],
-    //             // 'step_num' => ['required'],
-    //             'sub_station_id' => ['required'],
-    //             // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //             // 'material_id' => ['required'], // 08-11-2022 -JD
-    //             // 'material_type' => ['required'], // 08-16-2022 -JD
-    //             'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //             $return_body = 'Please complete required fields.';
-    //             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //             return $return;
-    //         }
-    //         else{
-
-    //             $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //             if($user->count() > 0){
-    //                 if($user[0]->position == 4){
-    //                     // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 if( $processFlow->id != (int)$request->sub_station_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 3.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Lot No. 1.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                         // if($validator->passes()){
-    //                             DB::beginTransaction();
-
-    //                             $selected_prod_runcard = explode(',', $request->selected_prod_runcard);
-    //                             // return count($selected_prod_runcard);
-    //                             if(count($selected_prod_runcard) > 0){
-    //                                 // return $selected_prod_runcard;
-    //                                 $counter = 0;
-    //                                 try {
-    //                                     ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                         ->update(
-    //                                             [
-    //                                                 'status'=> 3,
-    //                                                 'last_updated_by' => $user[0]->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s')
-    //                                             ]
-    //                                         );
-
-
-    //                                     // return $selected_prod_runcard;
-    //                                     for ($outer_index = 0; $outer_index < count($selected_prod_runcard); $outer_index++) {
-    //                                         $counter++;
-
-    //                                             $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $selected_prod_runcard[$outer_index])->orderBy('id', 'desc')->first();
-
-    //                                             $step_num = 1;
-
-    //                                             if($last_prod_runcard_station != null){
-    //                                                 $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                             }
-
-
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $selected_prod_runcard[$outer_index],
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                              * Multiple insert for Prod Runcard Station Materials(INSERT)
-    //                                              * 08-16-2022
-    //                                              * -JD
-    //                                              */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'sub_station_id' => $request->process,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // DB::commit();
-    //                                             // $result = true;
-
-    //                                     }
-
-    //                                     // return $counter;
-    //                                     DB::commit();
-    //                                     // ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                     //     ->update(
-    //                                     //         [
-    //                                     //             'status'=> 3,
-    //                                     //             'last_updated_by' => $user[0]->id,
-    //                                     //             'updated_at' => date('Y-m-d H:i:s')
-    //                                     //         ]
-    //                                     //     );
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-
-    //                             }
-    //                             else{
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                     // }
-
-    //                     if( $result == 0 ){
-    //                         $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                         $return_body = 'An error occured. The record not saved.';
-    //                     }
-    //                     $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                     $return_body = ' Scanned QR Code is not Operator.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //             }
-    //             else{
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = ' Invalid Employee No.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                 return $return;
-    //                 // return '0';
-    //             }
-    //         }
-    //     }
-    // }
-
-    /**
-     * New
-     * Additional validation for Materials if included based on Matrix
-     * 01-25-2023
-     * -JD
-     */
-    // public function edit_prod_runcard_station(Request $request){
-    //     // return "edit_prod_runcard_station";
-
-    //     date_default_timezone_set('Asia/Manila');
-    //     $timeNow = date('H:i');
-    //     $time = explode(':', $timeNow);
-    //     $hour = (int)$time[0];
-    //     $min = (int)$time[1];
-
-    //     // 7:30AM to 19:29PM A shift (Morning)
-    //     // 19:30PM to 7:29AM B shift (Evening)
-    //     $isMorning = false;
-    //     if( $hour >= 7 && $hour <= 19 ) {
-    //         $isMorning = true;
-    //         if( $hour == 7 && $min < 30 )
-    //             $isMorning = false;
-    //         if( $hour == 19 && $min >= 30 )
-    //             $isMorning = false;
-    //     }
-    //     $processFlow = ProcessFlow::find($request->process_flow_id);
-    //     // return response()->json(['processFlow' => $processFlow]);
-    //     // return response()->json([
-    //     //     'request' => $request->all(),
-    //     //     'processFlow' => $processFlow,
-    //     //     'timeNow' => $timeNow,
-    //     //     'hour' => $hour,
-    //     //     'min' => $min,
-    //     //     'isMorning' => $isMorning,
-    //     // ]);
-
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> SAVED';
-    //     $return_body = '<center><p style="color:green;">Record has been saved.</p></center>';
-    //     $result = 1;
-
-    //     /**
-    //      * For checking of process if "Auto Insertion / #MO Installation"
-    //      * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //      * -JD
-    //      */
-    //     $runcardRequiredFieldsArray = [
-    //         'mold'                  =>null,
-    //         'ct_supplier'           =>null,
-    //         'die_no'                =>null,
-    //         'pair_no'               =>null,
-    //         'is_auto_insertion'     =>false,
-    //         'is_full_assembly'      =>false,
-    //         'work_week'             =>null,
-    //         'qty_input'             =>null,
-    //         'qty_output'            =>null,
-    //     ];
-    //     $runcardRequiredFieldsArrayHasNull = true;
-    //     $fullAssemblyRequiredFieldsArrayHasNull = true;
-
-    //     $data = $request->all();
-
-    //      // For Edit of Station
-    //     if((isset($request->txt_prod_runcard_id_query) || $request->txt_prod_runcard_id_query != null || $request->txt_prod_runcard_id_query != '')){
-    //         // For Edit Process, runcard station should be set on this state
-    //         if(isset($request->txt_prod_runcard_station_id_query)){
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'txt_prod_runcard_station_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-
-    //                 // 'sub_station_id' => ['required'], // 08-16-2022 -JD
-    //                 // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'],
-    //             ]);
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){
-    //                         if( $request->txt_prod_runcard_station_id_query ){
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-    //                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-15-2022 -JD
-    //                                 if( $processFlow->id != (int)$request->process_flow_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 /**
-    //                                  * Operator is required to scan their id
-    //                                  * 01-20-2023
-    //                                  * -JD
-    //                                  */
-    //                                 if(!isset($request->txt_edit_prod_runcard_operator)){
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                     $return_body = " Operator/s is required";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 /**
-    //                                  * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                                  * 09-15-2022
-    //                                  * -JD
-    //                                  */
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesNotIncludedInMatrixArray = []; // -JD
-    //                                 $hasOneMachine = false; // -JD
-    //                                 $hasDefectEscalation = false; // -JD 11-28-2022
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                                 // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                                 // print_r($machinesIDSToCheck);
-    //                                 // echo "\r\n";
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                                 // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                                 // print_r($machinesIDSToCompare);
-    //                                 // echo "\r\n";
-    //                                 // return count($machinesIDSToCheck);
-    //                                 if(count($machinesIDSToCheck) > 0){
-    //                                     if(isset($machinesIDSToCompare)){
-    //                                         for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                             if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                                 $machineCountDetected++;
-    //                                                 $hasOneMachine = true;
-    //                                             }elseif(isset($request->runcard_for_defect)){
-    //                                                 $hasDefectEscalation = true;
-    //                                             }else{
-    //                                                 $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                             }
-    //                                         }
-    //                                         // return "has def = $hasDefectEscalation";
-    //                                         if($hasOneMachine || $hasDefectEscalation){
-    //                                             // echo 'hasOneMachine true';
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                     $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                     return $return;
-    //                                                 }
-    //                                             }else{
-    //                                                 // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                                 // echo "\r\n";
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                                 $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-
-    //                                         }else{
-    //                                             // echo 'hasOneMachine false';
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                             $return_body = " No Machine/s found on the Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                         // echo 'machinesNotIncludedInMatrixArray ';
-    //                                         // return $machinesNotIncludedInMatrixArray;
-
-    //                                     }else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                         $return_body = "Please select one or more Machine based on Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                 }
-    //                                 // return "tama lahat";
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Scanning of material is required based on the registered materials in Process Flow(Matrix)
-    //                              * 01-26-2023
-    //                              * -JD
-    //                              */
-    //                             if(isset($request->materialArray)){
-    //                                 $materialDetails = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                 ->get();
-    //                                 // return $materialDetails;
-
-    //                                 /* Total count of scanned materials should be equal to registered materials in Process Flow(Matrix)*/
-    //                                 if( count($materialDetails) != count($request->materialArray) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> NOT SAVED!';
-    //                                     $return_body = ' <center>Material/s is not equal based on the Matrix! <br> Please call your immediate Superior!</center>';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-    //                             }
-
-    //                             /**
-    //                              * Check the process if "Auto Insertion / #MO Installation"
-    //                              * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                              * -JD
-    //                              */
-    //                             $process = ProductionRuncardStation::with('process_flow.processFlow')
-    //                             ->where('id',$request->txt_prod_runcard_station_id_query)
-    //                             ->where('process_flow_id', $processFlow->id)
-    //                             ->get();
-    //                             // echo "prod runcard station id ". $request->txt_prod_runcard_station_id_query;
-    //                             // echo "\r\n";
-    //                             // echo "process_flow_id ". $processFlow->id;
-    //                             // echo "\r\n";
-    //                             // return $process[0]->process_flow->processFlow->name;
-
-    //                             // if($process[0]->process_flow->processFlow->name == "Auto Insertion / #MO Installation"){
-
-    //                             // updated by nessa 02072023
-    //                             if($process[0]->process_flow->processFlow->name == "Auto Insertion / #MO Installation" || $process[0]->process_flow->processFlow->name == "Contact Insertion - Auto Insertion" || $process[0]->process_flow->processFlow->name == "Auto Insertion"){
-    //                                 $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                                 $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                                 ->get();
-    //                                 if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                     $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                     $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                     $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                                 }
-
-    //                                 if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                     $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                                 }
-    //                                 // return $runcardRequiredFieldsArray;
-    //                             }
-
-    //                             /**
-    //                              * If "Auto Insertion / #MO Installation" is true and has no null values on the required fields (Mold, C/T Supplier, etc.)
-    //                              * then set the $runcardRequiredFieldsArrayHasNull to false
-    //                              */
-    //                             if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                                 if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                     DB::beginTransaction();
-    //                                     try {
-    //                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                             ->update(
-    //                                                 [
-    //                                                     'qty_input'=>$request->qty_input,
-    //                                                     'qty_output'=>$request->qty_output,
-    //                                                     'qty_ng'=>$request->qty_ng,
-    //                                                     'partial'=>$request->qty_partial,
-    //                                                     'runcard_defect'=>$request->runcard_defect,
-    //                                                     'remarks'=>$request->remarks,
-    //                                                     // 'status' => 1,
-    //                                                     // 'sub_station_id' => $request->sub_station_id,
-    //                                                 ]
-    //                                             );
-
-    //                                         // angelo
-    //                                         // Save Operators
-    //                                         ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                 ProductionRuncardStationOperator::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         // angelo
-    //                                         // Save Machines
-    //                                         ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-
-    //                                         if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                             for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                 ProductionRuncardStationMachine::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                             ->delete();
-    //                                         // if has NG only
-    //                                         if($request->qty_ng > 0){
-    //                                             // Required to save MOD if has NG only
-    //                                             if(isset($request->mod)){
-    //                                                 for($index = 0; $index < count($request->mod); $index++){
-    //                                                     ProductionRuncardStationMOD::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'mod_id' => $request->mod[$index],
-    //                                                         'type_of_ng' => $request->type_of_ng[$index],
-    //                                                         'mod_qty' => $request->mod_qty[$index],
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'update_version' => 1,
-    //                                                         'status' => 1,
-    //                                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                                 $return_body = ' Please Fill-up MOD!';
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                                 return $return;
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             // Don't save the MOD
-    //                                         }
-
-    //                                         /**
-    //                                         * Multiple insert for Prod Runcard Station Materials
-    //                                         * 08-16-2022
-    //                                         * -JD
-    //                                         */
-    //                                         ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                         if(isset($request->materialArray)){
-    //                                             for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                 ProductionRuncardStationMaterial::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'sub_station_id' => $request->sub_station_id,
-    //                                                     'material_id' => $request->materialArray[$index][0],
-    //                                                     'material_name' => $request->materialArray[$index][1],
-    //                                                     'lot_no' => $request->materialArray[$index][2],
-    //                                                     'material_type' => $request->materialArray[$index][3],
-    //                                                     'status' => 1,
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                     'created_at' => date('Y-m-d H:i:s')
-    //                                                 ]);
-    //                                             }
-    //                                         }
-
-    //                                         DB::commit();
-    //                                         $result = 1;
-
-    //                                     } catch (Exception $e) {
-    //                                         DB::rollback();
-    //                                         $result = 0;
-    //                                     }
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = ' Please Fill-up required fields';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                     return $return;
-    //                                 }
-    //                             }else{
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
-    //                                         ->update(
-    //                                             [
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'partial'=>$request->qty_partial,
-    //                                                 'runcard_defect'=>$request->runcard_defect,
-    //                                                 'remarks'=>$request->remarks,
-    //                                                 // 'status' => 1,
-    //                                                 // 'sub_station_id' => $request->sub_station_id,
-    //                                             ]
-    //                                         );
-
-    //                                     // angelo
-    //                                     // Save Operators
-    //                                     ProductionRuncardStationOperator::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // angelo
-    //                                     // Save Machines
-    //                                     ProductionRuncardStationMachine::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                         ->delete();
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
-    //                                     ->delete();
-
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         /* Main Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> NOT SAVED!';
-    //                     $return_body = ' <center> Invalid Employee No. </center>';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //         else{ // For Add Process, runcard station is not set on this state
-    //             // return "add process";
-    //             $validator = Validator::make($data, [
-    //                 'txt_prod_runcard_id_query' => ['required'],
-    //                 'qty_input' => ['required'],
-    //                 'qty_output' => ['required'],
-    //                 'qty_ng' => ['required'],
-    //                 'txt_employee_number_scanner' => ['required'],
-    //                 // 'step_num' => ['required'],
-    //                 'sub_station_id' => ['required'],
-    //                 // 'lot_no' => ['required's], // 08-16-2022 -JD
-    //                 // 'material_id' => ['required'], // 08-11-2022 -JD
-    //                 // 'material_type' => ['required'], // 08-16-2022 -JD
-    //                 'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                 $return_body = 'Please complete required fields.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //                 return $return;
-    //             }
-    //             else{
-    //                 $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //                 if($user->count() > 0){
-    //                     if($user[0]->position == 4){ // 4-Operator
-    //                         $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                         if( isset($processFlow->id) ){
-
-    //                             // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
-    //                             if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = ' Invalid Process.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Operator is required to scan their id
-    //                              * 01-20-2023
-    //                              * -JD
-    //                              */
-    //                             if(!isset($request->txt_edit_prod_runcard_operator)){
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = " Operator/s is required";
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                             /**
-    //                              * Additional rules for Process Flow Machine(Matrix) vs Machine(Runcard Station Machine Selected)
-    //                              * 09-15-2022
-    //                              * -JD
-    //                              */
-    //                             $machineCountDetected = 0;
-    //                             $machinesNotIncludedInMatrixArray = []; // -JD
-    //                             $hasOneMachine = false; // -JD
-    //                             $hasDefectEscalation = false; // -JD 11-28-22
-    //                             $machinesIDSToCheck = explode(',', $processFlow->machine_id); // From Process Flow(Matrix)
-    //                             // echo 'Process flow machines and count ' . count($machinesIDSToCheck)  . " ";
-    //                             // echo "\r\n";
-    //                             // print_r($machinesIDSToCheck);
-    //                             // echo "\r\n";
-
-    //                             $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine; // Runcard Station Machines
-    //                             // echo 'Runcard station machines and count ' . count($machinesIDSToCompare) . " ";
-    //                             // print_r($machinesIDSToCompare);
-    //                             // echo "\r\n";
-    //                             // return count($machinesIDSToCheck);
-
-    //                             /**
-    //                              * To check if process flow is null vs selected machine values(n/a) on prod runcard station
-    //                              */
-    //                             $machinesIDSToCheckIsNull = false;
-    //                             if($processFlow->machine_id == ''){
-    //                                 $machinesIDSToCheckIsNull = true;
-    //                             }
-    //                             // echo $machinesIDSToCheckIsNull;
-    //                             // echo "\r\n";
-    //                             // echo $machinesIDSToCompare[0];
-    //                             // return;
-    //                             if(isset($machinesIDSToCompare)){
-    //                                 /**
-    //                                  * To check if process flow is null vs selected machine values(n/a) on prod runcard station
-    //                                  */
-    //                                 // if($machinesIDSToCheckIsNull != true && $machinesIDSToCompare[0] != "N/A"){
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 //     $return_body = "Please only select N/A if no machine registered based on Matrix.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                 //     return $return;
-    //                                 // }else{
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 //     $return_body = "Please only select N/A if no machine registered based on Matrix.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                 //     return $return;
-    //                                 // }
-    //                             }
-
-    //                             if(count($machinesIDSToCheck) > 0){
-    //                                 if(isset($machinesIDSToCompare)){
-    //                                     /**
-    //                                      * To check if process flow is null vs selected machine values(n/a) on prod runcard station
-    //                                      */
-    //                                     // if($machinesIDSToCheckIsNull = true && $machinesIDSToCompare[0] != "N/A"){
-    //                                     //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     //     $return_body = "Please only select N/A if no machine registered based on Matrix.";
-    //                                     //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     //     return $return;
-    //                                     // }
-    //                                     // // else{
-    //                                     // //     echo "id: " .$machinesIDSToCheckIsNull . " machineId: ". $machinesIDSToCompare[0];
-    //                                     // // }
-    //                                     for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                         if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) ){
-    //                                             $machineCountDetected++;
-    //                                             $hasOneMachine = true;
-    //                                         }elseif(isset($request->runcard_for_defect)){
-    //                                             $hasDefectEscalation = true;
-    //                                         }else{
-    //                                             $machinesNotIncludedInMatrixArray[] = $machinesIDSToCompare[$i];
-    //                                         }
-    //                                     }
-
-    //                                     // return "hasDefectEscalation: $hasDefectEscalation";
-    //                                     if($hasOneMachine || $hasDefectEscalation){
-    //                                         // echo 'hasOneMachine true';
-    //                                         // echo "\r\n";
-    //                                         if(count($machinesIDSToCompare) <= count($machinesIDSToCheck)){
-    //                                             // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is not more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                             // echo "\r\n";
-    //                                             if(count($machinesNotIncludedInMatrixArray) > 0){
-    //                                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                                 $return_body = "Some Selected Machine is not registered based on Matrix.";
-    //                                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                                 return $return;
-    //                                             }
-    //                                         }else{
-    //                                             // echo "machinesIDSToCompare ". count($machinesIDSToCompare) ." is more than machinesIDSToCheck " . count($machinesIDSToCheck);
-    //                                             // echo "\r\n";
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                             $return_body = "Please check the Selected Machine registered based on Matrix.";
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                             return $return;
-    //                                         }
-    //                                     }else{
-    //                                         // echo 'hasOneMachine false';
-    //                                         // echo "\r\n";
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                         $return_body = " No Machine/s found on the Matrix.";
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                         return $return;
-    //                                     }
-    //                                     // echo 'machinesNotIncludedInMatrixArray ';
-    //                                     // return $machinesNotIncludedInMatrixArray;
-
-    //                                 }else{
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = "Please select one or more Machine based on Matrix.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-    //                             }
-    //                         } else {
-    //                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                             $return_body = ' Process Flow not found.';
-    //                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                             return $return;
-    //                         }
-
-    //                         $processFlowApprovalStatus = ProcessFlow::where('id',$request->process_flow_id)->get();
-    //                         // return $processFlowApprovalStatus;
-    //                         if($processFlowApprovalStatus[0]->approval_status == 1 || $processFlowApprovalStatus[0]->approval_status == 2){ // added by nessa 01/22/2023
-    //                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                             $return_body = ' Process Step is not yet approved. <br> Please check the matrix.';
-    //                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                             return $return;
-    //                         }
-
-    //                         /**
-    //                          * Scanning of material is required based on the registered materials in Process Flow(Matrix)
-    //                          * 01-26-2023
-    //                          * -JD
-    //                          */
-    //                         if(isset($request->materialArray)){
-    //                             $materialDetails = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                             ->get();
-    //                             // return $materialDetails;
-
-    //                             /* Total count of scanned materials should be equal to registered materials in Process Flow(Matrix)*/
-    //                             if( count($materialDetails) != count($request->materialArray) ) {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = ' Materials is not equal based on the Matrix';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-    //                         }
-
-    //                         /**
-    //                          * Check the process if "Auto Insertion / #MO Installation"
-    //                          * then add validation for Mold, C/T Supplier, Die No & Pair #
-    //                          * -JD
-    //                          */
-    //                         $process = SubStation::where('id',$request->sub_station_id)->get();
-    //                         // return $process[0]->name;
-    //                         // echo $process[0]->name;
-    //                         // echo "\r\n";
-
-    //                         // if($process[0]->name == "Auto Insertion / #MO Installation"){
-    //                         //updated by nesa 02072023
-    //                         if($process[0]->name == "Auto Insertion / #MO Installation" || $process[0]->name == "Contact Insertion - Auto Insertion" || $process[0]->name == "Auto Insertion"){
-
-    //                             $runcardRequiredFieldsArray['is_auto_insertion'] = true;
-
-    //                             $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
-    //                             ->get();
-    //                             if($prodRuncard[0]->mold != null || $prodRuncard[0]->mold != ''){
-    //                                 $runcardRequiredFieldsArray['mold'] = $prodRuncard[0]->mold;
-    //                             }
-
-    //                             if($prodRuncard[0]->ct_supplier != null || $prodRuncard[0]->ct_supplier != ''){
-    //                                 $runcardRequiredFieldsArray['ct_supplier'] = $prodRuncard[0]->ct_supplier;
-    //                             }
-
-    //                             if($prodRuncard[0]->die_no != null || $prodRuncard[0]->die_no != ''){
-    //                                 $runcardRequiredFieldsArray['die_no'] = $prodRuncard[0]->die_no;
-    //                             }
-
-    //                             if($prodRuncard[0]->pair_no != null || $prodRuncard[0]->pair_no != ''){
-    //                                 $runcardRequiredFieldsArray['pair_no'] = $prodRuncard[0]->pair_no;
-    //                             }
-    //                             // return $runcardRequiredFieldsArray;
-    //                         }
-
-
-    //                         /**
-    //                          * Check the process if "Full Assembly"
-    //                          * then add validation for Workweek, Input, Output in Print / Curing(Process)
-    //                          * -JD
-    //                          * 10-17-2022
-    //                          */
-    //                         if($process[0]->name == "Full Assembly"){
-    //                             $runcardRequiredFieldsArray['is_full_assembly'] = true;
-
-    //                             $prodRuncard = ProductionRuncard::with('prod_runcard_station_many_details')->where('id',$request->txt_prod_runcard_id_query)
-    //                             ->get();
-    //                             // return $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                             if($prodRuncard[0]->work_week != null || $prodRuncard[0]->work_week != ''){
-    //                                 $runcardRequiredFieldsArray['work_week'] = $prodRuncard[0]->work_week;
-    //                             }
-
-    //                             $qty_input = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_input;
-    //                             $qty_output = $prodRuncard[0]->prod_runcard_station_many_details[0]->qty_output;
-    //                             if($qty_input != 0 || $qty_input != null){
-    //                                 $runcardRequiredFieldsArray['qty_input'] = $qty_input;
-    //                             }
-
-    //                             if($qty_output != 0 || $qty_output != null){
-    //                                 $runcardRequiredFieldsArray['qty_output'] = $qty_output;
-    //                             }
-    //                             // return $runcardRequiredFieldsArray;
-    //                         }
-
-    //                         if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
-    //                             if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
-    //                                 // $runcardRequiredFieldsArrayHasNull = false;
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     // return 'Success';
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'partial'=>$request->qty_partial,
-    //                                         'runcard_defect'=>$request->runcard_defect,
-    //                                         'remarks'=>$request->remarks,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     DB::commit();
-    //                                     $result = 1;
-
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }else{
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = ' Please Fill-up required fields(For Auto Insertion)';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                 return $return;
-    //                             }
-    //                         }
-    //                         else if($runcardRequiredFieldsArray['is_full_assembly'] == true){
-    //                             if($runcardRequiredFieldsArray['work_week'] != null && ($runcardRequiredFieldsArray['qty_input'] != 0 || $runcardRequiredFieldsArray['qty_input'] !=  null) && ($runcardRequiredFieldsArray['qty_output'] != 0 || $runcardRequiredFieldsArray['qty_output'] != null)){
-    //                                 DB::beginTransaction();
-    //                                 try {
-    //                                     // return 'Success';
-    //                                     $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                         'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                         // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                         // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                         // 'sub_station_id'=> $request->sub_station_id,
-    //                                         // 'step_num'=> $step_num,
-    //                                         'process_flow_id'=> $request->process_flow_id,
-    //                                         'qty_input'=>$request->qty_input,
-    //                                         'qty_output'=>$request->qty_output,
-    //                                         'qty_ng'=>$request->qty_ng,
-    //                                         'partial'=>$request->qty_partial,
-    //                                         'runcard_defect'=>$request->runcard_defect,
-    //                                         'remarks'=>$request->remarks,
-    //                                         'status' => 1,
-    //                                         'created_by'=> Auth::user()->id,
-    //                                         'last_updated_by'=> Auth::user()->id,
-    //                                         'created_at' => date('Y-m-d H:i:s'),
-    //                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                     ]);
-
-    //                                     // Save Operators
-    //                                     if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                             ProductionRuncardStationOperator::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // Save Machines
-    //                                     if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                         for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                             ProductionRuncardStationMachine::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                             ]);
-    //                                         }
-    //                                     }
-
-    //                                     // if has NG only
-    //                                     if($request->qty_ng > 0){
-    //                                         // Required to save MOD if has NG only
-    //                                         if(isset($request->mod)){
-    //                                             for($index = 0; $index < count($request->mod); $index++){
-    //                                                 ProductionRuncardStationMOD::insert([
-    //                                                     'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                     'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                     'mod_id' => $request->mod[$index],
-    //                                                     'type_of_ng' => $request->type_of_ng[$index],
-    //                                                     'mod_qty' => $request->mod_qty[$index],
-    //                                                     'created_by' => Auth::user()->id,
-    //                                                     'last_updated_by' => Auth::user()->id,
-    //                                                     'update_version' => 1,
-    //                                                     'status' => 1,
-    //                                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 ]);
-    //                                             }
-    //                                         }
-    //                                         else{
-    //                                             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                             $return_body = ' Please Fill-up MOD!';
-    //                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                             return $return;
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         // Don't save the MOD
-    //                                     }
-
-
-    //                                     /**
-    //                                     * Multiple insert for Prod Runcard Station Materials
-    //                                     * 08-16-2022
-    //                                     * -JD
-    //                                     */
-    //                                     if(isset($request->materialArray)){
-    //                                         for($index = 0; $index < count($request->materialArray); $index++){
-    //                                             ProductionRuncardStationMaterial::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'sub_station_id' => $request->sub_station_id,
-    //                                                 'material_id' => $request->materialArray[$index][0],
-    //                                                 'material_name' => $request->materialArray[$index][1],
-    //                                                 'lot_no' => $request->materialArray[$index][2],
-    //                                                 'material_type' => $request->materialArray[$index][3],
-    //                                                 'status' => 1,
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                                 'created_at' => date('Y-m-d H:i:s')
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     DB::commit();
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-    //                             }else{
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = ' Please Fill-up required fields(For Full Assembly)';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRe uiredFieldsArray'=>$runcardRequiredFieldsArray);
-    //                                 return $return;
-    //                             }
-    //                         }
-    //                         else{
-    //                             DB::beginTransaction();
-    //                             try {
-    //                                 // return 'Success';
-    //                                 $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                     'production_runcard_id'=> $request->txt_prod_runcard_id_query,
-    //                                     // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                     // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                     // 'sub_station_id'=> $request->sub_station_id,
-    //                                     // 'step_num'=> $step_num,
-    //                                     'process_flow_id'=> $request->process_flow_id,
-    //                                     'qty_input'=>$request->qty_input,
-    //                                     'qty_output'=>$request->qty_output,
-    //                                     'qty_ng'=>$request->qty_ng,
-    //                                     'partial'=>$request->qty_partial,
-    //                                     'runcard_defect'=>$request->runcard_defect,
-    //                                     'remarks'=>$request->remarks,
-    //                                     'status' => 1,
-    //                                     'created_by'=> Auth::user()->id,
-    //                                     'last_updated_by'=> Auth::user()->id,
-    //                                     'created_at' => date('Y-m-d H:i:s'),
-    //                                     'updated_at' => date('Y-m-d H:i:s'),
-    //                                 ]);
-
-    //                                 // Save Operators
-    //                                 if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                     for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                         ProductionRuncardStationOperator::insert([
-    //                                             'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                             'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                         ]);
-    //                                     }
-    //                                 }
-
-    //                                 // Save Machines
-    //                                 if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                     for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                         ProductionRuncardStationMachine::insert([
-    //                                             'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                             'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                         ]);
-    //                                     }
-    //                                 }
-
-    //                                 // if has NG only
-    //                                 if($request->qty_ng > 0){
-    //                                     // Required to save MOD if has NG only
-    //                                     if(isset($request->mod)){
-    //                                         for($index = 0; $index < count($request->mod); $index++){
-    //                                             ProductionRuncardStationMOD::insert([
-    //                                                 'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                 'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                 'mod_id' => $request->mod[$index],
-    //                                                 'type_of_ng' => $request->type_of_ng[$index],
-    //                                                 'mod_qty' => $request->mod_qty[$index],
-    //                                                 'created_by' => Auth::user()->id,
-    //                                                 'last_updated_by' => Auth::user()->id,
-    //                                                 'update_version' => 1,
-    //                                                 'status' => 1,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-    //                                         }
-    //                                     }
-    //                                     else{
-    //                                         $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                         $return_body = ' Please Fill-up MOD!';
-    //                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                         return $return;
-    //                                     }
-    //                                 }
-    //                                 else{
-    //                                     // Don't save the MOD
-    //                                 }
-
-
-    //                                 /**
-    //                                 * Multiple insert for Prod Runcard Station Materials
-    //                                 * 08-16-2022
-    //                                 * -JD
-    //                                 */
-    //                                 if(isset($request->materialArray)){
-    //                                     for($index = 0; $index < count($request->materialArray); $index++){
-    //                                         ProductionRuncardStationMaterial::insert([
-    //                                             'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                             'sub_station_id' => $request->sub_station_id,
-    //                                             'material_id' => $request->materialArray[$index][0],
-    //                                             'material_name' => $request->materialArray[$index][1],
-    //                                             'lot_no' => $request->materialArray[$index][2],
-    //                                             'material_type' => $request->materialArray[$index][3],
-    //                                             'status' => 1,
-    //                                             'created_by' => Auth::user()->id,
-    //                                             'last_updated_by' => Auth::user()->id,
-    //                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                             'created_at' => date('Y-m-d H:i:s')
-    //                                         ]);
-    //                                     }
-    //                                 }
-    //                                 DB::commit();
-    //                                 $result = 1;
-    //                             } catch (Exception $e) {
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                         }
-
-    //                         if( $result == 0 ){
-    //                             $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                             $return_body = 'An error occured. The record not saved.';
-    //                         }
-
-    //                         $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->get();
-
-    //                         /* Maint Return */
-    //                         $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray, 'prodRuncard' => $prodRuncard);
-    //                         return $return;
-    //                     }
-    //                     else{
-    //                         $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                         $return_body = ' Scanned QR Code is not Operator.';
-    //                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                         return $return;
-    //                     }
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                     $return_body = ' Invalid Employee No.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                     // return '0';
-    //                 }
-    //             }
-
-    //         }
-    //     }
-
-    //     // For Insert of Station
-    //     else{ // For Multiple Runcard
-    //         $validator = Validator::make($data, [
-    //             // 'txt_prod_runcard_id_query' => ['required'],
-    //             'selected_prod_runcard' => ['required'],
-    //             'qty_input' => ['required'],
-    //             'qty_output' => ['required'],
-    //             'qty_ng' => ['required'],
-    //             'txt_employee_number_scanner' => ['required'],
-    //             // 'step_num' => ['required'],
-    //             'sub_station_id' => ['required'],
-    //             // 'lot_no' => ['required'], // 08-16-2022 -JD
-    //             // 'material_id' => ['required'], // 08-11-2022 -JD
-    //             // 'material_type' => ['required'], // 08-16-2022 -JD
-    //             'process_flow_id' => ['required'], // 08-16-2022 -JD
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //             $return_body = 'Please complete required fields.';
-    //             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'error' => $validator->messages());
-    //             return $return;
-    //         }
-    //         else{
-
-    //             $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
-
-    //             if($user->count() > 0){
-    //                 if($user[0]->position == 4){
-    //                     // if( $request->txt_prod_runcard_station_id_query ){
-
-    //                             $processFlow = ProcessFlow::find($request->process_flow_id);
-    //                             if( isset($processFlow->id) ){
-
-    //                                 if( $processFlow->id != (int)$request->sub_station_id ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = ' Invalid Process.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-    //                                     return $return;
-    //                                 }
-
-    //                                 // $operatorCountDetected = 0;
-    //                                 // $operatorCountDetectedNotSet = 0;
-    //                                 // $operatorsIDSToCheck = [];
-    //                                 // if( $isMorning )
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->a_shift_user_id);
-    //                                 // else
-    //                                 //     $operatorsIDSToCheck = explode(',', $processFlow->b_shift_user_id);
-
-    //                                 // $operatorsIDSToCompare = $request->txt_edit_prod_runcard_operator;
-
-    //                                 // for ($i=0; $i < count($operatorsIDSToCompare); $i++) {
-    //                                 //     if( in_array($operatorsIDSToCompare[$i], $operatorsIDSToCheck) )
-    //                                 //         $operatorCountDetected++;
-    //                                 //     else
-    //                                 //         $operatorCountDetectedNotSet++;
-    //                                 // }
-
-    //                                 // if( ($operatorCountDetected != count($operatorsIDSToCheck) || count($operatorsIDSToCheck) != count($operatorsIDSToCompare)) || !($operatorCountDetected > 0 && $operatorCountDetectedNotSet == 0) ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = " Operator/s is not certified.";
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $machineCountDetected = 0;
-    //                                 $machinesIDSToCheck = explode(',', $processFlow->machine_id);
-
-    //                                 $machinesIDSToCompare = $request->txt_edit_prod_runcard_station_machine;
-
-    //                                 for ($i=0; $i < count($machinesIDSToCompare); $i++) {
-    //                                     if( in_array($machinesIDSToCompare[$i], $machinesIDSToCheck) )
-    //                                         $machineCountDetected++;
-    //                                 }
-
-    //                                 if( $machineCountDetected != count($machinesIDSToCheck) || count($machinesIDSToCheck) != count($machinesIDSToCompare) ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = " Invalid Selected Machine's.";
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 // if( $processFlow->material_name != $request->material_id ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Material.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 // if( $processFlow->lot_no != $request->lot_no ) {
-    //                                 //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //                                 //     $return_body = ' Invalid Lot No. 3.';
-    //                                 //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 //     return $return;
-    //                                 // }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = ' Invalid Material.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = ' Invalid Lot No. 1.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                                 $material = DeviceProcessFlowMaterial::where("process_flow_id", $processFlow->id)
-    //                                     ->where("material_name", $request->material_id)
-    //                                     ->where("lot_no", $request->lot_no)
-    //                                     ->get();
-    //                                 if( count($material) == 0 ) {
-    //                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                     $return_body = ' Invalid Material Name and Lot No. is not match.';
-    //                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                     return $return;
-    //                                 }
-
-    //                             } else {
-    //                                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                 $return_body = ' Process Flow not found.';
-    //                                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                                 return $return;
-    //                             }
-
-    //                         // if($validator->passes()){
-    //                             DB::beginTransaction();
-
-    //                             $selected_prod_runcard = explode(',', $request->selected_prod_runcard);
-    //                             // return count($selected_prod_runcard);
-    //                             if(count($selected_prod_runcard) > 0){
-    //                                 // return $selected_prod_runcard;
-    //                                 $counter = 0;
-    //                                 try {
-    //                                     ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                         ->update(
-    //                                             [
-    //                                                 'status'=> 3,
-    //                                                 'last_updated_by' => $user[0]->id,
-    //                                                 'updated_at' => date('Y-m-d H:i:s')
-    //                                             ]
-    //                                         );
-
-
-    //                                     // return $selected_prod_runcard;
-    //                                     for ($outer_index = 0; $outer_index < count($selected_prod_runcard); $outer_index++) {
-    //                                         $counter++;
-
-    //                                             $last_prod_runcard_station = ProductionRuncardStation::where('production_runcard_id', $selected_prod_runcard[$outer_index])->orderBy('id', 'desc')->first();
-
-    //                                             $step_num = 1;
-
-    //                                             if($last_prod_runcard_station != null){
-    //                                                 $step_num = $last_prod_runcard_station->step_num + 1;
-    //                                             }
-
-
-    //                                             $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-    //                                                 'production_runcard_id'=> $selected_prod_runcard[$outer_index],
-    //                                                 // 'mat_proc_id'=> $material_process[$index]->id,
-    //                                                 // 'station_id'=> $material_process[$index]->station_sub_station->station_id,
-    //                                                 // 'sub_station_id'=> $request->sub_station_id,
-    //                                                 // 'step_num'=> $step_num,
-    //                                                 'process_flow_id'=> $request->process_flow_id,
-    //                                                 'qty_input'=>$request->qty_input,
-    //                                                 'qty_output'=>$request->qty_output,
-    //                                                 'qty_ng'=>$request->qty_ng,
-    //                                                 'status' => 1,
-    //                                                 'created_by'=> Auth::user()->id,
-    //                                                 'last_updated_by'=> Auth::user()->id,
-    //                                                 'created_at' => date('Y-m-d H:i:s'),
-    //                                                 'updated_at' => date('Y-m-d H:i:s'),
-    //                                             ]);
-
-    //                                             // Save Operators
-    //                                             if(isset($request->txt_edit_prod_runcard_operator)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_operator); $index++){
-    //                                                     ProductionRuncardStationOperator::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'operator_id' => $request->txt_edit_prod_runcard_operator[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // Save Machines
-    //                                             if(isset($request->txt_edit_prod_runcard_station_machine)){
-    //                                                 for($index = 0; $index < count($request->txt_edit_prod_runcard_station_machine); $index++){
-    //                                                     ProductionRuncardStationMachine::insert([
-    //                                                         'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                         'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                         'machine_id' => $request->txt_edit_prod_runcard_station_machine[$index],
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // if has NG only
-    //                                             if($request->qty_ng > 0){
-    //                                                 // Required to save MOD if has NG only
-    //                                                 if(isset($request->mod)){
-    //                                                     for($index = 0; $index < count($request->mod); $index++){
-    //                                                         ProductionRuncardStationMOD::insert([
-    //                                                             'production_runcard_id' => $selected_prod_runcard[$outer_index],
-    //                                                             'production_runcard_station_id' => $prod_runcard_station_id,
-    //                                                             'mod_id' => $request->mod[$index],
-    //                                                             'type_of_ng' => $request->type_of_ng[$index],
-    //                                                             'mod_qty' => $request->mod_qty[$index],
-    //                                                             'created_by' => Auth::user()->id,
-    //                                                             'last_updated_by' => Auth::user()->id,
-    //                                                             'update_version' => 1,
-    //                                                             'status' => 1,
-    //                                                             'created_at' => date('Y-m-d H:i:s'),
-    //                                                             'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         ]);
-    //                                                     }
-    //                                                 }
-    //                                                 else{
-    //                                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                                                     $return_body = ' Please Fill-up MOD!';
-    //                                                     $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //                                                     return $return;
-    //                                                 }
-    //                                             }
-    //                                             else{
-    //                                                 // Don't save the MOD
-    //                                             }
-
-
-    //                                             /**
-    //                                              * Multiple insert for Prod Runcard Station Materials(INSERT)
-    //                                              * 08-16-2022
-    //                                              * -JD
-    //                                              */
-    //                                             if(isset($request->materialArray)){
-    //                                                 for($index = 0; $index < count($request->materialArray); $index++){
-    //                                                     ProductionRuncardStationMaterial::insert([
-    //                                                         'production_runcard_id' => $request->txt_prod_runcard_id_query,
-    //                                                         'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-    //                                                         'sub_station_id' => $request->process,
-    //                                                         'material_id' => $request->materialArray[$index][0],
-    //                                                         'material_name' => $request->materialArray[$index][1],
-    //                                                         'lot_no' => $request->materialArray[$index][2],
-    //                                                         'material_type' => $request->materialArray[$index][3],
-    //                                                         'status' => 1,
-    //                                                         'created_by' => Auth::user()->id,
-    //                                                         'last_updated_by' => Auth::user()->id,
-    //                                                         'updated_at' => date('Y-m-d H:i:s'),
-    //                                                         'created_at' => date('Y-m-d H:i:s')
-    //                                                     ]);
-    //                                                 }
-    //                                             }
-
-    //                                             // DB::commit();
-    //                                             // $result = true;
-
-    //                                     }
-
-    //                                     // return $counter;
-    //                                     DB::commit();
-    //                                     // ProductionRuncard::whereIn('id', $selected_prod_runcard)
-    //                                     //     ->update(
-    //                                     //         [
-    //                                     //             'status'=> 3,
-    //                                     //             'last_updated_by' => $user[0]->id,
-    //                                     //             'updated_at' => date('Y-m-d H:i:s')
-    //                                     //         ]
-    //                                     //     );
-    //                                     $result = 1;
-    //                                 } catch (Exception $e) {
-    //                                     DB::rollback();
-    //                                     $result = 0;
-    //                                 }
-
-    //                             }
-    //                             else{
-    //                                 DB::rollback();
-    //                                 $result = 0;
-    //                             }
-    //                     // }
-
-    //                     if( $result == 0 ){
-    //                         $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                         $return_body = 'An error occured. The record not saved.';
-    //                     }
-    //                     $return = array('result' => $result, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //                 else{
-    //                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                     $return_body = ' Scanned QR Code is not Operator.';
-    //                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                     return $return;
-    //                 }
-    //             }
-    //             else{
-    //                 $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-    //                 $return_body = ' Invalid Employee No.';
-    //                 $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-    //                 return $return;
-    //                 // return '0';
-    //             }
-
-    //         }
-    //     }
-
-    // }
-
-    /**
-     * Happy valentines
-     * -JD
-     */
     public function edit_prod_runcard_station(Request $request){
-        // return 'true';
+        return 'true'; DB::commit();
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
         $time = explode(':', $timeNow);
@@ -12892,6 +5978,7 @@ class ProductionRuncardController extends Controller
                                  * then set the $runcardRequiredFieldsArrayHasNull to false
                                  */
                                 if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
+                                    // return 'asd';
                                     if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
                                         DB::beginTransaction();
                                         try {
@@ -12942,6 +6029,8 @@ class ProductionRuncardController extends Controller
                                             ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                                 ->delete();
                                             // if has NG only // mdr 11/07/25
+
+                                            return 'otids';
                                             if($request->qty_ng > 0){
                                                 // Required to save MOD if has NG only
                                                 if(isset($request->mod)){
@@ -12959,8 +6048,33 @@ class ProductionRuncardController extends Controller
                                                             'created_at' => date('Y-m-d H:i:s'),
                                                             'updated_at' => date('Y-m-d H:i:s'),
                                                         ]);
-
+                                                        //mdr checking
+                                                        // return 1;
                                                         // DefectEscalationV2
+                                                        DefectEscalationV2Rev::insert([
+                                                            'po_number'                    => $request->po_number_with_defect,
+                                                            'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                            'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                            'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                            'prod_runcard_station_id'      => $prod_runcard_station_id,
+                                                            // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                            'defect_classification'        => $current_class,
+                                                            'defect_qty'                   => $request->mod_qty[$index],
+                                                            'mod_type'                     => $request->type_of_ng[$index],
+                                                            'mod_id'                       => $mod[$index],
+                                                            'de_occurence'                 => $de_occurence,
+                                                            'de_group'                     => 1,
+                                                            'defect_status'                => 0,
+                                                            'de_user'                      => $user[0]->id,
+                                                            'de_position'                  => $user[0]->position,
+                                                            'created_by'                   => Auth::user()->id,
+                                                            'created_at'                   => now(),
+                                                            'de_shift'                     => $shift,
+                                                            'de_date'                      => date('Y-m-d'),
+                                                            'de_time'                      => date('h:i:s A'),
+                                                            'line'                         => $lineWithDefect,
+                                                            'line_id'                      => $request->line_with_defect_id,
+                                                        ]);
                                                     }
                                                 }
                                                 else{
@@ -13000,7 +6114,7 @@ class ProductionRuncardController extends Controller
                                                 }
                                             }
 
-                                            DB::commit();
+                                            // DB::commit();
                                             $result = 1;
 
                                         } catch (Exception $e) {
@@ -13014,6 +6128,7 @@ class ProductionRuncardController extends Controller
                                         return $return;
                                     }
                                 }else{
+                                    // return 'aaaa';
                                     DB::beginTransaction();
                                     try {
                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
@@ -14127,7 +7242,6 @@ class ProductionRuncardController extends Controller
                                                     }
                                                 }
 
-                                                // DB::commit();
                                                 // $result = true;
 
                                         }
@@ -14182,8 +7296,9 @@ class ProductionRuncardController extends Controller
 
     }
 
-     public function edit_prod_runcard_station_with_defect(Request $request){
-        // return 'save';
+    public function edit_prod_runcard_station_with_defect(Request $request){
+        // return 'working function';
+        // //DB::commit(); mdr checking
         date_default_timezone_set('Asia/Manila');
         $timeNow = date('H:i');
         $time = explode(':', $timeNow);
@@ -14393,7 +7508,7 @@ class ProductionRuncardController extends Controller
                                 //     }
                                 // }
 
-                                // return 'dito';
+
                                 /**
                                  * Count of Scanned Materials vs Process Matrix(Materials) should be equal
                                  * 04-04-2023
@@ -14414,7 +7529,8 @@ class ProductionRuncardController extends Controller
                                     // return $request->process_flow_id;
                                     // return $process_flow_ids;
 
-                                    $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+                                    $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    ->get();
                                     /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
                                     for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
                                         if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
@@ -14509,6 +7625,7 @@ class ProductionRuncardController extends Controller
                                  * then set the $runcardRequiredFieldsArrayHasNull to false
                                  */
                                 if($runcardRequiredFieldsArray['is_auto_insertion'] == true){
+                                    // return 'here';
                                     if($runcardRequiredFieldsArray['mold'] != null && $runcardRequiredFieldsArray['ct_supplier'] != null && $runcardRequiredFieldsArray['die_no'] != null && $runcardRequiredFieldsArray['pair_no'] != null){
                                         DB::beginTransaction();
                                         try {
@@ -14559,41 +7676,299 @@ class ProductionRuncardController extends Controller
                                             ProductionRuncardStationMOD::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                                 ->delete();
 
-                                                // return $request->qty_ng;
 
-                                            // if has NG only // mdr 11/07/25
+                                        $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
+                                            ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
+                                            ->first();
+
+                                            // return $request->txt_prod_runcard_station_id_query;
+                                            // return 'asd';
+                                            // return $existingDefect;450259238800010
+
+                                            $ts = "TSF1";
+                                            $lineWithDefect = $request->line_with_defect;
+                                            $de_occurence = 1;
+
+                                            // return $lineWithDefect;
+
+                                            $time = Carbon::now();
+                                            $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
+                                            $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
+
+                                            $isMorning = $time->between($todayStartA, $todayEndA);
+
+                                            $shift = $isMorning ? 1 : 2;
+                                            $mod = $request->mode_of_defect;
+
                                             if($request->qty_ng > 0){
                                                 // return 'here';
                                                 // Required to save MOD if has NG only
-                                                if(isset($request->mod)){
-                                                    for($index = 0; $index < count($request->mod); $index++){
-                                                        ProductionRuncardStationMOD::insert([
-                                                            'production_runcard_id' => $request->txt_prod_runcard_id_query,
-                                                            'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-                                                            'mod_id' => $request->mod[$index],
-                                                            'type_of_ng' => $request->type_of_ng[$index],
-                                                            'mod_qty' => $request->mod_qty[$index],
-                                                            'created_by' => Auth::user()->id,
-                                                            'last_updated_by' => Auth::user()->id,
-                                                            'update_version' => 1,
-                                                            'status' => 1,
-                                                            'created_at' => date('Y-m-d H:i:s'),
-                                                            'updated_at' => date('Y-m-d H:i:s'),
-                                                        ]);
+                                               $selectedMod = $request->mod ?? [];
+                                                if(count($selectedMod)){
+                                                    // return 'asdasdasd';
+                                                    try{
+                                                          for($index = 0; $index < count($selectedMod); $index++){
+                                                            ProductionRuncardStationMOD::insert([
+                                                                'production_runcard_id' => $request->txt_prod_runcard_id_query,
+                                                                'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
+                                                                'mod_id' => $request->mod[$index],
+                                                                'type_of_ng' => $request->type_of_ng[$index],
+                                                                'mod_qty' => $request->mod_qty[$index],
+                                                                'created_by' => Auth::user()->id,
+                                                                'last_updated_by' => Auth::user()->id,
+                                                                'update_version' => 1,
+                                                                'status' => 1,
+                                                                'created_at' => date('Y-m-d H:i:s'),
+                                                                'updated_at' => date('Y-m-d H:i:s'),
+                                                            ]);
 
-                                                        // DefectEscalationV2
+                                                            $current_class = $request->mod_classification[$index];
+
+                                                            if(str_contains($current_class,'1')){
+                                                                $defect_text = 'A1';
+                                                            }if(str_contains($current_class,'2')){
+                                                                $defect_text = 'A2';
+                                                            }else if(str_contains($current_class,'3')){
+                                                                $defect_text = 'A3';
+                                                            }else if(str_contains($current_class, '4')){
+                                                                $defect_text = 'A4';
+                                                            }else if(str_contains($current_class, '5')){
+                                                                $defect_text = 'A5';
+                                                            }
+
+                                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+
+                                                            // return $defectCtrltxt;
+
+                                                            // Logic to increment $defectCtrlNumber (example: finding the next sequence)
+                                                            // $lastRecord = DefectEscalationV2Rev::where('defect_ctrl_txt', $defectCtrltxt)->latest()->first();
+                                                            $lastRecord = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
+
+                                                            // return 'asd';
+                                                            // return $request->mod_classification; // MALAG
+
+                                                            $mod_classification = $request->mod_classification;
+
+                                                            // 1. Flatten the data: Convert ["1,2", "2"] into [1, 2, 2]
+                                                            $flattened = [];
+                                                            foreach ($mod_classification as $item) {
+                                                                // split by comma and merge into the flattened array
+                                                                $flattened = array_merge($flattened, explode(',', $item));
+                                                            }
+                                                            // 2. Remove duplicates (optional, but cleaner)
+                                                            $unique_classes = array_unique($flattened);
+
+                                                            // edit da
+                                                            // 3. Perform your Validation
+                                                            // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                            //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                            //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                            //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                            // }
+
+                                                            // return $lastRecord;
+
+                                                            // return $lastRecord;
+                                                            if($lastRecord == null || ''){
+                                                                // return 'asd';
+                                                                $defectCtrlNumber = '0001';
+                                                            }else{
+                                                                // return 'qwe';
+                                                                $nextSequence = $lastRecord ? (intval($lastRecord->defect_ctrl_number) + 1) : 1;
+                                                                $defectCtrlNumber = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+                                                            }
+
+                                                            // return [
+                                                            //     'po_number'                    => $request->po_number_with_defect,  //shadow  beast
+                                                            //     'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                            //     'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                            //     'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                            //     'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                            //     'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                            //     'defect_classification'        => $current_class,
+                                                            //     'defect_qty'                   => $request->mod_qty[$index],
+                                                            //     'mod_type'                     => $request->type_of_ng[$index],
+                                                            //     'mod_id'                       => $mod[$index],
+                                                            //     'de_occurence'                 => $de_occurence,
+                                                            //     'de_group'                     => 1,
+                                                            //     'defect_status'                => 0,
+                                                            //     'de_user'                      => $user[0]->id,
+                                                            //     'de_position'                  => $user[0]->position,
+                                                            //     'created_by'                   => Auth::user()->id,
+                                                            //     'created_at'                   => now(),
+                                                            //     'de_shift'                     => $shift,
+                                                            //     'de_date'                      => date('Y-m-d'),
+                                                            //     'de_time'                      => date('h:i:s A'),
+                                                            //     'line'                         => $lineWithDefect,
+                                                            //     'line_id'                      => $request->line_with_defect_id,
+                                                            // ];
+
+                                                            // return 'qweqweqwe';
+
+                                                            // edit da
+                                                            $inserted = DefectEscalationV2Rev::insert([
+                                                                'po_number'                    => $request->po_number_with_defect,
+                                                                'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                                'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                                'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                                'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                                // 'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                                'defect_classification'        => $current_class,
+                                                                'defect_qty'                   => $request->mod_qty[$index],
+                                                                'mod_type'                     => $request->type_of_ng[$index],
+                                                                'mod_id'                       => $mod[$index],
+                                                                'de_occurence'                 => $de_occurence,
+                                                                'de_group'                     => 1,
+                                                                'defect_status'                => 0,
+                                                                'de_user'                      => $user[0]->id,
+                                                                'de_position'                  => $user[0]->position,
+                                                                'created_by'                   => Auth::user()->id,
+                                                                'created_at'                   => now(),
+                                                                'de_shift'                     => $shift,
+                                                                'de_date'                      => date('Y-m-d'),
+                                                                'de_time'                      => date('h:i:s A'),
+                                                                'line'                         => $lineWithDefect,
+                                                                'line_id'                      => $request->line_with_defect_id,
+                                                            ]);
+
+                                                        // dd([
+                                                        //     'inserted' => $inserted,
+                                                        //     'queries' => DB::getQueryLog(),
+                                                        // ]);
+
+                                                        // $record = DefectEscalationV2Rev::where('defect_ctrl_number', $defectCtrlNumber)
+                                                        //     ->where('defect_ctrl_txt', $defectCtrltxt)
+                                                        //     ->first();
+
+                                                        // dd($record);
+
+                                                        }
+                                                    } catch (\Exception $e){
+                                                        DB::rollback();
+                                                        // return '1';
+                                                        // dd($e->getMessage());
+                                                        throw $e;
                                                     }
 
-                                                    // DefectEscalationV2Rev::insert([
-                                                    //     'prod_runcard_id' => $request->txt_prod_runcard_id_query,
-                                                    //     'prod_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
-                                                    //     // 'reported_by' => $user[0]->id,
-                                                    //     'status' => 0,
-                                                    //     'created_by' => Auth::user()->id,
-                                                    //     // 'last_updated_by' => Auth::user()->id,
-                                                    //     'created_at' => date('Y-m-d H:i:s'),
-                                                    //     // 'updated_at' => date('Y-m-d H:i:s'),
-                                                    // ]);
+
+                                                        // DefectEscalationV2
+                                                }else{
+                                                    $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                    $return_body = ' Please Fill-up MOD!';
+                                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
+                                                    return $return;
+                                                }
+
+
+                                                    if(blank($existingDefect)){
+
+                                                        if($request->qty_ng > 0){
+                                                            if(isset($mod)){
+                                                                for ($index=0; $index < count($mod) ; $index++) {
+
+
+                                                                }
+
+
+                                                            $mod_classification = $request->mod_classification;
+                                                            // return '> 0';
+                                                            // If it’s an array with a single string like "1,2", explode it
+                                                            if (is_array($mod_classification) && count($mod_classification) === 1) {
+
+                                                                $mod_classification = explode(',', $mod_classification[0]);
+
+                                                                if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                                                    $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
+                                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                                    $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                                                    return $return;
+                                                                }
+
+
+                                                            }
+                                                            // IF TWO OR MORE TOTAL NO of NG COUNT
+                                                            else{
+                                                                // return 'dito5';
+
+                                                                // return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                                            }
+                                                            // Generate control text
+                                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+                                                            $defectCtrlNumber = '0001';
+
+
+                                                        }
+                                                    // FOR EXISTING DEFECT
+                                                    }else{
+                                                        // return 'not';
+                                                        $nonCriticalDefects = DefectEscalationV2Rev::where('defect_classification', 2)
+                                                            ->orWhere('defect_classification', 3)
+                                                            ->orWhere('defect_classification', 4)
+                                                            ->orWhere('defect_classification', 5)
+                                                            ->where('de_shift', $shift)
+                                                            ->get();
+
+                                                        if (count($nonCriticalDefects) >= 5) {
+                                                                $de_occurence = 2;
+                                                                // $nonCriticalDefects = $nonCriticalDefects->de_group +1;
+                                                        } else {
+                                                            $de_occurence = 1;
+                                                            // $nonCriticalDefects = $nonCriticalDefects->de_group;
+                                                        }
+
+                                                        // return $de_occurence;
+
+                                                        $mod_classification = $request->mod_classification;
+
+                                                        if (is_array($mod_classification) && count($mod_classification) === 1) {
+                                                            $mod_classification = explode(',', $mod_classification[0]);
+
+                                                            // return $mod_classification;
+
+                                                            if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                                $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                                $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                                                // return $return; //edit da
+                                                            }else if(in_array('1', $mod_classification)){
+                                                                $defect_text = "A1";
+                                                                $defect_classification = 1;
+                                                            }else if (in_array('2', $mod_classification)){
+                                                                $defect_text = "A2";
+                                                                $defect_classification = 2;
+                                                            }else if (in_array('3', $mod_classification)){
+                                                                $defect_text = "A3";
+                                                                $defect_classification = 3;
+                                                            }else if (in_array('4', $mod_classification)){
+                                                                $defect_text = "A4";
+                                                                $defect_classification = 4;
+                                                            }
+
+                                                            // return $defect_text; qty_ng
+
+                                                        }
+                                                        // IF TWO OR MORE TOTAL NO of NG COUNT
+                                                        else{
+                                                            // return 'dito2';
+
+                                                            // return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                                        }
+
+                                                        // Generate control text
+                                                        $defectCtrltxt = $existingDefect->defect_ctrl_txt;
+
+                                                        // Increment the defect control number by 1
+                                                        $lastNumber = (int)$existingDefect->defect_ctrl_number;
+                                                        $newNumber = $lastNumber + 1;
+                                                        // Pad the number with leading zeros to ensure it is 4 digits
+                                                        $defectCtrlNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+                                                    }
+
+                                                    // return $defectCtrltxt;
 
                                                 }
                                                 else{
@@ -14605,6 +7980,11 @@ class ProductionRuncardController extends Controller
                                             }
                                             else{
                                                 // Don't save the MOD
+                                                // return 'adsasdasd';
+                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                    $return_body = ' Please Fill-up MOD!';
+                                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
+                                                    return $return;
                                             }
 
                                             /**
@@ -14646,8 +8026,9 @@ class ProductionRuncardController extends Controller
                                         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
                                         return $return;
                                     }
-                                }else{
-                                    // return 'dito';
+                                }
+                                else{
+
                                     DB::beginTransaction();
                                     try {
                                         ProductionRuncardStation::where('id',$request->txt_prod_runcard_station_id_query)
@@ -14694,69 +8075,214 @@ class ProductionRuncardController extends Controller
                                                 ]);
                                             }
                                         }
+                                        $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
+                                            ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
+                                            ->first();
 
-                                    $existingDefect = DefectEscalationV2Rev::orderBy('id', 'desc')
-                                    ->where('prod_runcard_id',$request->txt_prod_runcard_station_id_query)
-                                    ->first();
+                                            // return $request->txt_prod_runcard_station_id_query;
+                                            // return 'asd';
+                                            // return $existingDefect;450259238800010
 
-                                    // return 'asd';
-                                    // return $existingDefect;450259238800010
+                                            $ts = "TSF1";
+                                            $lineWithDefect = $request->line_with_defect;
+                                            $de_occurence = 1;
 
-                                    $ts = "TSF1";
-                                    $lineWithDefect = $request->line_with_defect;
-                                    $de_occurence = 1;
+                                            // return $lineWithDefect;
 
-                                    $time = Carbon::now();
-                                    $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
-                                    $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
+                                            $time = Carbon::now();
+                                            $todayStartA = $time->copy()->setTime(7, 30); // 7:30 AM
+                                            $todayEndA   = $time->copy()->setTime(19, 29); // 7:29 PM
 
-                                    $isMorning = $time->between($todayStartA, $todayEndA);
+                                            $isMorning = $time->between($todayStartA, $todayEndA);
 
-                                    $shift = $isMorning ? 1 : 2;
+                                            $shift = $isMorning ? 1 : 2;
+                                            $mod = $request->mode_of_defect;
 
                                     if(blank($existingDefect)){
-                                        if($request->ng_qty > 0){ //MIGZ - considered no defect or zero NG QTY - kada save kasi matik nanghihingi ng MOD even 0 NG QTY
-                                            $mod_classification = $request->mod_classification;
-                                            // If it’s an array with a single string like "1,2", explode it
-                                            if (is_array($mod_classification) && count($mod_classification) === 1) {
-                                                // return 'dito';
-                                                $mod_classification = explode(',', $mod_classification[0]);
+                                        // return 'aaaa';
+                                        if($request->qty_ng > 0){ //MIGZ - considered no defect or zero NG QTY - kada save kasi matik nanghihingi ng MOD even 0 NG QTY
+                                        // return 'ng_qty';
+                                            // $mod_classification = $request->mod_classification;
+                                            // // return 'asdd';
+                                            // // If it’s an array with a single string like "1,2", explode it
+                                            // if (is_array($mod_classification) && count($mod_classification) === 1) {
 
-                                                if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+                                            //     $mod_classification = explode(',', $mod_classification[0]);
 
-                                                    $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
-                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
-                                                    $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
-                                                    return $return;
-                                                }else if(in_array('1', $mod_classification)){
-                                                    $defect_text = "A1";
-                                                    $defect_classification = 1;
-                                                }else if (in_array('2', $mod_classification)){
-                                                    $defect_text = "A2";
-                                                    $defect_classification = 2;
-                                                }else if (in_array('3', $mod_classification)){
-                                                    $defect_text = "A3";
-                                                    $defect_classification = 3;
-                                                }else if (in_array('4', $mod_classification)){
-                                                    $defect_text = "A4";
-                                                    $defect_classification = 4;
+                                            //     if (in_array('1', $mod_classification) && count($mod_classification) > 1) {
+
+                                            //         $return_title = '<i class="fa fa-exclamation-triangle te+xt-danger"></i> Not saved';
+                                            //         $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                            //         $return = array('result' => 3, 'title'=>$return_title,'body'=>$return_body);
+                                            //         return $return;
+                                            //     }else if(in_array('1', $mod_classification)){
+                                            //         $defect_text = "A1";
+                                            //         $defect_classification = 1;
+                                            //     }else if (in_array('2', $mod_classification)){
+                                            //         $defect_text = "A2";
+                                            //         $defect_classification = 2;
+                                            //     }else if (in_array('3', $mod_classification)){
+                                            //         $defect_text = "A3";
+                                            //         $defect_classification = 3;
+                                            //     }else if (in_array('4', $mod_classification)){
+                                            //         $defect_text = "A4";
+                                            //         $defect_classification = 4;
+                                            //     }
+
+
+                                            // }
+                                            // // IF TWO OR MORE TOTAL NO of NG COUNT
+                                            // else{
+
+
+                                            //     return 'TWO OR MORE TOTAL NO OF NG COUNT';
+                                            // }
+                                            // // Generate control text
+                                            // $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
+
+                                            // $defectCtrlNumber = '0001';
+
+                                            try{
+                                                for($index = 0; $index < count($request->mod); $index++){
+                                                ProductionRuncardStationMOD::insert([
+                                                    'production_runcard_id' => $request->txt_prod_runcard_id_query,
+                                                    'production_runcard_station_id' => $request->txt_prod_runcard_station_id_query,
+                                                    'mod_id' => $request->mod[$index],
+                                                    'type_of_ng' => $request->type_of_ng[$index],
+                                                    'mod_qty' => $request->mod_qty[$index],
+                                                    'created_by' => Auth::user()->id,
+                                                    'last_updated_by' => Auth::user()->id,
+                                                    'update_version' => 1,
+                                                    'status' => 1,
+                                                    'created_at' => date('Y-m-d H:i:s'),
+                                                    'updated_at' => date('Y-m-d H:i:s'),
+                                                ]);
+
+                                                $current_class = $request->mod_classification[$index];
+
+                                                if(str_contains($current_class,'1')){
+                                                    $defect_text = 'A1';
+                                                }if(str_contains($current_class,'2')){
+                                                    $defect_text = 'A2';
+                                                }else if(str_contains($current_class,'3')){
+                                                    $defect_text = 'A3';
+                                                }else if(str_contains($current_class, '4')){
+                                                    $defect_text = 'A4';
+                                                }else if(str_contains($current_class, '5')){
+                                                    $defect_text = 'A5';
                                                 }
 
-                                                // return 'dito1';
-                                            }
-                                            // IF TWO OR MORE TOTAL NO of NG COUNT
-                                            else{
-                                                // return 'dito11';
+                                                $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
 
-                                                return 'TWO OR MORE TOTAL NO OF NG COUNT';
-                                            }
-                                            // Generate control text
-                                            $defectCtrltxt = $ts . '-' . $lineWithDefect . '-' . $defect_text . '-' . date('m') . date('y');
 
-                                            $defectCtrlNumber = '0001';
+                                                // return $defectCtrltxt;
+
+                                                // Logic to increment $defectCtrlNumber (example: finding the next sequence)
+                                                // $lastRecord = DefectEscalationV2Rev::where('defect_ctrl_txt', $defectCtrltxt)->latest()->first();
+                                                $lastRecord = DefectEscalationV2Rev::orderBy('id', 'desc')->first();
+
+                                                // return 'asd';
+                                                // return $request->mod_classification; // MALAG
+
+                                                $mod_classification = $request->mod_classification;
+
+                                                // 1. Flatten the data: Convert ["1,2", "2"] into [1, 2, 2]
+                                                $flattened = [];
+                                                foreach ($mod_classification as $item) {
+                                                    // split by comma and merge into the flattened array
+                                                    $flattened = array_merge($flattened, explode(',', $item));
+                                                }
+                                                // 2. Remove duplicates (optional, but cleaner)
+                                                $unique_classes = array_unique($flattened);
+
+                                                // 3. Perform your Validation
+                                                // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                // }
+                                                // return $lastRecord;
+
+                                                // return $lastRecord;
+                                                if($lastRecord == null || ''){
+                                                    $defectCtrlNumber = '0001';
+                                                }else{
+                                                    $nextSequence = $lastRecord ? (intval($lastRecord->defect_ctrl_number) + 1) : 1;
+                                                    $defectCtrlNumber = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+                                                }
+
+                                                // return [
+                                                //     'po_number'                    => $request->po_number_with_defect, //shadow  beast
+                                                //     'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                //     'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                //     'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                //     'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                //     // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                //     'defect_classification'        => $current_class,
+                                                //     'defect_qty'                   => $request->mod_qty[$index],
+                                                //     'mod_type'                     => $request->type_of_ng[$index],
+                                                //     'mod_id'                       => $mod[$index],
+                                                //     'de_occurence'                 => $de_occurence,
+                                                //     'de_group'                     => 1,
+                                                //     'defect_status'                => 0,
+                                                //     'de_user'                      => $user[0]->id,
+                                                //     'de_position'                  => $user[0]->position,
+                                                //     'created_by'                   => Auth::user()->id,
+                                                //     'created_at'                   => now(),
+                                                //     'de_shift'                     => $shift,
+                                                //     'de_date'                      => date('Y-m-d'),
+                                                //     'de_time'                      => date('h:i:s A'),
+                                                //     'line'                         => $lineWithDefect,
+                                                //     'line_id'                      => $request->line_with_defect_id,
+                                                // ];
+
+
+                                                $inserted = DefectEscalationV2Rev::insert([
+                                                    'po_number'                    => $request->po_number_with_defect,
+                                                    'defect_ctrl_txt'              => $defectCtrltxt,       // Now unique per loop
+                                                    'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
+                                                    'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
+                                                    'prod_runcard_station_id'      => $request->txt_prod_runcard_station_id_query,
+                                                    // 'prod_runcard_station_mod_id'  => $request->mod[$index],
+                                                    'defect_classification'        => $current_class,
+                                                    'defect_qty'                   => $request->mod_qty[$index],
+                                                    'mod_type'                     => $request->type_of_ng[$index],
+                                                    'mod_id'                       => $mod[$index],
+                                                    'de_occurence'                 => $de_occurence,
+                                                    'de_group'                     => 1,
+                                                    'defect_status'                => 0,
+                                                    'de_user'                      => $user[0]->id,
+                                                    'de_position'                  => $user[0]->position,
+                                                    'created_by'                   => Auth::user()->id,
+                                                    'created_at'                   => now(),
+                                                    'de_shift'                     => $shift,
+                                                    'de_date'                      => date('Y-m-d'),
+                                                    'de_time'                      => date('h:i:s A'),
+                                                    'line'                         => $lineWithDefect,
+                                                    'line_id'                      => $request->line_with_defect_id,
+                                                ]);
+
+                                                //                                                             dd([
+                                                //     'inserted' => $inserted,
+                                                //     'queries' => DB::getQueryLog(),
+                                                // ]);
+
+                                                // $record = DefectEscalationV2Rev::where('defect_ctrl_number', $defectCtrlNumber)
+                                                //     ->where('defect_ctrl_txt', $defectCtrltxt)
+                                                //     ->first();
+
+                                                // dd($record);
+
+                                                }
+                                            } catch (\Exception $e){
+                                                DB::rollback();
+                                                throw $e;
+                                                // dd($e->getMessage());
+                                            }
                                         }
-                                    // FOR EXISTING DEFECT
+
                                     }else{
+                                        // return 'qweqwe';
                                         $nonCriticalDefects = DefectEscalationV2Rev::where('defect_classification', 2)
                                             ->orWhere('defect_classification', 3)
                                             ->orWhere('defect_classification', 4)
@@ -14802,11 +8328,11 @@ class ProductionRuncardController extends Controller
                                             }
 
                                             // return $defect_text; qty_ng
-                                            // return 'dito2';
+
                                         }
                                         // IF TWO OR MORE TOTAL NO of NG COUNT
                                         else{
-                                            // return 'dito1';
+                                            // return 'dito4';
 
                                             return 'TWO OR MORE TOTAL NO OF NG COUNT';
                                         }
@@ -14849,6 +8375,7 @@ class ProductionRuncardController extends Controller
                                                     // Dito dapat insert
 
 
+
                                                 }
 
                                                 // return count($request->mod);
@@ -14869,6 +8396,7 @@ class ProductionRuncardController extends Controller
                                         * 08-16-2022
                                         * -JD
                                         */
+
                                         ProductionRuncardStationMaterial::where('production_runcard_station_id', $request->txt_prod_runcard_station_id_query)
                                         ->delete();
 
@@ -14929,6 +8457,7 @@ class ProductionRuncardController extends Controller
             }
             else{ // For Add Process, runcard station is not set on this state
                 // return "add process";
+                //add da
                 $validator = Validator::make($data, [
                     'txt_prod_runcard_id_query' => ['required'],
                     'qty_input' => ['required'],
@@ -14957,6 +8486,7 @@ class ProductionRuncardController extends Controller
                         if($user[0]->position == 4){ // 4-Operator
                             $processFlow = ProcessFlow::find($request->process_flow_id);
                             if( isset($processFlow->id) ){
+                                // return 'asd';
 
                                 // if( $processFlow->id != (int)$request->sub_station_id ) { // Old 09-14-2022 -JD
                                 if( $processFlow->id != (int)$request->process_flow_id ) { // Process field
@@ -15125,6 +8655,7 @@ class ProductionRuncardController extends Controller
                              * -JD
                              */
                             if(!isset($request->runcard_defect)){
+                                // return 'asdasd';
                                 $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
                                 // return $device;
                                 $deviceProcessFlowMaterialsArray = [];
@@ -15140,7 +8671,8 @@ class ProductionRuncardController extends Controller
                                 // return $processFlow->id;
                                 // return $process_flow_ids;
 
-                                $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->get();
+                                $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
+                                    ->get();
                                 /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
                                 for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
                                     if($deviceProcessFlowMaterials[$i]->process_flow_id == $processFlow->id){
@@ -15381,9 +8913,10 @@ class ProductionRuncardController extends Controller
                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
                                     return $return;
                                 }
+                                // return 'here';
                             }
                             else if($runcardRequiredFieldsArray['is_full_assembly'] == true){
-                                // return 'dito';
+
                                 if($runcardRequiredFieldsArray['work_week'] != null && ($runcardRequiredFieldsArray['qty_input'] != 0 || $runcardRequiredFieldsArray['qty_input'] !=  null) && ($runcardRequiredFieldsArray['qty_output'] != 0 || $runcardRequiredFieldsArray['qty_output'] != null)){
                                     DB::beginTransaction();
                                     try {
@@ -15619,15 +9152,11 @@ class ProductionRuncardController extends Controller
                                                 $unique_classes = array_unique($flattened);
 
                                                 // 3. Perform your Validation
-                                                if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
-                                                    $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-                                                    $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
-                                                    return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
-                                                } else {
-                                                    // If validation passes, proceed to your loop
-                                                    // return 'Validation Passed';
-                                                }
-
+                                                // if (in_array('1', $unique_classes) && count($unique_classes) > 1) {
+                                                //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                                //     $return_body = ' CRITICAL DEFECT cannot be combined with other Defect Classifications!';
+                                                //     return array('result' => 3, 'title' => $return_title, 'body' => $return_body);
+                                                // }
                                                 // return $lastRecord;
 
                                                 // return $lastRecord;
@@ -15648,7 +9177,7 @@ class ProductionRuncardController extends Controller
                                                         'defect_ctrl_number'           => $defectCtrlNumber,    // Now unique per loop
                                                         'prod_runcard_id'              => $request->txt_prod_runcard_id_query,
                                                         'prod_runcard_station_id'      => $prod_runcard_station_id,
-                                                        // 'prod_runcard_station_mod_id'  => $prod_runcard_station_mod_id,
+                                                        // 'prod_runcard_station_mod_id'  => $request->mod[$index],
                                                         'defect_classification'        => $current_class,
                                                         'defect_qty'                   => $request->mod_qty[$index],
                                                         'mod_type'                     => $request->type_of_ng[$index],
@@ -15670,17 +9199,6 @@ class ProductionRuncardController extends Controller
                                         }
                                     } // BINI MLAG
 
-
-                                    // return gettype($request->mode_of_defect);
-                                    // return ($request->mod);
-
-                                    // return $request->mode_of_defect;
-
-                                    // $resulttest = explode(',', $request->mode_of_defect);
-
-                                    // return $resulttest;
-                                    // $implodedModeOfDefect = implode(',', $request->mod_of_defect);
-                                    // return $implodedModeOfDefect;
 
                                     if($request->qty_ng > 0){
                                         // Required to save MOD if has NG only
@@ -16075,10 +9593,6 @@ class ProductionRuncardController extends Controller
                                                         ]);
                                                     }
                                                 }
-
-                                                // DB::commit();
-                                                // $result = true;
-
                                         }
 
                                         // return $counter;
@@ -16161,7 +9675,10 @@ class ProductionRuncardController extends Controller
 
                 // Update Runcard
                 if(isset($request->txt_prod_runcard_id_query)){
+                    // return 'if';
                     $data = $request->all();
+
+                    // return $data;
 
                     $rules = [
                         'txt_employee_number_scanner' => 'required',
@@ -16174,11 +9691,14 @@ class ProductionRuncardController extends Controller
 
                     ];
 
+                    // return $request->judgement;
+
                     /**
                      * Condition for radio buttons
                      * -JD
                      */
                     if($request->judgement == 3 || $request->judgement == null ){
+                        // return '1';
                         $rules['input'] = '';
                         $rules['output'] = '';
                         $rules['qty_ng'] = '';
@@ -16192,6 +9712,7 @@ class ProductionRuncardController extends Controller
                         $rules['mpc_operator_id'] = ''; // JD 05-08-2023
                     }
                     else{
+                        // return '2';
                         $rules['input'] = 'required';
                         $rules['output'] = 'required';
                         $rules['qty_ng'] = 'required';
@@ -16226,6 +9747,7 @@ class ProductionRuncardController extends Controller
                         // $messages['prod_quali_remarks.required'] = 'Prod Quali Remarks is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16346,7 +9868,9 @@ class ProductionRuncardController extends Controller
                 }
                 // Add Runcard
                 else{
+                    // return 'elsesss';
                     $data = $request->all();
+                    // return $request->judgement;
 
                     $rules = [
                         'txt_employee_number_scanner' => 'required',
@@ -16423,14 +9947,17 @@ class ProductionRuncardController extends Controller
                         // 'txt_pair_no.required' => 'Pair No. field is required.',
                     ];
 
+                    // return $request->judgement;
+
                     if(isset($request->judgement)){
                         $messages['input.required'] = 'Input is required';
                         $messages['output.required'] = 'Output is required';
                         $messages['qty_ng.required'] = 'NG is required';
-                        $messages['disposition.required'] = 'Disposition is required';
+                        // $messages['disposition.required'] = 'Disposition is required';
                         $messages['mod.required'] = 'Mode of Defect is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16449,16 +9976,20 @@ class ProductionRuncardController extends Controller
                     DB::beginTransaction();
                     try {
                         if($validator->passes()){
+                            // return 'passes';
 
                             $user_info = User::where('employee_id', $request->txt_employee_number_scanner)
                                 ->where('status', 1)
                                 ->first();
 
+                                // return $user_info;
+
                             if($user_info != null){
                                 /* 03112025 by Nessa */
                                 $es_po = substr($request->txt_po_number, 0, 2);
                                 if ($es_po == 'ES'){
-                                    $runcard_no = substr($request->txt_po_number, 0, -4);
+                                    // $runcard_no = substr($request->txt_po_number, 0, -4);
+                                    $runcard_no = str_replace('-', '', $request->txt_po_number); //07-09-26 Sample Output: ES26095
                                 }else{
                                     $runcard_no = substr($request->txt_po_number, 0, -5);
                                 }
@@ -16476,6 +10007,8 @@ class ProductionRuncardController extends Controller
                                 $device_info = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $request->txt_po_number, 'name' => $request->device_name, 'barcode' => '', 'get_or_first' => 'first']);
                                 // $device_info = Device::where('name', $request->device_name)->where('status', 1)->first();
 
+                                // return $device_info;
+
                                 if($device_info != null){
                                     if($device_info->lot_no_machine_code != null){
                                         $lot_no_machine_code = $device_info->lot_no_machine_code;
@@ -16485,24 +10018,32 @@ class ProductionRuncardController extends Controller
                                 // Generate Runcard No
                                 $prod_runcards = ProductionRuncard::where('runcard_no', 'LIKE', $runcard_no . "%")->orderBy('id', 'desc')->limit(1)->get();
 
+                                // return $prod_runcards;
+
                                 $final_runcard_no = "";
                                 $explode_runcard_no = "";
 
                                 if($prod_runcards->count() > 0){
+                                    // return 'if';
                                     /* 03112025 by Nessa */
                                     $es_po = substr($prod_runcards[0]->runcard_no, 0, 2);
 
                                     $explode_runcard_no = explode('-', $prod_runcards[0]->runcard_no);
+                                    // return $explode_runcard_no;
 
                                     $explode_runcard_no[1] = str_pad($explode_runcard_no[1] + 1,3,"0", STR_PAD_LEFT);
 
                                     $final_runcard_no = implode('-', $explode_runcard_no);
+
+                                    // return $final_runcard_no;
                                 }
                                 else{
+                                    // return 'eles';
                                     /* 03112025 by Nessa */
                                     $es_po = substr($request->txt_po_number, 0, 2);
                                     if ($es_po == 'ES'){
-                                        $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
+                                        // $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
+                                        $final_runcard_no = str_replace('-', '', $request->txt_po_number). '-001'; //07-09-26 Sample Output: ES26095
                                     }else{
                                         $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
 
@@ -16511,6 +10052,8 @@ class ProductionRuncardController extends Controller
 
                                     // $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
                                 }
+
+                                // return $final_runcard_no;
 
                                 $prod_runcard_id = ProductionRuncard::insertGetId([
                                     'po_no'=> $request->txt_po_number,
@@ -16586,13 +10129,13 @@ class ProductionRuncardController extends Controller
                                         }
                                     }
                                 }
-                        // DB::rollback();
-                        // return response()->json(['auth' => 1, 'result' => 0, 'error' => "haha", "device" => $device, "processFlow" => $processFlow, "prod_runcard_station_id" => $prod_runcard_station_id]);
+                                // return 'if';
 
                                 DB::commit();
                                 return response()->json(['auth' => 1, 'result' => 1, 'PFlow' => $PFlow, 'error' => null, 'prod_runcard_id' => $prod_runcard_id]); // Success
                             }
                             else{
+                                // return 'else';
                                 return response()->json(['auth' => 1, 'result' => 2, 'error' => null]); // Invalid Operator
                             }
                         }
@@ -16685,6 +10228,7 @@ class ProductionRuncardController extends Controller
                         // $messages['prod_quali_remarks.required'] = 'Prod Quali Remarks is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16768,7 +10312,7 @@ class ProductionRuncardController extends Controller
                                          * -JD
                                         */
                                         'qty_input'=> $request->input,
-                                        // 'assembly_line_id'=> $request->assembly_line, // mdr 06-16-25 -> 11/05/2025 - updated
+                                        'assembly_line_id'=> $request->assembly_line, // mdr 06-16-25 -> 11/05/2025 - updated
                                         'qty_output'=> $request->output,
                                         'operator_id'=> $request->operator_id, // 12-12-2022
                                         'mpc_operator_id'=> $request->mpc_operator_id, // 05-07-2023
@@ -16885,6 +10429,7 @@ class ProductionRuncardController extends Controller
                         $messages['mod.required'] = 'Mode of Defect is required';
                         $messages['qc_id.required'] = 'QC is required';
                         $messages['judgement.required'] = 'Judgement is required';
+                        $messages['assembly_line.required'] = 'Assembly Line is required';
                     }
 
                     /**
@@ -16981,7 +10526,6 @@ class ProductionRuncardController extends Controller
                                     if ( str_contains(  $request->txt_po_number, 'ES') ){
                                         // $final_runcard_no = substr($request->txt_po_number, 0, -4) . '-001';
                                         $final_runcard_no = str_replace('-','',$request->txt_po_number) . '-001'; //06282025 Updated by Darren&Nessa
-
                                     }else{
                                         $final_runcard_no = substr($request->txt_po_number, 0, -5) . '-001';
 
@@ -17029,7 +10573,7 @@ class ProductionRuncardController extends Controller
                                      * -JD
                                      */
                                     'qty_input'=> $request->input,
-                                    // 'assembly_line'=> $request->assembly_line, // mdr 06-16-25
+                                    'assembly_line'=> $request->assembly_line, // mdr 06-16-25
                                     'qty_output'=> $request->output,
                                     'qty_ng'=> $request->qty_ng,
                                     'operator_id'=> $request->operator_id, // 12-12-2022
@@ -18388,333 +11932,6 @@ class ProductionRuncardController extends Controller
             ->make(true);
     }
 
-    /**
-     * Old code
-     * 09-05-2022
-     */
-    // public function check_material_no(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-    //     /* Old code */
-    //     // $data = WBSKitIssuance::with([
-    //     //                     'kit_issuance',
-    //     //                     'parts_prep_info' => function($query){
-    //     //                         $query->where('wbs_table', 1);
-    //     //                         $query->where('deleted_at', null);
-    //     //                     },
-    //     //                 ])
-    //     //             ->where('po','=',$request['po_number'])
-    //     //             // ->whereIn('id', $arr_issuance_id)
-    //     //             ->get();
-
-    //     // $data = [];
-    //     // $type = 1;
-
-    //     // $data = WBSKitIssuance::
-    //     //     with(['kit_issuance'])
-    //     //     ->where('po','=',$request->po_number)
-    //     //     // ->where('issue_no','=',$request['issue_no'])
-    //     //     ->where('lot_no', $request->lot_no)
-    //     //     ->get();
-
-    //     // if(count($data) <= 0){
-    //     //     $data = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')
-    //     //     ->where('po_no',$request['po_number'])
-    //     //     ->whereHas('tbl_wbs_sakidashi_issuance_item',
-    //     //        function($query) use ($request){
-    //     //             $query->where('lot_no', $request->lot_no);
-    //     //         },
-    //     //     )
-    //     //     ->get();
-
-    //     //     if(count($data) > 0){
-    //     //         $type = 2;
-    //     //     }
-    //     // }
-
-    //     // $processFlow = ;
-    //     // if( isset($processFlow->id) ){
-    //     //     $data[] = $processFlow
-    //     // }
-
-    //     // return response()->json(['data' => ProcessFlow::where('id', $request->process_flow_id)->get(), 'type' => $type]);
-    //     return response()->json(['data' => DeviceProcessFlowMaterial::where('lot_no', $request->lot_no)->get()]);
-    // }
-
-    /**
-     * Orig Code 09-16-2022
-     * -JD
-     */
-    // public function check_material_no(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-
-    //     $materials = [];
-    //     $get_id_from_tbl_wbs_kit_issuance = DB::connection('mysql_subsystem')->table('tbl_wbs_kit_issuance')
-    //         ->where('po', $request->po_number)
-    //         ->where('lot_no', $request->lot_no)
-    //         ->get()->unique('lot_no')->flatten(1);
-
-    //     // return response()->json([
-    //     //     'get_id_from_tbl_wbs_kit_issuance' => $get_id_from_tbl_wbs_kit_issuance,
-    //     // ]);
-
-    //     $process_flow_materials_array = [];
-    //     for ($i=0; $i < count($get_id_from_tbl_wbs_kit_issuance); $i++) {
-    //         $id_from_tbl_wbs_kit_issuance = $get_id_from_tbl_wbs_kit_issuance[$i];
-    //         $status = 0;
-
-    //         $parts_preps = PartsPrep::where([
-    //             [ 'wbs_kit_issuance_id', '=', $id_from_tbl_wbs_kit_issuance->id ],
-    //             // [ 'wbs_table', '=', 1 ],
-    //             [ 'status', '=', 1 ], // 1-received
-    //             [ 'deleted_at', '=', null ],
-    //         ])
-    //         ->get();
-
-    //         // if( count($parts_preps) > 0 ){
-
-    //         //     if( $parts_preps[0]->status == 1 )
-    //         //         $status = 1;
-
-    //         //     if(isset($subkitting_collect[$lot_number->id])){
-    //         //         $issued_qty = $lot_number->issued_qty;
-    //         //         $sub_kit_qty = $subkitting_collect[$lot_number->id];
-
-    //         //         if($issued_qty > $subkitting_collect[$lot_number->id]){
-    //         //             $status = 0;
-    //         //         }
-    //         //     }
-    //         // }
-
-    //         // $process_flow = ProcessFlow::with(['processFlow'])
-    //         // ->where('id', $request->sub_station)
-    //         // ->where('status', 1)
-    //         // ->get();
-    //         // return $process_flow;
-    //         // return $process_flow[0]->process;
-
-
-    //         $process_flow = DeviceProcessFlowMaterial::with(['substation'])
-    //         // ->where('process_flow_id', $request->sub_station) // Orig 09-14-2022
-    //         ->where('process_flow_id', $request->process_flow_id)
-    //         ->where('status', 1)
-    //         ->get();
-    //         // return $process_flow;
-
-    //         for ($k=0; $k < count($process_flow); $k++) {
-    //             array_push($process_flow_materials_array, $process_flow[$k]->material_name);
-    //         }
-    //         // return $process_flow_materials_array;
-
-    //         if( count($parts_preps) > 0 ){
-    //             if(in_array($id_from_tbl_wbs_kit_issuance->item_desc,$process_flow_materials_array)){
-    //                 $materials[]=[
-    //                     "id" => $parts_preps[0]->id,
-    //                     "wbs_kit_issuance_id"=> $parts_preps[0]->wbs_kit_issuance_id,
-    //                     "wbs_table"=> $parts_preps[0]->wbs_table,
-    //                     "status"=> $parts_preps[0]->status,
-    //                     "with_partsprep"=> $parts_preps[0]->with_partsprep,
-    //                     "lot_no" => $id_from_tbl_wbs_kit_issuance->lot_no,
-    //                     "item_desc" => $id_from_tbl_wbs_kit_issuance->item_desc,
-    //                 ];
-    //             }
-
-    //         }
-    //     }
-    //     return response()->json(['data' => $materials]);
-    // }
-
-    /**
-     * Old Code 09-16-2022
-     * Due to modification of Production Runcard, Prod Runcard Station and Material Process(Matrix)
-     * -JD
-     */
-    // public function check_material_no(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-
-    //     $materials = [];
-    //     $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance;
-    //     // $get_id_from_tbl_wbs_kit_issuance = DB::connection('mysql_subsystem')->table('tbl_wbs_kit_issuance')
-    //     $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance = DB::connection('mysql_subsystem')->table('tbl_wbs_kit_issuance')
-    //         ->where('po', $request->po_number)
-    //         ->where('lot_no', $request->lot_no)
-    //         ->orderBy('created_at', 'DESC')
-    //         // ->get()->unique('lot_no')->flatten(1);
-    //         ->get()->flatten(1);
-    //         // ->get();
-
-    //     // return response()->json([
-    //     //     'get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance' => $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance,
-    //     // ]);
-
-    //     // if(count($get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance) <= 0){
-    //     //     $data = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')
-    //     //         ->where('po_no',$request['po_number'])
-    //     //         ->whereHas('tbl_wbs_sakidashi_issuance_item',
-    //     //             function($query) use ($request){
-    //     //                 $query->where('lot_no', $request->lot_no);
-    //     //             },
-    //     //         )
-    //     //         ->get();
-    //     //     return response()->json([
-    //     //         'get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance' => $data,
-    //     //     ]);
-    //     // }
-
-    //     $process_flow_materials_array = [];
-    //     for ($i=0; $i < count($get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance); $i++) {
-    //         $id_from_tbl_wbs_kit_issuance = $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance[$i];
-    //         $status = 0;
-
-    //         $parts_preps = PartsPrep::where([
-    //             [ 'wbs_kit_issuance_id', '=', $id_from_tbl_wbs_kit_issuance->id ],
-    //             // [ 'wbs_table', '=', 1 ],
-    //             [ 'status', '=', 1 ], // 1-received
-    //             [ 'deleted_at', '=', null ],
-    //         ])
-    //         ->get();
-
-    //         // if( count($parts_preps) > 0 ){
-
-    //         //     if( $parts_preps[0]->status == 1 )
-    //         //         $status = 1;
-
-    //         //     if(isset($subkitting_collect[$lot_number->id])){
-    //         //         $issued_qty = $lot_number->issued_qty;
-    //         //         $sub_kit_qty = $subkitting_collect[$lot_number->id];
-
-    //         //         if($issued_qty > $subkitting_collect[$lot_number->id]){
-    //         //             $status = 0;
-    //         //         }
-    //         //     }
-    //         // }
-
-    //         // $process_flow = ProcessFlow::with(['processFlow'])
-    //         // ->where('id', $request->sub_station)
-    //         // ->where('status', 1)
-    //         // ->get();
-    //         // return $process_flow;
-    //         // return $process_flow[0]->process;
-
-    //         /**
-    //          * Search material in DeviceProcessFlowMaterial by process_flow_id
-    //          */
-    //         $process_flow = DeviceProcessFlowMaterial::with(['substation'])
-    //         ->where('process_flow_id', $request->process_flow_id)
-    //         ->where('status', 1)
-    //         ->get();
-    //         // return $process_flow;
-
-    //         for ($k=0; $k < count($process_flow); $k++) {
-    //             array_push($process_flow_materials_array, $process_flow[$k]->material_name);
-    //         }
-    //         // return $process_flow_materials_array;
-
-    //         if( count($parts_preps) > 0 ){
-    //             // $replacedYutaka = str_replace("(YUTAKA)","",$id_from_tbl_wbs_kit_issuance->item_desc);
-
-    //             // return trim($id_from_tbl_wbs_kit_issuance->item_desc);
-    //             // return $process_flow_materials_array;
-    //             // echo "\r\n";
-    //             // return trim($replacedYutaka);
-    //             // if(in_array(trim($replacedYutaka),$process_flow_materials_array)){
-    //             if(in_array($id_from_tbl_wbs_kit_issuance->item_desc,$process_flow_materials_array)){
-    //                 $materials[]=[
-    //                     "id" => $parts_preps[0]->id,
-    //                     "wbs_kit_issuance_id"=> $parts_preps[0]->wbs_kit_issuance_id,
-    //                     "wbs_table"=> $parts_preps[0]->wbs_table,
-    //                     "status"=> $parts_preps[0]->status,
-    //                     "with_partsprep"=> $parts_preps[0]->with_partsprep,
-    //                     "lot_no" => $id_from_tbl_wbs_kit_issuance->lot_no,
-    //                     "item_desc" => $id_from_tbl_wbs_kit_issuance->item_desc,
-    //                 ];
-    //             }
-
-    //         }
-    //     }
-    //     return response()->json(['data' => $materials]);
-    // }
-
-    /**
-     * New Code 10-24-2022
-     * Due to modification of Production Runcard, Prod Runcard Station and Material Process(Matrix)
-     * -JD
-     */
-    // public function check_material_no(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-
-    //     $materials = [];
-    //     $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance;
-    //     /**
-    //      * Old 11-02-2022
-    //      */
-    //     // $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance = DB::connection('mysql_subsystem')->table('tbl_wbs_kit_issuance')
-    //     //     ->where('po', $request->po_number)
-    //     //     ->where('lot_no', $request->lot_no)
-    //     //     ->orderBy('created_at', 'DESC')
-    //     //     ->get()->unique('lot_no')->flatten(1);
-    //     //     ->get()->flatten(1);
-
-    //     $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance = DB::connection('mysql_subsystem')->table('tbl_wbs_kit_issuance')
-    //         ->where('po', $request->po_number)
-    //         ->where('lot_no', $request->lot_no)
-    //         // ->orderBy('created_at', 'DESC')
-    //         // ->get()->unique('lot_no')->flatten(1);
-    //         ->get()->flatten(1);
-    //     // return response()->json([
-    //     //     'get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance' => $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance,
-    //     // ]);
-
-    //     /* For Sakidashi Issuance */
-    //     // if(count($get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance) <= 0){
-    //     //     $data = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')
-    //     //         ->where('po_no',$request['po_number'])
-    //     //         ->whereHas('tbl_wbs_sakidashi_issuance_item',
-    //     //             function($query) use ($request){
-    //     //                 $query->where('lot_no', $request->lot_no);
-    //     //             },
-    //     //         )
-    //     //         ->get();
-    //     //     return response()->json([
-    //     //         'get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance' => $data,
-    //     //     ]);
-    //     // }
-
-    //     // return $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance;
-    //     $process_flow_materials_array = [];
-    //     for ($i=0; $i < count($get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance); $i++) {
-    //         $id_from_tbl_wbs_kit_issuance = $get_id_from_tbl_wbs_kit_issuance_or_sakidashi_issuance[$i];
-    //         $status = 0;
-
-    //         $parts_preps = PartsPrep::where([
-    //             [ 'wbs_kit_issuance_id', '=', $id_from_tbl_wbs_kit_issuance->id ],
-    //             // [ 'wbs_table', '=', 1 ],
-    //             [ 'status', '=', 1 ], // 1-received
-    //             [ 'deleted_at', '=', null ],
-    //         ])
-    //         ->get();
-    //         // return $parts_preps;
-
-    //         if( count($parts_preps) > 0 ){
-    //                 $materials[]=[
-    //                     "id" => $parts_preps[0]->id,
-    //                     "wbs_kit_issuance_id"=> $parts_preps[0]->wbs_kit_issuance_id,
-    //                     "wbs_table"=> $parts_preps[0]->wbs_table,
-    //                     "status"=> $parts_preps[0]->status,
-    //                     "with_partsprep"=> $parts_preps[0]->with_partsprep,
-    //                     "lot_no" => $id_from_tbl_wbs_kit_issuance->lot_no,
-    //                     "item_desc" => $id_from_tbl_wbs_kit_issuance->item_desc,
-    //                     "item" => $id_from_tbl_wbs_kit_issuance->item,
-    //                 ];
-    //         }
-    //     }
-    //     return response()->json(['data' => $materials]);
-    // }
-
-    /**
-     * Check material if included based on Process Flow(Matrix)
-     * 01-25-2023
-     * -JD
-     */
     public function check_material_no(Request $request){ // Change for live -JD
         date_default_timezone_set('Asia/Manila');
 
@@ -18896,17 +12113,18 @@ class ProductionRuncardController extends Controller
          * For the validation of the Filtered Material on WBS vs Matrix Material
          * -JD
          */
-        // return $materialTypeChecking;
+        // return $materialTypeChecking; //MP260624 | 1351-12064 | 4/4 A10000002
+        //  return $lotNumber;
         $materialList = [];
         $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::where("process_flow_id", $request->process_flow_id)->get();
 
         // return $deviceProcessFlowMaterials;
         for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
-            if($deviceProcessFlowMaterials[$i]->material_part_no == $materialTypeChecking){
+            if($deviceProcessFlowMaterials[$i]->material_part_no == $materialTypeChecking){ // NEED TO HAVE SAME Material Number
                 $materialList[] = $deviceProcessFlowMaterials[$i];
             }
         }
-        // return $mate rialList;
+        // return $deviceProcessFlowMaterials[]->material_part_no;
 
         return response()->json(['data' => $materialList, "lot_no" => $lotNumber]);
     }

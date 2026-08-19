@@ -212,7 +212,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title"><i class="fa fa-plus"></i> Add Device</h4>
+          <h4 class="modal-title"><i class="fa fa-plus"></i> Add Device 2</h4>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -289,7 +289,7 @@
  -->
                 <div class="form-group">
                   <label>Copy Material Process Flow from other Device Name</label>
-                    <select class="form-control" name="copy_material_flow" id="addDeviceCopyMaterialFlow">
+                    <select class="form-control select2" name="copy_material_flow" id="addDeviceCopyMaterialFlow">
                       <option value="0">No</option>
                     </select>
                 </div>
@@ -1967,14 +1967,15 @@
                              * 08-11-2022
                              * -JD
                             */
-                            console.log('actionEditMaterialProcessFlow');
-                            console.log('i before ',i);
+                            // console.log('actionEditMaterialProcessFlow');
+                            // console.log('i before ',i);
                             if(data['process_flow_info']['process_flow_substation_details'].length > 0){
                               let processFlowSubstationDetails = data['process_flow_info']['process_flow_substation_details'];
                               // console.table(processFlowSubstationDetails);
+                              console.log('bossda', processFlowSubstationDetails)
 
                               i = processFlowSubstationDetails.length; // i - variable at the top
-                              console.log('i now ',i);
+                            //   console.log('i now ',i);
                               for (let index = 0; index < processFlowSubstationDetails.length; index++) {
                                 let material_id = processFlowSubstationDetails[index].material_id;
                                 let material_lot_no = processFlowSubstationDetails[index].lot_no;

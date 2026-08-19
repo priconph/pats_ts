@@ -126,17 +126,17 @@ z-index: 2001;
                         <input type="text" class="form-control" id="txt_po_number_lbl" value="{{ $po ?? '' }}" readonly>
                     </div>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>Device Name</label>
                     <input type="text" class="form-control" id="txt_device_name_lbl" value="{{ $device ?? '' }}" readonly>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>Device Code</label>
                     <input type="text" class="form-control" id="txt_device_code_lbl" value="{{ $code ?? '' }}" readonly>
                 </div>
-        
+
                 <div class="col-sm-3">
                     <label>PO Qty</label>
                     <input type="text" class="form-control" id="txt_po_qty_lbl" value="{{ $qty ?? '' }}" readonly>
@@ -266,21 +266,6 @@ z-index: 2001;
                         <!-- FRONT TAB -->
                         <div class="tab-pane fade show active" id="front" role="tabpanel">
 
-                            {{-- <div class="row">
-                                <div class="col-sm-4">
-                                    <div class="input-group input-group-sm mb-3">
-                                        <div class="input-group-prepend w-50">
-                                            <span class="input-group-text w-100" id="basic-addon1">Defect Type</span>
-                                        </div>                 
-                                        <select name="mod_type" id="txtModType" class="form-control">
-                                            <option disabled selected value="">-- Select Defect Type --</option>
-                                            <option value="1">Material NG</option>
-                                            <option value="2">Production NG</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>   --}}
-        
                             <div class="row">
                                 <div class="col-sm-3">
                                     <div class="input-group input-group-sm mb-3">
@@ -291,7 +276,7 @@ z-index: 2001;
                                             <input type="text" class="form-control" name="defect_ctrl_number" id="txtDefectCtrlNumber" placeholder="Auto generated" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -309,7 +294,7 @@ z-index: 2001;
                                         </div>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-3">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group input-group-prepend w-25">
@@ -322,7 +307,7 @@ z-index: 2001;
                                         <input hidden type="text" name="line_t" id="txtLineT" class="form-control" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -331,7 +316,7 @@ z-index: 2001;
                                         <input type="text" name="date" id="txtDate" class="form-control" value="{{ date('Y-m-d') }}" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-2">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-30">
@@ -341,13 +326,13 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="header" style="border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                 <label class="fw-bold">
                                     DEFECT ESCALATION
                                 </label>
                             </div>
-        
+
                             <div class="row mt-2">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-sm mb-3">
@@ -359,7 +344,7 @@ z-index: 2001;
                                         </select>
                                     </div>
                                 </div>
-                            
+
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend">
@@ -386,7 +371,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Product Name -->
                                 <div class="col-sm-4">
@@ -397,7 +382,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="product_name" id="txtProductName" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <!-- PO Number -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -407,7 +392,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="po_number" id="txtPONumber" readonly>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Runcard Number -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -422,7 +407,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row">
                                 <!-- Lot # -->
                                 <div class="col-sm-4">
@@ -433,7 +418,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="lot_no" id="txtLotNo" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Pair # -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -443,7 +428,7 @@ z-index: 2001;
                                         <input type="text" class="form-control" name="pair_no" id="txtPairNo" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Die/Mold # -->
                                 <div class="col-sm-4">
                                     <div class="input-group input-group-sm mb-3">
@@ -454,7 +439,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Station Select -->
                                 <div class="col-sm-6">
@@ -474,7 +459,7 @@ z-index: 2001;
                                         </select>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Other Station Text Input (hidden by default) -->
                                 <div class="col-sm-6" id="otherStationContainer" style="display: none;">
                                     <div class="input-group input-group-sm mb-3">
@@ -485,7 +470,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <div class="col-sm-8">
                                     <div class="form-group">
@@ -518,7 +503,7 @@ z-index: 2001;
                                         </table>
                                     </div>
                                 </div>
-        
+
                                 <div class="container col-sm-4 border border-secondary rounded p-2">
                                     <div class="form-group">
                                         <label>Legend:</label>
@@ -536,18 +521,18 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                         <label class="fw-bold">
                                             A. PROBLEM ENCOUNTERED (Indicate the problem encountered by ticking the below of box defect lists)
                                         </label>
-        
+
                                     </div>
                                 </div>
                             </div>
-        
+
                             <!-- No. of Occurrence -->
                             <div class="row mb-3 mt-3">
                                 <div class="col-sm-12">
@@ -605,7 +590,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="row">
                                 <!-- Mode of Defect -->
                                 <div class="col-sm-6 modeOfDefectClass" hidden>
@@ -616,7 +601,7 @@ z-index: 2001;
                                         <select class="form-control select2 select2bs4 selDefects" id="txtDefects" name="defect[]" multiple></select>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Critical -->
                                 <div class="col-sm-6 criticalDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -627,7 +612,7 @@ z-index: 2001;
                                     </div>
                                 </div>
 
-                            
+
                             </div>
 
                             <div class="row">
@@ -642,7 +627,7 @@ z-index: 2001;
                                         <input type="text" name="defect_qty" id="txtDefectQty" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Setup -->
                                 {{-- <div class="col-sm-6 setupDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -652,7 +637,7 @@ z-index: 2001;
                                         <input type="text" name="setup_qty" id="txtSetupQty" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- Auto Inserter -->
                                 <div class="col-sm-6 autoInserterDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -662,7 +647,7 @@ z-index: 2001;
                                         <input type="text" name="auto_inserter_others" id="txtautoInserterOthers" class="form-control" autocomplete="off">
                                     </div>
                                 </div>
-                            
+
                                 <!-- NG Samples -->
                                 <div class="col-sm-6 ngSamplesDefectClass" hidden>
                                     <div class="input-group input-group-sm mb-3">
@@ -674,18 +659,18 @@ z-index: 2001;
                                 </div> --}}
                             </div>
 
-                            <div class="row bHeaderClass" hidden>
+                            <div class="row bHeaderClass hidden">
                                 <div class="col-sm-12">
                                     <div id="bToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <span id="bHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                         <label class="fw-bold">
-                                                B. LEVEL 1: PROBLEM VERIFICATION 
+                                                B. LEVEL 1: PROBLEM VERIFICATION
                                                 <small>(Verification shall be done by Production, Engineering & Line QC)</small>
-                                            </label>                     
+                                            </label>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row bHeaderVerificationHeader" style="display: none;">
                                 <div class="col-sm-12">
                                     <div id="bToggleVerificationContentHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
@@ -693,9 +678,9 @@ z-index: 2001;
                                             <span id="bHeaderVerificationContentIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                             B.1. VERIFICATION RESULT
                                         </label>
-        
+
                                     </div>
-        
+
                                     <div class="content bHeaderVerificationContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                         <div class="row mb-3">
                                             <!-- Production -->
@@ -735,7 +720,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="p_verification_remarks" id="txtPVerificationRemarks" autocomplete="off">
                                                 </div>
                                             </div>
-                                        
+
                                             <!-- Engineering -->
                                             <div class="col-sm-4">
                                                 <div class="d-flex justify-content-center mb-3">
@@ -775,7 +760,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="e_verification_remarks" id="txtEVerificationRemarks" autocomplete="off">
                                                 </div>
                                             </div>
-                                        
+
                                             <!-- QC -->
                                             <div class="col-sm-4">
                                                 <div class="d-flex justify-content-center mb-3">
@@ -819,7 +804,7 @@ z-index: 2001;
                                     </div>
                                 </div>
                             </div>
-        
+
                             <!--DISPOSITION -->
                             <div class="row bHeaderDispositionHeader" style="display: none;">
                                 <div class="col-sm-12">
@@ -829,9 +814,9 @@ z-index: 2001;
                                                 <span id="bHeaderDispositionContentIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 B.2. DISPOSITION
                                             </label>
-            
+
                                         </div>
-        
+
                                         <div class="content bHeaderDispositionContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                             <div class="row mb-3">
                                                 <!-- Production -->
@@ -985,20 +970,20 @@ z-index: 2001;
                                         </div>
                                 </div>
                             </div>
-        
+
                             <div class="row cHeaderClass" hidden>
                             {{-- <div class="row cHeaderClass"> --}}
                                 <div class="col-sm-12">
                                     <div id="cToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <label class="fw-bold">
-                                                <span id="cHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>      
+                                                <span id="cHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 C. IMMEDIATE ACTION
                                                 <small>(shall be made within 24 hours)</small>
                                             </label>
                                     </div>
                                 </div>
                             </div>
-        
+
                             <div class="content cHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                 <div class="row mb-3">
                                     <div class="col-sm-12">
@@ -1061,21 +1046,21 @@ z-index: 2001;
                                         </div>
                                     </div>
                                 </div>
-                            </div>  
-        
+                            </div>
+
                             <div class="row dHeaderClass" hidden>
                             {{-- <div class="row dHeaderClass"> --}}
                                     <div class="col-sm-12">
                                         <div id="dToggleHeader" class="header" style="cursor: pointer; border-top: 2px solid #ddd; border-bottom: 2px solid #ddd;">
                                             <label class="fw-bold">
-                                                <span id="dHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>      
+                                                <span id="dHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                                 D. CONTAINMENT ACTION
                                                 <small>(IF NG)</small>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
-            
+
                                 <div class="content dHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                     <div class="row mb-3">
                                         <div class="col-sm-12">
@@ -1139,7 +1124,7 @@ z-index: 2001;
                                             </div>
                                         </div>
                                     </div>
-                                </div>  
+                                </div>
                             </div>
 
                         <!-- BACK TAB -->
@@ -1152,9 +1137,9 @@ z-index: 2001;
                                             <span id="reworkHeaderIcon" style="float: left; font-weight: bold; font-family: Arial Black, sans-serif;">&#x25BA;</span>
                                             IF REWORK, OPERATOR TO FILL IN
                                         </label>
-        
+
                                     </div>
-                              
+
                                   <!-- Collapsible Content -->
                                   <div class="reworkHeaderContent p-4 border rounded bg-white shadow-sm" style="display:none;">
                                     <div class="row g-4">
@@ -1194,7 +1179,7 @@ z-index: 2001;
                                                 </div>
                                             </div>
                                         </div>
-                              
+
                                       <div class="col-md-6">
                                         <table class="table table-sm table-bordered text-center align-middle">
                                           <thead class="table-primary">
@@ -1216,7 +1201,7 @@ z-index: 2001;
                                               <h6 class="fw-bold text-primary mb-3">
                                                 <i class="bi bi-wrench-adjustable-circle me-2"></i> Rework Activities
                                               </h6>
-                                          
+
                                               <div class="row">
                                                 <div class="col-md-6">
                                                   <div class="form-check">
@@ -1240,7 +1225,7 @@ z-index: 2001;
                                                     <label class="form-check-label">GLUING OF CT</label>
                                                   </div>
                                                 </div>
-                                          
+
                                                 <div class="col-md-6">
                                                   <div class="form-check">
                                                     <input type="checkbox" class="form-check-input" name="rework_activity[]" value="6">
@@ -1258,7 +1243,7 @@ z-index: 2001;
                                                     <input type="checkbox" class="form-check-input" name="rework_activity[]" value="9">
                                                     <label class="form-check-label">CLEANING</label>
                                                   </div>
-                                          
+
                                                   <div class="form-check mb-1">
                                                     <input type="checkbox" class="form-check-input" id="txtOthers" name="rework_activity[]" value="10">
                                                     <label class="form-check-label" for="txtOthers">OTHERS</label>
@@ -1269,35 +1254,35 @@ z-index: 2001;
                                                 </div>
                                               </div>
                                             </div>
-                                          
+
                                             <!-- Replaced Parts -->
                                             <div class="col-md-4">
                                                 <div class="d-flex align-items-center mb-3">
                                                     <h6 class="fw-bold text-primary mb-0 me-2 d-flex align-items-center">
                                                       <i class="bi bi-box-seam me-2"></i> Replaced Parts
                                                     </h6>
-                                                  
+
                                                     <div class="d-flex align-items-center gap-1">
-                                                      <button type="button" 
+                                                      <button type="button"
                                                               class="btn btn-outline-primary btn-sm rounded-circle addReplaceParts"
                                                               style="width:25px; height:25px; padding:0; margin-left:5px;">
                                                         <i class="bi bi-plus">+</i>
                                                       </button>
-                                                      <button type="button" 
+                                                      <button type="button"
                                                               class="btn btn-outline-danger btn-sm rounded-circle removeReplaceParts"
                                                               style="width:25px; height:25px; padding:0; margin-left:5px;">
                                                         <i class="bi bi-x">X</i>
                                                       </button>
                                                     </div>
                                                 </div>
-                                            
+
                                                 <div id="replacedPartsContainer">
                                                     <div class="replaced-part-row mb-2 border rounded p-2">
                                                         <div class="input-group input-group-sm mb-2">
                                                         <span class="input-group-text w-50">Part Name</span>
                                                         <input type="text" class="form-control" name="r_part_name[]" autocomplete="off">
                                                         </div>
-                                                
+
                                                         <div class="input-group input-group-sm">
                                                             <span class="input-group-text w-50">Lot No</span>
                                                             <input type="text" class="form-control" name="r_lot_no[]" autocomplete="off">
@@ -1305,29 +1290,29 @@ z-index: 2001;
                                                     </div>
                                                 </div>
                                             </div>
-                              
+
                                         <!-- MPC + Activity + Parts -->
                                         <div class="col-md-4 text-start">
                                             <h6 class="fw-bold text-primary mb-3">
                                             <i class="bi bi-gear me-2"></i> MPC Check Using
                                             </h6>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="1" id="mpc1">
                                             <label class="form-check-label" for="mpc1">TERMINAL GAUGE</label>
                                             </div>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="2" id="mpc2">
                                             <label class="form-check-label" for="mpc2">DUMMY #LO</label>
                                             </div>
-                                        
+
                                             <div class="form-check ms-0">
                                             <input type="radio" class="form-check-input" name="mpc_check" value="3" id="mpc3">
                                             <label class="form-check-label" for="mpc3">DUMMY #MO</label>
                                             </div>
                                         </div>
-                              
+
                                       <div class="col-md-4">
                                         <h6 class="fw-bold text-primary mb-3"><i class="bi bi-arrow-repeat me-2"></i> Activity After Rework</h6>
                                         <div class="form-check"><input type="radio" class="form-check-input" name="activity_after_rework" value="1"><label class="form-check-label">PRINTING</label></div>
@@ -1335,7 +1320,7 @@ z-index: 2001;
                                         <div class="form-check"><input type="radio" class="form-check-input" name="activity_after_rework" value="3"><label class="form-check-label">CURING</label></div>
                                       </div>
 
-                              
+
                                     </div><!-- row -->
                                   </div><!-- content -->
                                 </div>
@@ -1350,7 +1335,7 @@ z-index: 2001;
                                             G. FINAL DISPOSITION - LINE RESUMPTION
                                         </label>
                                     </div>
-                                
+
                                     <!-- Collapsible Content -->
                                     <div class="content gHeaderContent" style=" display: none; padding: 10px; border: 1px solid #ddd;">
                                         <div class="row g-4">
@@ -1590,7 +1575,7 @@ z-index: 2001;
                                                     <input type="text" class="form-control" name="result_confirmation" id="txtResultConfirmation">
                                                 </div>
                                             </div>
-                                            
+
 
                                             <div class="col-sm-4">
                                                 <div class="input-group input-group-sm mb-3">
@@ -1667,7 +1652,7 @@ z-index: 2001;
                                                     </div>
                                                 </div>
                                             </div>
-                                    
+
 
                                     </div><!-- content -->
 
@@ -1878,7 +1863,7 @@ z-index: 2001;
         </div>
     </div>
     <!-- /.Modal -->
-    
+
 
 <!-- /.content-wrapper -->
 @endsection
@@ -1907,7 +1892,7 @@ z-index: 2001;
 
 
 $(document).ready(function() {
-    
+
     $('.select2').select2();
 
     //Initialize Select2 ElementsW
@@ -1920,43 +1905,55 @@ $(document).ready(function() {
     let deviceCode = '';
     let poQty = '';
     let isViewingDefect = false;
-    
+
     let scanContext ='';
     let reworkerContext ='';
     let verification2Context ='';
     let finalDispositionContext ='';
     let qcContext ='';
 
-    let currentPoNo = sessionStorage.getItem('po_number_for_defect_escalation');
-    let currentDeviceName = sessionStorage.getItem('device_name_for_defect_escalation');
-    let currentDeviceCode = sessionStorage.getItem('device_code_for_defect_escalation');
-    let currentPoQty = sessionStorage.getItem('po_qty_for_defect_escalation');
-    let currentDieNo = sessionStorage.getItem('die_no_for_defect_escalation');
-    let currentLotNo = sessionStorage.getItem('pair_no_for_defect_escalation');
+    // let currentPoNo = sessionStorage.getItem('po_number_for_defect_escalation');
+    // let currentDeviceName = sessionStorage.getItem('device_name_for_defect_escalation');
+    // let currentDeviceCode = sessionStorage.getItem('device_code_for_defect_escalation');
+    // let currentPoQty = sessionStorage.getItem('po_qty_for_defect_escalation');
+    // let currentDieNo = sessionStorage.getItem('die_no_for_defect_escalation');
+    // let currentLotNo = sessionStorage.getItem('pair_no_for_defect_escalation');
+    // if(currentPoNo != null){
+    //     poNumber = currentPoNo;
+    //     deviceName = currentDeviceName;
+    //     deviceCode = currentDeviceCode;
+    //     poQty = currentPoQty;
+    //     dieNo = currentDieNo;
+    //     lotNo = currentLotNo;
 
-    if(currentPoNo != null){
-        poNumber = currentPoNo;
-        deviceName = currentDeviceName;
-        deviceCode = currentDeviceCode;
-        poQty = currentPoQty;
-        dieNo = currentDieNo;
-        lotNo = currentLotNo;
+    //     $('#txt_po_number_lbl').val(poNumber);
+    //     $('#txt_device_name_lbl').val(deviceName);
+    //     $('#txt_device_code_lbl').val(deviceCode);
+    //     $('#txt_po_qty_lbl').val(poQty);
+    //     $('#txtPairNo').val(dieNo);
+    //     $('#txtDMoldNo').val(lotNo);
+    //     // $('#lblPoNumber').text(poNumber);
+    //     sessionStorage.removeItem('po_number_for_defect_escalation');
+    //     sessionStorage.removeItem('device_name_for_defect_escalation');
+    //     sessionStorage.removeItem('device_code_for_defect_escalation');
+    //     sessionStorage.removeItem('po_qty_for_defect_escalation');
+    //     sessionStorage.removeItem('die_no_for_defect_escalation');
+    //     sessionStorage.removeItem('pair_no_for_defect_escalation');
+    //     getDefectCount(poNumber);
+    // }
 
-        $('#txt_po_number_lbl').val(poNumber);
-        $('#txt_device_name_lbl').val(deviceName);
-        $('#txt_device_code_lbl').val(deviceCode);
-        $('#txt_po_qty_lbl').val(poQty);
-        $('#txtPairNo').val(dieNo);
-        $('#txtDMoldNo').val(lotNo);
-        // $('#lblPoNumber').text(poNumber);
-        sessionStorage.removeItem('po_number_for_defect_escalation');
-        sessionStorage.removeItem('device_name_for_defect_escalation');
-        sessionStorage.removeItem('device_code_for_defect_escalation');
-        sessionStorage.removeItem('po_qty_for_defect_escalation');
-        sessionStorage.removeItem('die_no_for_defect_escalation');
-        sessionStorage.removeItem('pair_no_for_defect_escalation');
-        getDefectCount(poNumber);
-    }
+    const params = new URLSearchParams(window.location.search);
+
+    // console.log('url', params)
+    // console.log('params.get(po_number):', params.get('po_number'));
+    // console.log('params.get(device_name):', params.get('device_name'));
+
+    $('#txt_po_number_lbl').val(params.get('po_number'));
+    $('#txt_device_name_lbl').val(params.get('device_name'));
+    $('#txt_device_code_lbl').val(params.get('device_code'));
+    $('#txt_po_qty_lbl').val(params.get('po_qty'));
+    $('#txtPairNo').val(params.get('die_no'));
+    $('#txtDMoldNo').val(params.get('pair_no'));
 
     let defectEscalationDataTable = $("#tblDefectEscalation").DataTable({
         processing: true,
@@ -2024,7 +2021,7 @@ $(document).ready(function() {
                                 $('#txt_device_name_lbl').val(data['data']['device_name']);
                                 $('#txt_device_code_lbl').val(data['data']['device_code']);
                                 $('#txt_po_qty_lbl').val(data['data']['po_qty']);
-                                
+
                                 defectEscalationDataTable.ajax.reload();
                                 getDefectCount(poNumber);
                                 // Close the modal
@@ -2046,7 +2043,7 @@ $(document).ready(function() {
         });
     });
 
-    
+
 
     $(document).on('click', '.btn_view_defect_details, .btn_edit_defect_details', function () {
         isViewingDefect = true;
@@ -2064,7 +2061,6 @@ $(document).ready(function() {
 
         if(defectType.length > 1){
             defectTypeTest = defectType.split(",");
-
         }else{
             defectTypeTest = defectType;
         }
@@ -2122,7 +2118,6 @@ $(document).ready(function() {
             if(verificationStatus == 'VERIFIED' && occurence == 2 || occurence == 3 || isDefectType1){
                 $('.bHeaderClass').attr('hidden', false);
             }
-            
         }
 
         $.ajax({
@@ -2134,8 +2129,10 @@ $(document).ready(function() {
                 if (response.status !== 'success') {
                     return alert('Defect not found.');
                 }
+
                 
                 const data = response.data;
+                // console.log('data', data);
                 const userId = data.de_user;
                 const userName = data.operator_info.name;
                 const manUserDetails = response.manUserDetails;
@@ -2158,11 +2155,18 @@ $(document).ready(function() {
                 $('#txtRuncardNumber').val(data.production_runcard.runcard_no);
 
                     const runcardId = data.prod_runcard_id;
+
+                    if(data.detailed_description === null || data.detailed_description === ''){
+                        $('.bHeaderClass').attr('hidden', true);
+                    }else{
+                        $('.bHeaderClass').attr('hidden', false);
+                    }
+
                     $('#txtRuncardId').val(runcardId);
                     $('#txtRuncardStationId').val(data.prod_runcard_station_id);
                     $('#txtStationModId').val(data.prod_runcard_station_mod_id);
                     $('#txtLine').val(data.line_id).trigger('change').prop('disabled', isViewing);
-                    
+
                     // User select
                     if ($('#txtSelectUser option[value="' + userId + '"]').length === 0) {
                         $('#txtSelectUser').append(new Option(userName, userId, true, true));
@@ -2172,7 +2176,7 @@ $(document).ready(function() {
                         'pointer-events': 'none',
                         'background-color': '#e9ecef'  // optional: Bootstrap-like disabled look
                     });
-                    
+
                     $('#txtDefectCtrlNumber').val(defectCtrlNumber).prop('readonly', true); // control number
                     $('#txtDate').val(data.de_date).prop('readonly', true); // date
                     $('#txtTime').val(data.de_time).prop('readonly', true); // time
@@ -2185,14 +2189,17 @@ $(document).ready(function() {
                     $('#txtProductName').val($('#txt_device_name_lbl').val());
 
                     $('#txtStation').val(data.de_station).trigger('change').prop('disabled', isViewing);
-                    if (data.de_station == 7 || data.de_station == 3 || data.de_station == 4 || data.de_station == 2) {
-                        $('#otherStationContainer').show();
-                        $('#txtOtherStation').val(data.de_other_station).prop('readonly', isViewing);
-                    } else {
-                        $('#otherStationContainer').hide();
-                        $('#txtOtherStation').val('').prop('readonly', true);
-                    }
-                    
+                    // console.log('data.de_station', data.de_station);
+
+                    // if (data.de_station == 7 || data.de_station == 3 || data.de_station == 4 || data.de_station == 2) {
+                    //     // console.log('isViewing', isViewing);
+                    //     // $('#otherStationContainer').show();
+                    //     $('#txtOtherStation').val(data.de_other_station).prop('readonly', isViewing);
+                    // } else {
+                    //     $('#otherStationContainer').hide();
+                    //     $('#txtOtherStation').val('').prop('readonly', true);
+                    // }
+
 
                     // Shift radio
                     $("#shiftA").prop('checked', data.de_shift == 1).prop('disabled', isViewing && data.de_shift !== 1);
@@ -2205,6 +2212,7 @@ $(document).ready(function() {
 
                     let testClassification = data.defect_classification;
                     // console.log('defectClassification', typeof(testClassification));
+                    // console.log('defectClassifasdasdaication', testClassification);
 
                     // 1. Convert "2,4,6" into an array ["2", "4", "6"]
                     // We use split and handle cases where data might be null/empty
@@ -2215,39 +2223,27 @@ $(document).ready(function() {
 
                     classifications.forEach(function(id) {
                         let isSelected = selectedClasses.includes(id.toString());
-                        
+
                         // Target each checkbox by ID (e.g., #txtDefectClassification1Id)
                         $("#txtDefectClassification" + id + "Id")
                             .prop('checked', isSelected)
-                            .prop('disabled', isViewing && !isSelected); 
+                            .prop('disabled', isViewing && !isSelected);
                     });
 
-                    // if(testClassification.includes('2')){
-                        
-                    // }
-                    // $("#txtDefectClassification1Id").prop('checked', data.defect_classification == 1).prop('disabled', isViewing && data.defect_classification != 1);
-                    // $("#txtDefectClassification2Id").prop('checked', data.defect_classification == 2).prop('disabled', isViewing && data.defect_classification != 2);
-                    // $("#txtDefectClassification3Id").prop('checked', data.defect_classification == 3).prop('disabled', isViewing && data.defect_classification != 3);
-                    // $("#txtDefectClassification4Id").prop('checked', data.defect_classification == 4).prop('disabled', isViewing && data.defect_classification != 4);
-                    // $("#txtDefectClassification5Id").prop('checked', data.defect_classification == 5).prop('disabled', isViewing && data.defect_classification != 5);
-
-
-
-                    
                     $('#txtDetailedDescription').val(data.detailed_description).prop('readonly', isViewing);
 
-                    let primaryClass = testClassification[0]; 
+                    let primaryClass = testClassification[0];
 
                     if (primaryClass) {
                         let labelText = $('input[name="d_classification"][value="' + primaryClass + '"]').next('label').text();
-                        
+
                         // Update Label and Qty
                         $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
                         $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
 
                         // Update Visibility
                         $('.modeOfDefectClass, .criticalDefectClass').removeAttr('hidden');
-                        
+
                         if (primaryClass == 1) {
                             $('.otherDefectClass').attr('hidden', true);
                         } else {
@@ -2266,7 +2262,6 @@ $(document).ready(function() {
                         });
                     }
 
-                    // 3. Update the Checkboxes for ALL active classifications
                     [1, 2, 3, 4, 5].forEach(id => {
                         let isSelected = testClassification.includes(id.toString());
                         $("#txtDefectClassification" + id + "Id")
@@ -2274,94 +2269,6 @@ $(document).ready(function() {
                             .prop('disabled', isViewing && !isSelected);
                     });
 
-                    // if (data.defect_classification == 1) {
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').attr('hidden', true);
-
-                    //     // ✅ Pass a callback to preselect and disable the dropdown
-                    //     // getModOfDefect($("#txtDefects"), 1, function () {
-                    //     //     $('#txtDefects').val(data.mod_id).trigger('change').prop('disabled', isViewing);
-                    //     // });
-
-                    //     getModOfDefect($("#txtDefects"), 1, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-
-                    // } else if(data.defect_classification == 2) {
-                    //     let labelText = $('input[name="d_classification"][value="2"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 2, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 3) {
-                    //     let labelText = $('input[name="d_classification"][value="3"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 3, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 4) {
-                    //     let labelText = $('input[name="d_classification"][value="4"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 4, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }else if(data.defect_classification == 5) {
-                    //     let labelText = $('input[name="d_classification"][value="5"]').next('label').text();
-                    //     $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(labelText + ' QTY');
-
-                    //     $('.modeOfDefectClass').removeAttr('hidden');
-                    //     $('.criticalDefectClass').removeAttr('hidden');
-                    //     $('.otherDefectClass').removeAttr('hidden');
-                    //     $('#txtDefectQty').val(data.defect_qty).prop('readonly', isViewing);
-
-                    //     getModOfDefect($("#txtDefects"), 5, function () {
-                    //         let defectIds = (data.mod_id || "").split(",");
-
-                    //         $('#txtDefects')
-                    //             .val(defectIds)      // preselect multiple values
-                    //             .trigger('change')   // refresh Select2 UI
-                    //             .prop('disabled', isViewing);
-                    //     });
-                    // }
 
                     let areaCols = [
                         (data.area1 || "").split(","),
@@ -2524,11 +2431,11 @@ $(document).ready(function() {
                                     item?.de_pic_ids,
                                     item?.de_due_date,
                                 ])
-                                
+
                             );
 
-
-                    if(data.defect_classification == 1){
+                            // console.log('data', data);
+                    if(data.defect_classification == 1 ){
                         if(data.defect_status == 0 || data.defect_status == 1  || data.defect_status == 2|| data.defect_status == 3 || data.defect_status == 4 || data.defect_status == 5 || data.defect_status == 6 || data.defect_status == 7 || data.defect_status == 8){
                             $('.cHeaderClass').attr('hidden', !pvIsCompelete);
                             $('.dHeaderClass').attr('hidden', !iaIsComplete);
@@ -2539,6 +2446,8 @@ $(document).ready(function() {
                             $('.iHeaderClass').attr('hidden', !rcecIsComplete);
                             $('.jHeaderClass').attr('hidden', !cdIsComplete);
 
+                            // console.log('asdasdasd',data.problem_verificaiton_details);
+
                             if(data.problem_verificaiton_details != null){
                                 if( data.problem_verificaiton_details.prod_verification_user != null){
                                     $('#txtPVerificationUser').val(data.problem_verificaiton_details.prod_verification_user.name).prop('readonly' ,true);
@@ -2548,7 +2457,7 @@ $(document).ready(function() {
                                     $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
                                     $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
                                 }
-                            
+
                                 if( data.problem_verificaiton_details.engr_verification_user != null){
                                     $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
                                     $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
@@ -2578,7 +2487,7 @@ $(document).ready(function() {
                                     $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
                                     $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
                                 }
-                                
+
                                 if( data.problem_verificaiton_details.d_engr_user != null){
                                     $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
                                     $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
@@ -2835,7 +2744,7 @@ $(document).ready(function() {
                                         </div>
                                     `);
                                 });
-                                
+
                             }
 
                             if (finalDispositionDetails?.f_disposition != null) {
@@ -2945,7 +2854,7 @@ $(document).ready(function() {
                                     });
 
                                     // Remove ID to avoid duplicates
-                                    $select.removeAttr('id'); 
+                                    $select.removeAttr('id');
 
                                     // Initialize Select2
                                     if ($.fn.select2) {
@@ -2975,8 +2884,8 @@ $(document).ready(function() {
                                 $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
                                 $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
                                 $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
-                                    
-                                    
+
+
                                 if( verificationAndConfirmationResults.qc_inspector != null){
                                     $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
                                     $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
@@ -3002,7 +2911,8 @@ $(document).ready(function() {
 
                     }
 
-                    else if(data.de_occurence == 2 && (data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5)){
+                    // else if(data.de_occurence == 2 && (data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5)){
+                    else if(data.defect_classification == 2 || data.defect_classification == 3 ||data.defect_classification == 4 || data.defect_classification == 5){
                         if(data.defect_status == 0 || data.defect_status == 1  || data.defect_status == 2|| data.defect_status == 3 || data.defect_status == 4 || data.defect_status == 5 || data.defect_status == 6 || data.defect_status == 7 || data.defect_status == 8){
                             $('.cHeaderClass').attr('hidden', !pvIsCompelete);
                             $('.dHeaderClass').attr('hidden', !iaIsComplete);
@@ -3022,7 +2932,7 @@ $(document).ready(function() {
                                     $('#txtPVerificationDate').val(data.problem_verificaiton_details.vr_prod_date).prop('readonly');
                                     $('#txtPVerificationRemarks').val(data.problem_verificaiton_details.vr_prod_remarks).prop('readonly', isViewing);
                                 }
-                            
+
                                 if( data.problem_verificaiton_details.engr_verification_user != null){
                                     $('#txtEVerificationUser').val(data.problem_verificaiton_details.engr_verification_user.name).prop('readonly' ,true);
                                     $('#txtEVerificationUserId').val(data.problem_verificaiton_details.engr_verification_user.id).prop('readonly' ,true);
@@ -3052,7 +2962,7 @@ $(document).ready(function() {
                                     $('#txtPDispositionDate').val(data.problem_verificaiton_details.d_prod_date).prop('readonly');
                                     $('#txtPDispositionRemarks').val(data.problem_verificaiton_details.d_prod_remarks).prop('readonly', isViewing);
                                 }
-                                
+
                                 if( data.problem_verificaiton_details.d_engr_user != null){
                                     $('#txtEDispositionUser').val(data.problem_verificaiton_details.d_engr_user.name).prop('readonly' ,true);
                                     $('#txtEDispositionUserID').val(data.problem_verificaiton_details.d_engr_user.id).prop('readonly' ,true);
@@ -3309,7 +3219,7 @@ $(document).ready(function() {
                                         </div>
                                     `);
                                 });
-                                
+
                             }
 
                             if (finalDispositionDetails?.f_disposition != null) {
@@ -3419,7 +3329,7 @@ $(document).ready(function() {
                                     });
 
                                     // Remove ID to avoid duplicates
-                                    $select.removeAttr('id'); 
+                                    $select.removeAttr('id');
 
                                     // Initialize Select2
                                     if ($.fn.select2) {
@@ -3449,8 +3359,8 @@ $(document).ready(function() {
                                 $('#txtDerivedActionsDocumented').val(verificationAndConfirmationResults?.actions_documented ?? '').prop('readonly', isViewing);
                                 $('#txtResultConfirmation').val(verificationAndConfirmationResults?.confirmation_result ?? '').prop('readonly', isViewing);
                                 $('#txtVerificationRemarks').val(verificationAndConfirmationResults?.remarks ?? '').prop('readonly', isViewing);
-                                    
-                                    
+
+
                                 if( verificationAndConfirmationResults.qc_inspector != null){
                                     $('#txtVCInspectorUser').val(verificationAndConfirmationResults.qc_inspector.name).prop('readonly' ,true);
                                     $('#txtVCInspectorUserId').val(verificationAndConfirmationResults.qc_inspector.id).prop('readonly' ,true);
@@ -3476,9 +3386,9 @@ $(document).ready(function() {
 
                         }
 
-                    }else{
-                        $('.bHeaderClass').attr('hidden', true);
                     }
+
+
                         $('#btnSaveDefectEscalation').prop('disabled', isViewing);
                     },
                     error: function () {
@@ -3488,21 +3398,21 @@ $(document).ready(function() {
     });
 
     $(".btnScanVerificationId").click(function () {
-        scanContext = $(this).data("type"); 
+        scanContext = $(this).data("type");
         $('#modalScanProductionId').modal('show');
         $("#txtSearchProdId").val('');
         $("#scanProdIdBody").text('Please Scan ID...');
     });
 
     $(".btnScanVerification2Id").click(function () {
-        verification2Context = $(this).data("type"); 
+        verification2Context = $(this).data("type");
         $('#modalScanVerification2Id').modal('show');
         $("#txtSearchVerification2").val('');
         $("#scanVerification2IdBody").text('Please Scan ID...');
     });
 
     $(".btnScanReworker").click(function () {
-        reworkerContext = $(this).data("type"); 
+        reworkerContext = $(this).data("type");
         $('#modalScanReworkerId').modal('show');
         $("#txtReworkerId").val('');
         $("#scanReworkerIdBody").text('Please Scan ID...');
@@ -3571,15 +3481,15 @@ $(document).ready(function() {
                         },
                         success: function(response) {
                             if (response.status === 'success') {
-                            
+
                                 if (reworkerContext === 'R1') {
                                     $('#txtReworkerOperator1').val(response.user.name);
-                                    $('#txtReworkerOperatorId1').val(response.user.id);                
+                                    $('#txtReworkerOperatorId1').val(response.user.id);
                                 }else{
                                     $('#txtReworkerOperator2').val(response.user.name);
-                                    $('#txtReworkerOperatorId2').val(response.user.id); 
+                                    $('#txtReworkerOperatorId2').val(response.user.id);
                                 }
-                                
+
                                 $('#modalScanReworkerId').modal('hide');
                             } else {
                                     alert(response.message + '. Please try again or contact the administrator.');
@@ -3590,13 +3500,13 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
 
     $(".btnScanFinalDisposition").click(function () {
-        finalDispositionContext = $(this).data("type"); 
+        finalDispositionContext = $(this).data("type");
         $('#modalScanFinalDispositionId').modal('show');
         $("#txtSearchFinalDispositionUserId").val('');
         $("#scanFInalDispositionIdBody").text('Please Scan ID...');
@@ -3628,23 +3538,23 @@ $(document).ready(function() {
                             if (response.status === 'success') {
 
                                 // console.log('test');
-                               
+
                                 if (finalDispositionContext === 'FEM') {
                                     $('#txtDEngrManagerUser').val(response.user.name);
-                                    $('#txtDEngrManagerUserId').val(response.user.id);  
-                                    $('#txtDEngrManagerDateId').val(formattedDateTime);     
+                                    $('#txtDEngrManagerUserId').val(response.user.id);
+                                    $('#txtDEngrManagerDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'FPE'){
                                     $('#txtDPEngrUser').val(response.user.name);
                                     $('#txtDPEngrUserId').val(response.user.id);
-                                    $('#txtDPEngrDateId').val(formattedDateTime);  
+                                    $('#txtDPEngrDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'FQCM'){
                                     $('#txtDQCManagerUser').val(response.user.name);
                                     $('#txtDQCManagerUserId').val(response.user.id);
-                                    $('#txtQcManagerDateId').val(formattedDateTime);  
+                                    $('#txtQcManagerDateId').val(formattedDateTime);
                                 }else if(finalDispositionContext === 'DQS'){
                                     $('#txtDQcUser').val(response.user.name);
                                     $('#txtDQcUserId').val(response.user.id);
-                                    $('#txtDQcDateId').val(formattedDateTime);  
+                                    $('#txtDQcDateId').val(formattedDateTime);
                                 }
 
                                 $('#modalScanFinalDispositionId').modal('hide');
@@ -3657,7 +3567,7 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
@@ -3688,27 +3598,27 @@ $(document).ready(function() {
                             if (response.status === 'success') {
 
                                 // console.log('test');
-                               
+
                                 if (verification2Context === 'P2') {
                                     $('#txtPLevelTwoUser').val(response.user.name);
-                                    $('#txtPLevelTwoUserId').val(response.user.id);  
-                                    $('#txtPLevelTwoDate').val(formattedDateTime);     
+                                    $('#txtPLevelTwoUserId').val(response.user.id);
+                                    $('#txtPLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'E2'){
                                     $('#txtELevelTwoUser').val(response.user.name);
                                     $('#txtELevelTwoUserId').val(response.user.id);
-                                    $('#txtELevelTwoDate').val(formattedDateTime);  
+                                    $('#txtELevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'Q2'){
                                     $('#txtQcLevelTwoUser').val(response.user.name);
                                     $('#txtQcLevelTwoUserId').val(response.user.id);
-                                    $('#txtQcLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtQcLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'PPC'){
                                     $('#txtPpcLevelTwoUser').val(response.user.name);
                                     $('#txtPpcLevelTwoUserId').val(response.user.id);
-                                    $('#txtPpcLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtPpcLevelTwoDate').val(formattedDateTime);
                                 }else if(verification2Context === 'TA'){
                                     $('#txtTaLevelTwoUser').val(response.user.name);
                                     $('#txtTaLevelTwoUserId').val(response.user.id);
-                                    $('#txtTaLevelTwoDate').val(formattedDateTime);  
+                                    $('#txtTaLevelTwoDate').val(formattedDateTime);
                                 }
 
                                 $('#modalScanVerification2Id').modal('hide');
@@ -3721,19 +3631,19 @@ $(document).ready(function() {
                             alert('An error occurred while searching for the employee.');
                         }
                     });
-                } 
+                }
             }
         });
     });
-    
+
 
     $('#modalScanProductionId').on('shown.bs.modal', function (e) {
         $('#txtSearchProdId').focus();
         $(document).on('keypress',function(e){
             // e.preventDefault();
             scannedId = $('#txtSearchProdId').val();
-            
-            if( e.keyCode == 13){ 
+
+            if( e.keyCode == 13){
                 if(scannedId != ''){
                     // console.log('scanContext', scanContext);
                     // console.log(scannedId);
@@ -3798,7 +3708,7 @@ $(document).ready(function() {
                                 }else if(scanContext === 'QP'){
                                     alert(response.message + '. Please try again or contact the administrator.');
                                 }
-                                
+
                                 // alert('Employee not found.');
                             }
                         },
@@ -3808,7 +3718,7 @@ $(document).ready(function() {
                         }
                     });
                     // $(this).val('');
-                    
+
                 } else {
                     alert('Please scan.');
                 }
@@ -3818,7 +3728,7 @@ $(document).ready(function() {
 
 
     $(".btnScanVC").click(function () {
-        qcContext = $(this).data("type"); 
+        qcContext = $(this).data("type");
         $('#modalScanVerificationAndConfirmation').modal('show');
         $("#txtSearchForVerificationAndConfirmationId").val('');
         $("#scanVerificationAndConfirmationIqcBody").text('Please Scan ID...');
@@ -3829,8 +3739,8 @@ $(document).ready(function() {
         $(document).on('keypress',function(e){
             // e.preventDefault();
             scannedId = $('#txtSearchForVerificationAndConfirmationId').val();
-            
-            if( e.keyCode == 13){ 
+
+            if( e.keyCode == 13){
                 if(scannedId != ''){
                     // console.log('qcContext', qcContext);
                     // console.log(scannedId);
@@ -3883,7 +3793,7 @@ $(document).ready(function() {
                         }
                     });
                     // $(this).val('');
-                    
+
                 } else {
                     alert('Please scan.');
                 }
@@ -3929,11 +3839,11 @@ $(document).ready(function() {
 
         $('#txtPONumber').val($('#txt_po_number_lbl').val());
         $('#txtProductName').val($('#txt_device_name_lbl').val());
-        
+
     });
 
     $('#txtLine').on('change', function () {
-        var text = $(this).find("option:selected").text();  
+        var text = $(this).find("option:selected").text();
         $('#txtLineT').val(text);
     });
 
@@ -3969,55 +3879,16 @@ $(document).ready(function() {
             $(this).closest('tr').remove();
         });
 
-    // Initialize all existing rows
-    $('.iHeaderContent .capaRowTemplate select.selCapaUser').each(function() {
-        let $select = $(this);
+        // Initialize all existing rows
+        $('.iHeaderContent .capaRowTemplate select.selCapaUser').each(function() {
+            let $select = $(this);
 
-        // Populate users
-        GetUserForPersonInCharge($select);
+            // Populate users
+            GetUserForPersonInCharge($select);
 
-        // Initialize Select2
-        if ($.fn.select2 && !$select.hasClass('select2-hidden-accessible')) {
-            $select.select2({
-                theme: 'bootstrap4',
-                placeholder: '-- Select User --',
-                allowClear: true,
-                width: '100%'
-            });
-        }
-    });
-
-    // Add new CAPA row
-    $(document).on('click', '.addCapaRowBtn', function() {
-        let $parent = $(this).closest('.iHeaderContent');
-        let $template = $parent.find('.capaRowTemplate').first();
-
-        // Clone the template row
-        let $newRow = $template.clone(false, false);
-
-        // Remove old Select2 wrappers if any
-        $newRow.find('.select2-container').remove();
-
-        // Clear input fields
-        $newRow.find('textarea').val('');
-        $newRow.find('input[type="date"]').val('');
-
-        // Remove IDs to avoid duplicates
-        $newRow.find('[id]').removeAttr('id');
-
-        // Handle select elements
-        $newRow.find('select.selCapaUser').each(function() {
-            let $oldSelect = $(this);
-
-            // Clear old options
-            $oldSelect.empty().append('<option value="" disabled selected>-- Loading --</option>');
-
-            // Populate options via your function
-            GetUserForPersonInCharge($oldSelect);
-
-            // Initialize Select2 safely
-            if ($.fn.select2 && !$oldSelect.hasClass('select2-hidden-accessible')) {
-                $oldSelect.select2({
+            // Initialize Select2
+            if ($.fn.select2 && !$select.hasClass('select2-hidden-accessible')) {
+                $select.select2({
                     theme: 'bootstrap4',
                     placeholder: '-- Select User --',
                     allowClear: true,
@@ -4026,33 +3897,72 @@ $(document).ready(function() {
             }
         });
 
-        // Append new row
-        $parent.append($newRow);
-    });
+        // Add new CAPA row
+        $(document).on('click', '.addCapaRowBtn', function() {
+            let $parent = $(this).closest('.iHeaderContent');
+            let $template = $parent.find('.capaRowTemplate').first();
 
-    // Remove CAPA row
-    $(document).on('click', '.removeCapaRowBtn', function() {
-        let $parent = $(this).closest('.iHeaderContent');
-        let $rows = $parent.find('.capaRowTemplate');
-        let $row = $(this).closest('.capaRowTemplate');
+            // Clone the template row
+            let $newRow = $template.clone(false, false);
 
-        if ($rows.length > 1) {
-            // Destroy Select2 first to avoid dangling instances
-            $row.find('select.selCapaUser').each(function() {
-                let $select = $(this);
-                if ($select.hasClass('select2-hidden-accessible')) {
-                    $select.select2('destroy');
+            // Remove old Select2 wrappers if any
+            $newRow.find('.select2-container').remove();
+
+            // Clear input fields
+            $newRow.find('textarea').val('');
+            $newRow.find('input[type="date"]').val('');
+
+            // Remove IDs to avoid duplicates
+            $newRow.find('[id]').removeAttr('id');
+
+            // Handle select elements
+            $newRow.find('select.selCapaUser').each(function() {
+                let $oldSelect = $(this);
+
+                // Clear old options
+                $oldSelect.empty().append('<option value="" disabled selected>-- Loading --</option>');
+
+                // Populate options via your function
+                GetUserForPersonInCharge($oldSelect);
+
+                // Initialize Select2 safely
+                if ($.fn.select2 && !$oldSelect.hasClass('select2-hidden-accessible')) {
+                    $oldSelect.select2({
+                        theme: 'bootstrap4',
+                        placeholder: '-- Select User --',
+                        allowClear: true,
+                        width: '100%'
+                    });
                 }
             });
-            $row.remove();
-        } else {
-            // Last row: just reset
-            $row.find('select.selCapaUser').val(null).trigger('change');
-            $row.find('textarea').val('');
-            $row.find('input[type="date"]').val('');
-        }
-    });
-        
+
+            // Append new row
+            $parent.append($newRow);
+        });
+
+        // Remove CAPA row
+        $(document).on('click', '.removeCapaRowBtn', function() {
+            let $parent = $(this).closest('.iHeaderContent');
+            let $rows = $parent.find('.capaRowTemplate');
+            let $row = $(this).closest('.capaRowTemplate');
+
+            if ($rows.length > 1) {
+                // Destroy Select2 first to avoid dangling instances
+                $row.find('select.selCapaUser').each(function() {
+                    let $select = $(this);
+                    if ($select.hasClass('select2-hidden-accessible')) {
+                        $select.select2('destroy');
+                    }
+                });
+                $row.remove();
+            } else {
+                // Last row: just reset
+                $row.find('select.selCapaUser').val(null).trigger('change');
+                $row.find('textarea').val('');
+                $row.find('input[type="date"]').val('');
+            }
+        });
+
 
 
         $('#txtRuncardNumber').on('change', function () {
@@ -4096,6 +4006,7 @@ $(document).ready(function() {
     document.getElementById('txtStation').addEventListener('change', function () {
         const otherStationContainer = document.getElementById('otherStationContainer');
         if (this.value === '7' || this.value === '3' || this.value === '4' || this.value === '2') {
+            // console.log('selected value', this.value);
             otherStationContainer.style.display = 'block';
         } else {
             otherStationContainer.style.display = 'none';
@@ -4106,17 +4017,17 @@ $(document).ready(function() {
     document.querySelectorAll('input[name="d_classification"]').forEach(radio => {
         radio.addEventListener('change', function () {
             const selectedClassification = document.querySelector('input[name="d_classification"]:checked');
-
             let selectedText = $(this).next('label').text(); // get label text of selected radio
-            $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(selectedText + ' Qty');
 
+            $('#txtDefectQty').closest('.input-group').find('.input-group-text').text(selectedText + ' Qty');
             if (selectedClassification) {
                 const defectClassification = selectedClassification.value;
-                if(defectClassification == 1){    
+                getModOfDefect($("#txtDefects"), defectClassification)
+                if(defectClassification == 1){
                     $('.modeOfDefectClass').removeAttr('hidden');
                     $('.criticalDefectClass').removeAttr('hidden');
                     $('.otherDefectClass').attr('hidden', true);
-                    
+
                 }
                 else if(defectClassification == 2){
                     $('.modeOfDefectClass').removeAttr('hidden');
@@ -4141,7 +4052,6 @@ $(document).ready(function() {
                     $('.otherDefectClass').removeAttr('hidden');
                 }
 
-                getModOfDefect($("#txtDefects"), defectClassification)
             }
         });
     });
@@ -4150,7 +4060,7 @@ $(document).ready(function() {
     $('#txtSelectUser').change(function(){
         var userId = $(this).val();
         var userPosition = $('#txtSelectUser option:selected').data('position');
-        
+
         if(userPosition == 4){
             $('#txtOperator').prop('checked', true);
             $('#txtOperator').prop('disabled', false);
@@ -4170,7 +4080,7 @@ $(document).ready(function() {
             $('#txtOperator').prop('disabled', true);
             $('#txtMaterialHandler').prop('disabled', true);
             $('#txtTechnician').prop('disabled', true);
-            
+
         }else if(userPosition == 11){
             $('#txtTechnician').prop('checked', true);
             $('#txtTechnician').prop('disabled', false);
@@ -4181,7 +4091,7 @@ $(document).ready(function() {
             $('#txtOperator').prop('checked', false);
             $('#txtMaterialHandler').prop('checked', false);
             $('#txtQCInspector').prop('checked', false);
-            $('#txtTechnician').prop('checked', false); 
+            $('#txtTechnician').prop('checked', false);
 
             $('#txtOperator').prop('disabled', false);
             $('#txtMaterialHandler').prop('disabled', false);
@@ -4275,7 +4185,7 @@ $(document).ready(function() {
         getDefectEscalationCtrlNoToPrint(defectId, defectCtrlNo);
     });
 
-    
+
     $("#btnPrintDefectBarcode").click(function(){
         popup = window.open();
         let content = '';
@@ -4400,36 +4310,37 @@ $(document).ready(function() {
 
     $('#modalAddDefectEscalation').on('hidden.bs.modal', function () {
         resetDefectModal();
+
         // $('.bToggleHeader').slideUp(200);
         $('#bHeaderIcon').html('&#x25BA;');
         $('.bHeaderVerificationHeader').hide();
         $('.bHeaderDispositionHeader').hide();
-        
+
         $('.bHeaderVerificationContent').slideUp(200);
-        $('#bHeaderVerificationContentIcon').html('&#x25BA;'); 
-        
+        $('#bHeaderVerificationContentIcon').html('&#x25BA;');
+
         $('.bHeaderDispositionContent').slideUp(200);
-        $('#bHeaderDispositionContentIcon').html('&#x25BA;'); 
+        $('#bHeaderDispositionContentIcon').html('&#x25BA;');
 
 
 
 
-        $('#cHeaderIcon').html('&#x25BA;'); 
+        $('#cHeaderIcon').html('&#x25BA;');
         $('.cHeaderContent').slideUp(200);
         $('.dHeaderContent').slideUp(200);
-        $('#dHeaderIcon').html('&#x25BA;'); 
+        $('#dHeaderIcon').html('&#x25BA;');
         $('.eHeaderContent').slideUp(200);
-        $('#eHeaderIcon').html('&#x25BA;'); 
+        $('#eHeaderIcon').html('&#x25BA;');
         $('.fHeaderContent').slideUp(200);
-        $('#fHeaderIcon').html('&#x25BA;'); 
+        $('#fHeaderIcon').html('&#x25BA;');
         $('.gHeaderContent').slideUp(200);
-        $('#gHeaderIcon').html('&#x25BA;'); 
+        $('#gHeaderIcon').html('&#x25BA;');
         $('.hHeaderContent').slideUp(200);
-        $('#hHeaderIcon').html('&#x25BA;'); 
+        $('#hHeaderIcon').html('&#x25BA;');
         $('.iHeaderContent').slideUp(200);
-        $('#iHeaderIcon').html('&#x25BA;'); 
+        $('#iHeaderIcon').html('&#x25BA;');
         $('.jHeaderContent').slideUp(200);
-        $('#jHeaderIcon').html('&#x25BA;'); 
+        $('#jHeaderIcon').html('&#x25BA;');
     });
 
 });
@@ -4442,14 +4353,14 @@ function resetDefectModal() {
 
     // Reset inputs
     $('#modalAddDefectEscalation').find('input, textarea').each(function () {
-        $(this).val('');
+        // $(this).val(''); //Ito reason ng ng csrf error boss, dini delete neto ang CSRF token
         $(this).prop('checked', false);
         $(this).prop('readonly', false);
         $(this).prop('disabled', false);
     });
 
     // Reset hidden inputs
-    $('#modalAddDefectEscalation').find('input[type="hidden"]').val('');
+    // $('#modalAddDefectEscalation').find('input[type="hidden"]').val(''); //Ito reason ng ng csrf error boss, dini delete neto ang CSRF token
 
     // Hide conditional sections
     $('.cHeaderClass').attr('hidden', true);

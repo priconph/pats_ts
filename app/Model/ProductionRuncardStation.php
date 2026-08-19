@@ -66,12 +66,12 @@ class ProductionRuncardStation extends Model
     public function production_runcard_info(){
         return $this->hasOne(ProductionRuncard::class, 'id', 'production_runcard_id');
     }
-    
+
     // public function prod_runcard_station_defect(){
-    //     return $this->hasOne(DefectEscalationV2::class, 'prod_runcard_station_id', 'id');  
+    //     return $this->hasOne(DefectEscalationV2::class, 'prod_runcard_station_id', 'id');
     // }
 
-    
 
-    
+
+
 }
