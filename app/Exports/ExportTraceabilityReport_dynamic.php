@@ -302,8 +302,7 @@ class ExportTraceabilityReport_dynamic implements FromView, WithEvents, WithTitl
             //NOTE IF NO SHIPMENT DATE SELECTED, EXPORT RUNCARD DETAILS
             // ELSE EXPORT RUNCARD WITH DLABEL
             if($this->shipment_date_test == ''){
-                // echo 'true';
-                // exit;
+
                     // 3. Dynamic Material Headers (Starting at F7)
                     $col_index = 6; // Column F
                     foreach ($material_name as $material) {
@@ -341,7 +340,8 @@ class ExportTraceabilityReport_dynamic implements FromView, WithEvents, WithTitl
                     foreach ($prodn_runcard_tsppts_details as $tsppts) {
                         $input_date = substr($tsppts->created_at, 0, 10);
                         $lot_no = $tsppts->lot_no;
-
+    // echo json_encode($tsppts);
+    //                     exit;
                         foreach ($tsppts->prod_runcard_station_details as $station) {
                             // Find matching boxes for this specific runcard
                             $matching_boxes = collect($dlabel_boxes_data)->where('lot_no', $station->runcard_no);
@@ -399,9 +399,7 @@ class ExportTraceabilityReport_dynamic implements FromView, WithEvents, WithTitl
                     // $event->sheet->getStyle('A1:Z100')->applyFromArray($hv_center)->getAlignment()->setWrapText(true);
                     $event->sheet->getStyle('A7:'.$lastcol.'7')->getFont()->setBold(true);
             }else{
-                // 67.
-                // echo 'false';
-                // exit;
+
                 $start_col = 8;
                 $test_col = 8;
                 $test_col1 = 8;
@@ -464,7 +462,7 @@ class ExportTraceabilityReport_dynamic implements FromView, WithEvents, WithTitl
                     $date_input = substr($input_date,0,10);
                     // $box_no = substr($prodn_runcard_tsppts_details[$i]->lot_no,-2);
                     $lot_no = $prodn_runcard_tsppts_details[$i]->lot_no;
-
+                    $lotapp_work_week = $prodn_runcard_tsppts_details[$i]->oqc_lot_app_details[0]->ww;
 
                     for ($y=0; $y <count($prodn_runcard_tsppts_details[$i]->prod_runcard_station_details); $y++) {
                         // echo json_encode($prodn_runcard_tsppts_details);
@@ -498,6 +496,7 @@ class ExportTraceabilityReport_dynamic implements FromView, WithEvents, WithTitl
                                                             if(strtoupper($prodn_runcard_details[$u]->defect_rework_number) == 'N/A' || $prodn_runcard_details[$u]->defect_rework_number == null){
                                                                 // * OPERATOR NAME & WORKWEEK
                                                                 $event->sheet->setCellValue($column_start7.$start_col, $prodn_runcard_details[$u]->work_week);
+                                                                // $event->sheet->setCellValue($column_start7.$start_col, $lotapp_work_week); //MIGZ TODO: Work Week per LOT
                                                                 $event->sheet->setCellValue($column_start8.$start_col, $prodn_runcard_details[$u]->remarks);
 
                                                                     $event->sheet->setCellValue($column_start6.$start_col, $this->operator_name($operator_details[$prodn_runcard_details[$u]->id], $sakidashi_issuance_item_data));

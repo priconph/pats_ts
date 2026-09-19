@@ -109,7 +109,7 @@ class ExportTraceabilityReportControllerOrig extends Controller{
 
         /**
          * Data checker before matching to other tables
-         * Return "useful" error to debug correctly and avoid katangahan darren!!!
+         * Return "useful" error to debug correctly and avoid katangahan ni darren!!!
          */
         // if(!count($prodn_runcard_tsppts) > 0){
         //     return redirect()->back() ->with('alert', 'Variable Name: $prodn_runcard_tsppts, not found any data');
@@ -124,6 +124,7 @@ class ExportTraceabilityReportControllerOrig extends Controller{
 
 
         $materialprocess = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $po_number_susbtr, 'name' => $prodn_runcard_tsppts[0]->device_name, 'barcode' => '', 'get_or_first' => '']);
+        // return $materialprocess;
         // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
         // // ->where('status', 1)
         // ->get();
@@ -481,10 +482,10 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         ->whereBetween('lot_no', [$po_lot_from,$po_lot_to])
         ->get();
 
-        // return $dlabel_boxes;
+        return 'return';
 
 
-        $prodn_runcard_tsppts = ProductionRuncardTsPpts::with(['prod_runcard_station_details' => function($query){
+        $prodn_runcard_tsppts = ProductionRuncardTsPpts::with('oqc_lot_app_details',['prod_runcard_station_details' => function($query){
             $query->where('status', 1); // change from 1 to 4 10/2/2023
         }])
         ->where('status', 4)
@@ -931,8 +932,8 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         ob_start();
         return Excel::download(new ExportTraceabilityReport_dynamic($prodn_runcard,$prodn_runcard_tsppts,$material_name,$sakidashi_issuance_item,$dlabel,$dlabel_boxes,$materialprocess,$operator_details,$defect_escalation,$shipment_date_test), 'PATS generated.xlsx');
         // return Excel::download(new ExportTraceabilityReport_dynamic($prodn_runcard,$prodn_runcard_tsppts,$material_name,$sakidashi_issuance_item,$dlabel,$dlabel_boxes,$materialprocess,$operator_details,$defect_escalation), 'PATS generated.xlsx');
-
     }
+
     public function export_traceability_test(Request $request)
     {
         $po_number = $request->po_number;
@@ -993,7 +994,6 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         $dlabel_id = [
             "dlabel_id" => [],
         ];
-
         if(count($dlabel) != 0){
             if(count($dlabel) > 0){
                 for ($q=0; $q <count($dlabel); $q++) {
@@ -1007,20 +1007,20 @@ class ExportTraceabilityReportControllerOrig extends Controller{
             ->whereBetween('lot_no', [$po_lot_from,$po_lot_to])
             ->get();
         }
-        $prodn_runcard_tsppts = ProductionRuncardTsPpts::with(['prod_runcard_station_details' => function($query){
+
+    $prodn_runcard_tsppts = ProductionRuncardTsPpts::with(['prod_runcard_station_details' => function($query){
             $query->where('status', 1); // change from 1 to 4 10/2/2023
-        }])
+        },'oqc_lot_app_details'])
         ->where('status', 4)
         ->where('po_no', $po_number)
         ->where('deleted_at', null)
         ->whereBetween('lot_no', [$po_lot_from,$po_lot_to])
         ->get();
 
-
         // $materialprocess = Device::where('name', $prodn_runcard_tsppts[0]->device_name)
         // ->get();
 
-         $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
+        $materialprocess = CommonController::getInstance()->getMatrixByPoNo([
             'po_no'=> $po_number,
             'name'=>  $prodn_runcard_tsppts[0]->device_name,
             'barcode'=> '',
@@ -1040,7 +1040,6 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         }else{
             return "no ts_ppts runcard details";
         }
-
 
         $runcard_no = substr($po_number,0,10);
 
@@ -1076,7 +1075,6 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         ->whereIn('id', $tempo_array_id['parts_prep_wbs_kits_issuance_id'])
         ->get();
 
-
         $tempo_array_issuance = [
             "issuance_no" => [],
         ];
@@ -1089,10 +1087,8 @@ class ExportTraceabilityReportControllerOrig extends Controller{
             return "no sakidashi_issuance data";
         }
 
-
         $sakidashi_issuance_item = WBSSakidashiIssuanceItem::whereIn('issuance_no', $tempo_array_issuance['issuance_no'])
         ->get();
-
 
         $prodn_runcard_array = [
             "id" => [],
@@ -1107,8 +1103,6 @@ class ExportTraceabilityReportControllerOrig extends Controller{
         }else{
             return "no runcard details for operator";
         }
-
-
 
         $operator_details = ProductionRuncardStationOperator::with(['infoHeadCheckedby'])
         ->whereIn('production_runcard_id',$prodn_runcard_array['id'])

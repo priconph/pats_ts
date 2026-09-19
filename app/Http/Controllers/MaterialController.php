@@ -47,14 +47,14 @@ class MaterialController extends Controller
     public function getMaterialListByDeviceName(Request $request)
     {
 
-        return 'TODO getMaterialListByDeviceName';
-         $device = CommonController::getInstance()->getMatrixByPoNo([
-            'po_no'=> $po_number,
-            'name'=>  $request->deviceName,
-            'barcode'=> '',
-            'get_or_first'=> '',
-        ]);
-        // $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
+        // return 'TODO getMaterialListByDeviceName';
+        //  $device = CommonController::getInstance()->getMatrixByPoNo([
+        //     'po_no'=> $po_number,
+        //     'name'=>  $request->deviceName,
+        //     'barcode'=> '',
+        //     'get_or_first'=> '',
+        // ]);
+        $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
         $materialList = [];
         $process_ids = [];
         // if( count($device) > 0 ) {

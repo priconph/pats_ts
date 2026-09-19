@@ -4,12 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Model\Device;
 use App\Model\ProcessFlow;
-use App\Model\DeviceProcessFlowMaterial;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use DataTables;
 use Auth;
 use Maatwebsite\Excel\Facades\Excel;
@@ -33,16 +30,6 @@ class DeviceController extends Controller
 
         // return response()->json(['data' => []]);
     }
-
-    // Copy
-    // public function getProcessFlowByDeviceName(Request $request)
-    // {
-    //     $device = Device::where("name", $request->deviceName)->get();
-    //     if( count($device) > 0 )
-    //         return response()->json(['data' => ProcessFlow::with("processFlow")->where("device_id", $device[0]->id)->where("status", 1)->get(), 'device' =>$device]);
-    //     return response()->json(['data' => []]);
-    // }
-
     public function checkProcessFlowIsSet(Request $request)
     {
         // return 'TODO';
@@ -61,92 +48,6 @@ class DeviceController extends Controller
     {
         return response()->json(['data' => Device::where('status', 1)->get()]);
     }
-
-    /**
-     * Old Code
-     * 01-13-2023
-     * -JD
-     */
-	// public function view_devices(){
-    // 	$devices = Device::all();
-
-    //     return DataTables::of($devices)
-    //         ->addColumn('label1', function($device){
-    //             $result = "";
-
-    //             if($device->status == 1){
-    //                 $result .= '<span class="badge badge-pill badge-success">Active</span>';
-    //             }
-    //             else{
-    //                 $result .= '<span class="badge badge-pill badge-danger">Inactive</span>';
-    //             }
-
-    //             return $result;
-    //         })
-    //         ->addColumn('action1', function($device){
-    //             $result = '<center><div class="btn-group">
-    //                       <button type="button" class="btn btn-primary dropdown-toggle btn-xs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Action">
-    //                         <i class="fa fa-cog"></i>
-    //                       </button>
-    //                       <div class="dropdown-menu dropdown-menu-right">';
-    //             if($device->status == 1){
-    //             	$result .= '<button class="dropdown-item aEditDevice" type="button" device-id="' . $device->id . '" style="padding: 1px 1px; text-align: center;" data-toggle="modal" data-target="#modalEditDevice" data-keyboard="false">Edit</button>';
-
-    //                 $result .= '<button class="dropdown-item aChangeDeviceStat" type="button" device-id="' . $device->id . '" status="2" style="padding: 1px 1px; text-align: center;" data-toggle="modal" data-target="#modalChangeDeviceStat" data-keyboard="false">Deactivate</button>';
-
-    //                 // $result .= '<button class="dropdown-item aShowDeviceDevProc" device-id="' . $device->id . '" device-name="' . $device->name . '" type="button" style="padding: 1px 1px; text-align: center;">Show Device Process</button>';
-
-    //                 // $result .= '<button class="dropdown-item aGenDeviceBarcode" device-id="' . $device->barcode . '" type="button" style="padding: 1px 1px; text-align: center;">Generate Barcode</button>';
-
-    //                 // Removed temporarily - undefined value from barcode
-    //                 // $result .= '<button class="dropdown-item aGenerateBarcode" device-id="' . $device->id . '" barcode="' . $device->barcode . '" type="button" style="padding: 1px 1px; text-align: center;" data-toggle="modal" data-target="#modalGenBarcode">Generate Barcode</button>';
-    //             }
-    //             else{
-    //                 $result .= '<button class="dropdown-item aChangeDeviceStat" type="button" style="padding: 1px 1px; text-align: center;" device-id="' . $device->id . '" status="1" data-toggle="modal" data-target="#modalChangeDeviceStat" data-keyboard="false">Activate</button>';
-    //             }
-
-    //             $result .= '<input type="hidden" value="' . $device->id . '" class="form-control td_device_id">';
-    //             $result .= '<input type="hidden" value="' . $device->name . '" class="form-control td_device_name">';
-
-    //             $result .= '</div>
-    //                     </div></center>';
-
-    //             return $result;
-    //         })
-    //         ->addColumn('process_lbl', function($device){
-    //             $result = "";
-
-    //             if($device->process == 0){
-    //                 $result .= '<span class="badge badge-pill badge-danger">Without</span>';
-    //             }
-    //             else{
-    //                 $result .= '<span class="badge badge-pill badge-primary">With</span>';
-    //             }
-
-    //             return $result;
-    //         })
-    //         ->addColumn('type_lbl', function($device){
-    //             $result = "";
-
-    //             if($device->type == 1){
-    //                 $result .= '<span class="badge badge-pill badge-info">Burn-in</span>';
-    //             }
-    //             else if($device->type == 2){
-    //                 $result .= '<span class="badge badge-pill badge-primary">MICRON PATS</span>';
-    //             }
-    //             else if($device->type == 3){
-    //                 $result .= '<span class="badge badge-pill badge-info">Test Sockets</span>';
-    //             }else{
-    //                 $result .= '--';
-    //             }
-
-    //             return $result;
-    //         })
-
-    //         ->rawColumns(['label1', 'action1','process_lbl','type_lbl'])
-    //         ->make(true);
-    // }
-
     public function view_devices(){
 
     	$devices = Device::with('process_flow')->get();
@@ -362,7 +263,6 @@ class DeviceController extends Controller
             ->rawColumns(['label1', 'action1','process_lbl','type_lbl', 'total_approved_status'])
             ->make(true);
     }
-
     // Add Device
     public function add_device(Request $request){
         date_default_timezone_set('Asia/Manila');
@@ -373,7 +273,8 @@ class DeviceController extends Controller
             // 'name' => ['required', 'string', 'max:255', 'unique:devices'],
             'po_no' => 'required',
             'name' => ['required', 'string', 'max:255'],
-            'barcode' => ['required', 'string', 'max:255', 'unique:devices'],
+            // 'barcode' => ['required', 'string', 'max:255', 'unique:devices'],
+            'barcode' => ['required', 'string', 'max:255'],
             'process' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'max:255'],
             // 'mrp_no' => ['required', 'string', 'max:255'],
@@ -453,13 +354,11 @@ class DeviceController extends Controller
             }
         }
     }
-
     // Get Device By Id
     public function get_device_by_id(Request $request){
         $device = Device::where('id', $request->device_id)->get();
         return response()->json(['device' => $device]);
     }
-
     // Edit Device
     public function edit_device(Request $request){
         date_default_timezone_set('Asia/Manila');

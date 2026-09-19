@@ -3863,93 +3863,7 @@ class ProductionRuncardController extends Controller
         }
     }
 
-    // public function save_prod_emboss_material_list(Request $request){
-    //     date_default_timezone_set('Asia/Manila');
-    //     $return_title = '<i class="fa fa-check-circle text-success"></i> Saved';
-    //     $return_body = 'Record has been saved.';
-    //     $result = false;
 
-    //     $user = User::where('employee_id', $request->employee_id)->get();
-
-    //     if($user->count() > 0){
-    //         if($user[0]->position == 4){
-    //             DB::beginTransaction();
-    //             try {
-
-    //                 // ProductionRuncard::where('id',$request->prod_runcard_id)
-    //                 //         ->update(
-    //                 //             [
-    //                 //                 'status' => 2,
-    //                 //                 'last_updated_by' => Auth::user()->id,
-    //                 //                 'updated_at' => date('Y-m-d H:i:s')
-    //                 //             ]
-    //                 //         );
-
-    //                 if(isset($request->emboss_issuance)){
-    //                     for($index = 0; $index < count($request->emboss_issuance); $index++){
-    //                         ProdRuncardMaterialList::insert([
-    //                             'prod_runcard_id' => $request->prod_runcard_id,
-    //                             'status' => 1,
-    //                             'issuance_id' => $request->emboss_issuance[$index],
-    //                             'tbl_wbs' => 2,
-    //                             'for_emboss' => 1,
-    //                             'status' => 1,
-    //                         ]);
-    //                     }
-    //                 }
-
-    //                 DB::commit();
-    //                 $result = true;
-
-    //             } catch (Exception $e) {
-    //                 DB::rollback();
-    //                 $result = false;
-    //             }
-
-    //             if( !$result ){
-    //                 $return_title = '<i class="fa fa-times-circle text-danger"></i> Not saved';
-    //                 $return_body = 'An error occured. The record not saved.';
-    //             }
-    //             $return = array('result' => '1', 'title'=>$return_title,'body'=>$return_body);
-    //             return $return;
-    //         }
-    //         else{
-    //             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //             $return_body = ' Scanned QR Code is not Operator.';
-    //             $return = array('result' => '1', 'title'=>$return_title,'body'=>$return_body);
-    //             return $return;
-    //         }
-    //     }
-    //     else{
-    //         $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-    //         $return_body = ' Invalid Employee No.';
-    //         $return = array('result' => '0', 'title'=>$return_title,'body'=>$return_body);
-    //         return $return;
-    //     }
-    // }
-
-    // public function get_wbs_material_kitting(Request $request){
-    // date_default_timezone_set('Asia/Manila');
-    //     $material_kitting = MaterialIssuanceSubSystem::with([
-    //                                         'device_info',
-    //                                         // 'documents_details',
-    //                                     ])
-    //                                     ->where('po_no', $request->po_number)
-    //                                     ->first();
-
-    //     $doc_details_query = [];
-    //     $doc_a_drawing_query = [];
-    //     $doc_g_drawing_query = [];
-
-    //     // if($material_kitting != null){
-    //     //     $doc_details_query = RapidActiveDocs::where('doc_title', 'LIKE', '%' . $material_kitting->device_name . '%')
-    //     //         ->get();
-    //     //     $doc_a_drawing_query = collect($doc_details_query)->where('doc_type', 'A Drawing')->flatten(1);
-    //     //     $doc_g_drawing_query = collect($doc_details_query)->where('doc_type', 'G Drawing')->flatten(1);
-    //     // }
-
-    //     return response()->json(['material_kitting' => $material_kitting, 'doc_a_drawing_query' => $doc_a_drawing_query, 'doc_g_drawing_query' => $doc_g_drawing_query]);
-    // }
 
     public function get_wbs_material_kitting(Request $request){
         date_default_timezone_set('Asia/Manila');
@@ -3999,6 +3913,9 @@ class ProductionRuncardController extends Controller
     }
 
     public function get_prod_runcard_by_id1(Request $request){
+        session_start();
+
+        ;
         date_default_timezone_set('Asia/Manila');
         // return DefectEscalationV2Rev::where('prod_runcard_id',)
         $prod_runcard = ProductionRuncard::with([
@@ -4022,6 +3939,7 @@ class ProductionRuncardController extends Controller
         return response()->json(['prod_runcard' => $prod_runcard,'defects' => $prod_runcard]);
     }
     public function get_prod_runcard_by_id(Request $request){
+        session_start();
         date_default_timezone_set('Asia/Manila');
         // return DefectEscalationV2Rev::where('prod_runcard_id',)
         $prod_runcard = ProductionRuncard::with([
@@ -4050,7 +3968,8 @@ class ProductionRuncardController extends Controller
         }else{
             $collectDefects = '';
         }
-        return response()->json(['prod_runcard' => $prod_runcard,'defects' => $collectDefects]);
+        return response()->json(['prod_runcard' => $prod_runcard,'defects' => $collectDefects,'position'=>$_SESSION]);
+        // return response()->json(['prod_runcard' => $prod_runcard,'defects']);
     }
 
     public function view_ng_summary(Request $request){
@@ -9033,7 +8952,8 @@ class ProductionRuncardController extends Controller
                                 }else{
                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
                                     $return_body = ' Please Fill-up required fields(For Full Assembly)';
-                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRe uiredFieldsArray'=>$runcardRequiredFieldsArray);
+                                    // $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRe uiredFieldsArray'=>$runcardRequiredFieldsArray);
+                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, 'runcardRequiredFieldsArray'=>$runcardRequiredFieldsArray);
                                     return $return;
                                 }
                             }

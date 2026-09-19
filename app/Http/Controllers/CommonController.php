@@ -232,7 +232,7 @@ class CommonController extends Controller
             'critical_notif' => $critical_notif,
             'non_crit_notif' => $non_crit_notif
         ]);
-       
-        
+
+
     }
 }

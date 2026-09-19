@@ -207,7 +207,7 @@ function GetUserByIdToEdit(userId){
                 if (user[0].oic_role != '' && user[0].oic_role != null) {
                     // check the checkbox
                     $('#isOic').prop('checked', true);
-                
+
                     // enable + set values
                     $('#txtEditOicFrom').prop('disabled', false).val(user[0].oic_date_from);
                     $('#txtEditOicTo').prop('disabled', false).val(user[0].oic_date_to);
@@ -1071,7 +1071,7 @@ function GetUserList(cboElement){
                     if (JsonObject['users'][index].status == 2) {
                         continue;
                     }
-            
+
                     result += '<option data-code="' + JsonObject['users'][index].employee_id + '" value="' + JsonObject['users'][index].id + '">'
                             + JsonObject['users'][index].name + '</option>';
                 }
@@ -1092,7 +1092,7 @@ function GetUserList(cboElement){
 
 function GetUserListForDefect(cboElement) {
     let result = '<option value="0" selected disabled> -- Select User -- </option>';
-    
+
     $.ajax({
         url: 'get_user_list_for_defect',
         method: 'get',
@@ -1122,7 +1122,7 @@ function GetUserListForDefect(cboElement) {
 
 function GetUserForPersonInCharge(cboElement) {
     let result = '<option value="0" selected disabled> -- Select User -- </option>';
-    
+
     $.ajax({
         url: 'get_user_list_for_person_in_charge',
         method: 'get',
@@ -1236,6 +1236,7 @@ function fnValidateEmployeeId(employee_id){
                 if( response['is_employee_registered'] ===true ){
                     if( response['is_employee_validated'] ===true  ){
                         // alert('EMPLOYEE ID EXIST');
+                        // $("#tbl_prod_runcard").show();
                         $('#modalScanEmployeeId').modal('hide');
                         $('#alert_notif').empty();
                         arr_employee_id.push(response['validated_emp_id']);

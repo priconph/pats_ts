@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
-use App\Model\ProductionRuncardStation;
 use App\Model\Device;
 use App\Model\ProcessFlow;
+use App\Model\ProductionRuncard;
+use App\Model\ProductionRuncardStation;
+use Illuminate\Http\Request;
 
 class ProductionRuncardStationController extends Controller
 {
@@ -20,7 +20,9 @@ class ProductionRuncardStationController extends Controller
     		->get();
             // return $prodRuncardStation;
         $message = "No ProcessFlow Set.";
-        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => '', 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
+        $prod = ProductionRuncard::where('id',$request->runcardId)->first();
+        // 192402
+        $device = CommonController::getInstance()->getMatrixByPoNo(['po_no' => $prod->po_no, 'name' => $request->deviceName, 'barcode' => '', 'get_or_first' => '']);
         // $device = Device::where("name", $request->deviceName)->get();
         if( count($device) > 0 ) {
             $processFlows = ProcessFlow::with("processFlow")

@@ -4165,7 +4165,7 @@
 
                 $("#btnAddProcess").prop('disabled', true);
                 $("#btnSubmitToOQCLotApp").prop('disabled', true);
-                $("#btn_edit_material_details_primary").prop('disabled', false);
+                $("#btn_edit_material_details_primary").prop('disabled', false); //xmodify
                 viewMatKitAction = 1;
                 viewMatKitActionLotNo = null;
                 viewSakidashiAction = 1;
@@ -5773,7 +5773,9 @@
               $("#btnAddProcess").prop('disabled', false);
               $("#btnSubmitToOQCLotApp").prop('disabled', false);
             }
+            //   $("#btn_edit_material_details_primary").prop('disabled', false);
 
+            // alert('Checking button states'); //xmodify
             // $("#btn_setup_stations").removeAttr('disabled');
             // $("#btn_edit_material_details_verification").removeAttr('disabled');
             // $("#btnSaveSelectedMatSak").removeAttr('disabled');
