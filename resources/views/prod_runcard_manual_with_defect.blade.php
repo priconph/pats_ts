@@ -5773,7 +5773,9 @@
               $("#btnAddProcess").prop('disabled', false);
               $("#btnSubmitToOQCLotApp").prop('disabled', false);
             }
-            //   $("#btn_edit_material_details_primary").prop('disabled', false);
+            if(data['position'] === 1){
+              $("#btn_edit_material_details_primary").prop('disabled', false);
+            }
 
             // alert('Checking button states'); //xmodify
             // $("#btn_setup_stations").removeAttr('disabled');

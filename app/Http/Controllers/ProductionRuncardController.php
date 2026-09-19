@@ -3968,7 +3968,7 @@ class ProductionRuncardController extends Controller
         }else{
             $collectDefects = '';
         }
-        return response()->json(['prod_runcard' => $prod_runcard,'defects' => $collectDefects,'position'=>$_SESSION]);
+        return response()->json(['prod_runcard' => $prod_runcard,'defects' => $collectDefects,'position'=>$_SESSION['position'] ?? 0]);
         // return response()->json(['prod_runcard' => $prod_runcard,'defects']);
     }
 
