@@ -39,6 +39,9 @@
     else if(Auth::user()->position == 13){
       $layout = 'layouts.packing_user_layout';
     }
+    else if(Auth::user()->position == 14){
+      $layout = 'layouts.packing_user_layout';
+    }
   @endphp
 @endauth
 
@@ -196,6 +199,7 @@
                       <option value="8">Clerk</option>
                       <option value="12">Admin</option>
                       <option value="13">Packer</option>
+                      <option value="14">Traffic</option>
                     </select>
                 </div>
 
@@ -326,6 +330,7 @@
                       <option value="8">Clerk</option>
                       <option value="12">Admin</option>
                       <option value="13">Packer</option>
+                      <option value="14">Traffic</option>
                     </select>
                 </div>
 
@@ -624,6 +629,9 @@
                     }
                     else if (row.position == 13) {
                       return "Packer";
+                    }
+                    else if (row.position == 14) {
+                      return "Traffic";
                     }
                   },
                 },

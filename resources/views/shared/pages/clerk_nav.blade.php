@@ -11,29 +11,16 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-89
-
-
-
-
-
-
-
-
-
-
-
-l
     <!-- Sidebar Menu -->
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
         <li class="nav-header" style="color:#FFBF00; font-size: 18px;">RAPID - ACDCS</li>
         <li class="nav-item">
-          <a href="{{ route('drawing_ref') }}" class="nav-link">
+          <a href="{{ route('final_traffic_qc_insp_ppts') }}" class="nav-link">
             <i class="far fa-circle nav-icon"></i>
             <p>
-              Drawing Reference
+              Traffic/QC Inspection
             </p>
           </a>
         </li>

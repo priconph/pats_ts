@@ -38,6 +38,12 @@
             <p>Defect Escalation V2</p>
             </a>
         </li>
+         <li class="nav-item">
+              <a href="{{ route('defect_escalation_v2_for_testing') }}" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Defect Escalation V3</p>
+              </a>
+            </li>
       </ul>
     </nav>
     <!-- /.sidebar-menu -->
