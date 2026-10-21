@@ -3918,19 +3918,20 @@ class ProductionRuncardController_rev extends Controller
                 $item_desc = $col_parts_prep_kit_issuance[$index]->item_desc;
                 $assessment_no = $col_parts_prep_kit_issuance[$index]->kit_issuance->assessment;
 
-                $mat_proc_device = Device::with([
-                                    'material_process' => function($query){
-                                            $query->where('status', 1);
-                                    },
-                                    'material_process.material_details' => function($query) use($item, $item_desc){
-                                        $query->where('status', 1);
-                                        $query->where('tbl_wbs', 1);
-                                        $query->where('item', $item);
-                                        $query->where('item_desc', $item_desc);
-                                    },
-                                ])
-                                ->where('name', $request->device_name)
-                                ->first();
+                $mat_proc_device = CommonController::getInstance()->getMatrixByPoNo([
+                    'name' => $request->device_name,
+                    'get_or_first' => 'first',
+                ], [
+                    'material_process' => function($query){
+                        $query->where('status', 1);
+                    },
+                    'material_process.material_details' => function($query) use($item, $item_desc){
+                        $query->where('status', 1);
+                        $query->where('tbl_wbs', 1);
+                        $query->where('item', $item);
+                        $query->where('item_desc', $item_desc);
+                    },
+                ]);
 
                 if($mat_proc_device != null){
                     if(count($mat_proc_device->material_process) > 0){
@@ -4239,19 +4240,20 @@ class ProductionRuncardController_rev extends Controller
                             $item_desc = $col_parts_prep_kit_issuance[$index]->item_desc;
 
 
-                            $mat_proc_materials = Device::with([
-                                        'material_process' => function($query){
-                                            $query->where('status', 1);
-                                        },
-                                        'material_process.material_details' => function($query) use($item, $item_desc){
-                                            $query->where('status', 1);
-                                            $query->where('tbl_wbs', 1);
-                                            $query->where('item', $item);
-                                            $query->where('item_desc', $item_desc);
-                                        },
-                                    ])
-                                    ->where('name', $request->device_name)
-                                    ->first();
+                            $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                                'name' => $request->device_name,
+                                'get_or_first' => 'first',
+                            ], [
+                                'material_process' => function($query){
+                                    $query->where('status', 1);
+                                },
+                                'material_process.material_details' => function($query) use($item, $item_desc){
+                                    $query->where('status', 1);
+                                    $query->where('tbl_wbs', 1);
+                                    $query->where('item', $item);
+                                    $query->where('item_desc', $item_desc);
+                                },
+                            ]);
 
                             if($mat_proc_materials != null){
                                 $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
@@ -4434,19 +4436,20 @@ class ProductionRuncardController_rev extends Controller
                     $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
                     // $assessment_no = $col_parts_prep_kit_issuance[$index]->kit_issuance->assessment;
 
-                    $mat_proc_device = Device::with([
-                                        'material_process'  => function($query){
-                                            $query->where('status', 1);
-                                        },
-                                        'material_process.material_details' => function($query) use($item, $item_desc){
-                                            $query->where('status', 1);
-                                            $query->where('tbl_wbs', 2);
-                                            $query->where('item', $item);
-                                            // $query->where('item_desc', $item_desc);
-                                        },
-                                    ])
-                                    ->where('name', $request->device_name)
-                                    ->first();
+                    $mat_proc_device = CommonController::getInstance()->getMatrixByPoNo([
+                        'name' => $request->device_name,
+                        'get_or_first' => 'first',
+                    ], [
+                        'material_process' => function($query){
+                            $query->where('status', 1);
+                        },
+                        'material_process.material_details' => function($query) use($item, $item_desc){
+                            $query->where('status', 1);
+                            $query->where('tbl_wbs', 2);
+                            $query->where('item', $item);
+                            // $query->where('item_desc', $item_desc);
+                        },
+                    ]);
 
                     if($mat_proc_device != null){
                         if(count($mat_proc_device->material_process) > 0){
@@ -4502,20 +4505,21 @@ class ProductionRuncardController_rev extends Controller
                                 $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
                                 $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
 
-                                $mat_proc_materials = Device::with([
-                                            'material_process' => function($query){
-                                                $query->where('status', 1);
-                                            },
-                                            'material_process.material_details' => function($query) use($item, $item_desc){
-                                                $query->where('status', 1);
-                                                $query->where('tbl_wbs', 2);
-                                                // $query->where('has_emboss', 0);
-                                                $query->where('item', $item);
-                                                // $query->where('item_desc', $item_desc);
-                                            },
-                                        ])
-                                        ->where('name', $request->device_name)
-                                        ->first();
+                                $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                                    'name' => $request->device_name,
+                                    'get_or_first' => 'first',
+                                ], [
+                                    'material_process' => function($query){
+                                        $query->where('status', 1);
+                                    },
+                                    'material_process.material_details' => function($query) use($item, $item_desc){
+                                        $query->where('status', 1);
+                                        $query->where('tbl_wbs', 2);
+                                        // $query->where('has_emboss', 0);
+                                        $query->where('item', $item);
+                                        // $query->where('item_desc', $item_desc);
+                                    },
+                                ]);
 
                                 if($mat_proc_materials != null){
                                     $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('material_details', '!=', null);
@@ -4657,16 +4661,17 @@ class ProductionRuncardController_rev extends Controller
                 $user_status = true;
                 $user_status_label = 'Valid Operator';
 
-                $mat_proc_materials = Device::with([
-                            'material_process' => function($query){
-                                $query->where('status', 1);
-                            },
-                            'material_process.manpowers_details' => function($query) use($user){
-                                $query->where('manpower_id', $user->id);
-                            },
-                        ])
-                        ->where('name', $request->device_name)
-                        ->first();
+                $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                    'name' => $request->device_name,
+                    'get_or_first' => 'first',
+                ], [
+                    'material_process' => function($query){
+                        $query->where('status', 1);
+                    },
+                    'material_process.manpowers_details' => function($query) use($user){
+                        $query->where('manpower_id', $user->id);
+                    },
+                ]);
 
                 if($mat_proc_materials != null){
                     $col_mat_proc_materials = collect($mat_proc_materials)->flatten(1)->where('manpowers_details', '!=', null);
@@ -6789,8 +6794,11 @@ class ProductionRuncardController_rev extends Controller
 
             if($user != null){
                 if($user->position == 4){
-                    $mat_proc_materials = Device::with([
-                        'material_process'  => function($query){
+                    $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                        'name' => $request->device_name,
+                        'get_or_first' => 'first',
+                    ], [
+                        'material_process' => function($query){
                             $query->where('status', 1);
                         },
                         'material_process.material_details' => function($query) use($request){
@@ -6798,9 +6806,7 @@ class ProductionRuncardController_rev extends Controller
                             $query->where('tbl_wbs', 2);
                             $query->where('item', $request->item);
                         },
-                    ])
-                    ->where('name', $request->device_name)
-                    ->first();
+                    ]);
 
                     // return $mat_proc_materials;
                     if($mat_proc_materials != null){

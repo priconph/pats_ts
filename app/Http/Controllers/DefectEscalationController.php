@@ -3691,20 +3691,21 @@ class DefectEscalationController extends Controller
                 $item_desc = $col_parts_prep_kit_issuance[$index]->item_desc;
                 $assessment_no = $col_parts_prep_kit_issuance[$index]->kit_issuance->assessment;
 
-                $mat_proc_device = Device::with([
-                                    'material_process' => function($query){
-                                            $query->where('status', 1);
-                                    },
-                                    'material_process.material_details' => function($query) use($item, $item_desc){
-                                        $query->where('status', 1);
-                                        $query->where('tbl_wbs', 1);
-                                        $query->where('item', $item);
-                                        $query->where('item_desc', $item_desc);
-                                    },
-                                ])
-                                ->where('name', $request->device_name)
-                                ->where('po_no', $request->po_number) //getMatrixByPoNo
-                                ->first();
+                $mat_proc_device = CommonController::getInstance()->getMatrixByPoNo([
+                    'po_no' => $request->po_number,
+                    'name' => $request->device_name,
+                    'get_or_first' => 'first',
+                ], [
+                    'material_process' => function($query){
+                        $query->where('status', 1);
+                    },
+                    'material_process.material_details' => function($query) use($item, $item_desc){
+                        $query->where('status', 1);
+                        $query->where('tbl_wbs', 1);
+                        $query->where('item', $item);
+                        $query->where('item_desc', $item_desc);
+                    },
+                ]);
 
 
 
@@ -4220,20 +4221,21 @@ class DefectEscalationController extends Controller
                     $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
                     // $assessment_no = $col_parts_prep_kit_issuance[$index]->kit_issuance->assessment;
 
-                    $mat_proc_device = Device::with([
-                                        'material_process'  => function($query){
-                                            $query->where('status', 1);
-                                        },
-                                        'material_process.material_details' => function($query) use($item, $item_desc){
-                                            $query->where('status', 1);
-                                            $query->where('tbl_wbs', 2);
-                                            $query->where('item', $item);
-                                            // $query->where('item_desc', $item_desc);
-                                        },
-                                    ])
-                                    ->where('po_no', $request->po_number) //getMatrixByPoNo
-                                    ->where('name', $request->device_name)
-                                    ->first();
+                    $mat_proc_device = CommonController::getInstance()->getMatrixByPoNo([
+                        'po_no' => $request->po_number,
+                        'name' => $request->device_name,
+                        'get_or_first' => 'first',
+                    ], [
+                        'material_process' => function($query){
+                            $query->where('status', 1);
+                        },
+                        'material_process.material_details' => function($query) use($item, $item_desc){
+                            $query->where('status', 1);
+                            $query->where('tbl_wbs', 2);
+                            $query->where('item', $item);
+                            // $query->where('item_desc', $item_desc);
+                        },
+                    ]);
 
                     if($mat_proc_device != null){
                         if(count($mat_proc_device->material_process) > 0){
@@ -5918,8 +5920,12 @@ class DefectEscalationController extends Controller
             if($user != null){
                 if($user->position == 4){
                     $prod_runcard = ProductionRuncard::where('id',$request->prod_runcard_id)->first('po_no'); //
-                    $mat_proc_materials = Device::with([
-                        'material_process'  => function($query){
+                    $mat_proc_materials = CommonController::getInstance()->getMatrixByPoNo([
+                        'po_no' => $prod_runcard->po_no,
+                        'name' => $request->device_name,
+                        'get_or_first' => 'first',
+                    ], [
+                        'material_process' => function($query){
                             $query->where('status', 1);
                         },
                         'material_process.material_details' => function($query) use($request){
@@ -5927,10 +5933,7 @@ class DefectEscalationController extends Controller
                             $query->where('tbl_wbs', 2);
                             $query->where('item', $request->item);
                         },
-                    ])
-                    ->where('po_no', $prod_runcard->po_no) //getMatrixByPoNo
-                    ->where('name', $request->device_name)
-                    ->first();
+                    ]);
 
                     // return $mat_proc_materials;
                     if($mat_proc_materials != null){
