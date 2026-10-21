@@ -1,6 +1,6 @@
 @auth
   @php
-    if(Auth::user()->position == 1){ 
+    if(Auth::user()->position == 1){
       $layout = 'layouts.super_user_layout';
     }
     else if(Auth::user()->position == 2){
@@ -38,6 +38,9 @@
     }
     else if(Auth::user()->position == 13){
       $layout = 'layouts.packing_user_layout';
+    }
+    else if(Auth::user()->position == 14){
+      $layout = 'layouts.traffic_layout';
     }
   @endphp
 @endauth
@@ -120,3 +123,4 @@
 </script>
 @endsection
 @endauth
+

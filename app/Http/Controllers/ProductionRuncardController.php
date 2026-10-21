@@ -4579,6 +4579,7 @@ class ProductionRuncardController extends Controller
                                     },
                                 ])
                                 ->where('name', $request->device_name)
+                                ->where('po_no', $request->po_number) //getMatrixByPoNo
                                 ->first();
 
                 if($mat_proc_device != null){
@@ -5098,6 +5099,7 @@ class ProductionRuncardController extends Controller
                                         },
                                     ])
                                     ->where('name', $request->device_name)
+                                    ->where('po_no', $request->po_number) //getMatrixByPoNo
                                     ->first();
 
                     if($mat_proc_device != null){
@@ -5797,7 +5799,8 @@ class ProductionRuncardController extends Controller
                                  * -JD
                                  */
                                 if(!isset($request->runcard_defect)){
-                                    $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
+                                    $device = Device::with('process_flow')->where("name", $request->deviceName)
+                                    ->get();
                                     $deviceProcessFlowMaterialsArray = [];
                                     $process_flow_ids = [];
                                     $hasWrongMaterialsAdded = false;
@@ -7310,7 +7313,7 @@ class ProductionRuncardController extends Controller
                     $user = User::where('employee_id', $request->txt_employee_number_scanner)->get();
 
                     if($user->count() > 0){
-                        if($user[0]->position == 4){
+                        if($user[0]->position == 4 || $user[0]->position == 1){
                             if( $request->txt_prod_runcard_station_id_query ){
                                 $processFlow = ProcessFlow::find($request->process_flow_id);
                                 if( isset($processFlow->id) ){
@@ -7387,18 +7390,20 @@ class ProductionRuncardController extends Controller
                                                     return $return;
                                                 }
 
-                                            }else{
-                                                // echo 'hasOneMachine false';
-                                                // echo "\r\n";
-                                                $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
-                                                $return_body = " No Machine/s found on the Matrix.";
-                                                $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-                                                return $return;
                                             }
+                                            // else{
+                                            //     // echo 'hasOneMachine false';
+                                            //     // echo "\r\n";
+                                            //     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
+                                            //     $return_body = " No Machine/s found on the Matrix.";
+                                            //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
+                                            //     return $return;
+                                            // }
                                             // echo 'machinesNotIncludedInMatrixArray ';
                                             // return $machinesNotIncludedInMatrixArray;
 
-                                        }else{
+                                        }
+                                        else{
                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
                                             $return_body = "Please select one or more Machine based on Matrix.";
                                             $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
@@ -7406,7 +7411,8 @@ class ProductionRuncardController extends Controller
                                         }
                                     }
                                     // return "tama lahat";
-                                } else {
+                                }
+                                else {
                                     $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
                                     $return_body = ' Process Flow not found.';
                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
@@ -7439,7 +7445,11 @@ class ProductionRuncardController extends Controller
                                  * -JD
                                  */
                                 if(!isset($request->runcard_defect)){
-                                    $device = Device::with('process_flow')->where("name", $request->deviceName)->get();
+                                    $prodRuncard = ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)->first();
+                                    $device = Device::with('process_flow')->where("name", $request->deviceName)
+                                    ->where('po_no', $prodRuncard->po_no) //getMatrixByPoNo
+                                    ->get();
+
                                     $deviceProcessFlowMaterialsArray = [];
                                     $process_flow_ids = [];
                                     $hasWrongMaterialsAdded = false;
@@ -7453,8 +7463,8 @@ class ProductionRuncardController extends Controller
                                     // return $request->process_flow_id;
                                     // return $process_flow_ids;
 
-                                    $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)->where('is_deleted',0)
-                                    ->get();
+                                 $deviceProcessFlowMaterials = DeviceProcessFlowMaterial::whereIn("process_flow_id", $process_flow_ids)->where('is_deleted',0)
+                                ->get();
                                     /* Get the same Materials based on Process flow(Matrix) and Process flow($request) */
                                     for ($i=0; $i < count($deviceProcessFlowMaterials); $i++) {
                                         if($deviceProcessFlowMaterials[$i]->process_flow_id == $request->process_flow_id){
@@ -7462,9 +7472,10 @@ class ProductionRuncardController extends Controller
                                         }
                                     }
                                     // return isset($request->materialArray) ? count($request->materialArray) : 'null';
-                                    // return $deviceProcessFlowMaterialsArray;
+                                    return $deviceProcessFlowMaterials ;
 
                                     if(count($deviceProcessFlowMaterialsArray) > 0){
+                                       return $request->materialArray;
                                         /* If no materials added then execute below code */
                                         if(!isset($request->materialArray)){
                                             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
@@ -7499,7 +7510,7 @@ class ProductionRuncardController extends Controller
                                             return $return;
                                         }
                                     }
-                                    // return count($deviceProcessFlowMaterialsArray);
+                                    return count($deviceProcessFlowMaterialsArray);
                                 }
 
 
@@ -7777,7 +7788,8 @@ class ProductionRuncardController extends Controller
 
 
                                                         // DefectEscalationV2
-                                                }else{
+                                                }
+                                                else{
                                                     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
                                                     $return_body = ' Please Fill-up MOD!';
                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
@@ -7902,14 +7914,14 @@ class ProductionRuncardController extends Controller
                                                     return $return;
                                                 }
                                             }
-                                            else{
-                                                // Don't save the MOD
-                                                // return 'adsasdasd';
-                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-                                                    $return_body = ' Please Fill-up MOD!';
-                                                    $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
-                                                    return $return;
-                                            }
+                                            // else{
+                                            //     // Don't save the MOD
+                                            //     // return 'adsasdasd';
+                                            //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                            //         $return_body = ' Please Fill-up MOD!';
+                                            //         $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body);
+                                            //         return $return;
+                                            // }
 
                                             /**
                                             * Multiple insert for Prod Runcard Station Materials
@@ -8517,14 +8529,15 @@ class ProductionRuncardController extends Controller
                                                     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
                                                     return $return;
                                                 }
-                                            }else{
-                                                // echo 'hasOneMachine false';
-                                                // echo "\r\n";
-                                                $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
-                                                $return_body = " No Machine/s found on the Matrix.";
-                                                $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
-                                                return $return;
                                             }
+                                            // else{
+                                            //     // echo 'hasOneMachine false';
+                                            //     // echo "\r\n";
+                                            //     $return_title = '<i class="fa fa-exclamation-triangle text-danger"></i> Not saved';
+                                            //     $return_body = " No Machine/s found on the Matrix.";
+                                            //     $return = array('result' => 0, 'title'=>$return_title,'body'=>$return_body, "processFlow" => $processFlow, "request" => $request->all());
+                                            //     return $return;
+                                            // }
                                             // echo 'machinesNotIncludedInMatrixArray ';
                                             // return $machinesNotIncludedInMatrixArray;
                                         }

@@ -5974,7 +5974,11 @@
       console.log('modalRuncardDetails is closed');
       $('input[name="judgement"]').prop("checked", false);
       $('#additionalInputsForRadioBtn').addClass('d-none');
+    //   $('#frm_edit_material_details')[0].reset();
     });
+
+
+
 
     function SaveProductMaterialList(arrSelectedMaterials, arrSelectedSakidashis, _token, employeeId, prodRuncardId){
       // alert(prodRuncardId);
@@ -7770,6 +7774,14 @@ Ex: PO = 450245666 so the DE # = 450245666, PO = ES23 then Runcard# = ES23
         if ($("#id_search_employee_id").is(":focus")) {
             setTimeout(function() {
                 $("#id_search_employee_id").val('');
+            }, 200);
+        }
+    });
+
+    $(document).on('keydown',function(e){
+        if ($("#txt_employee_number_scanner").is(":focus")) {
+            setTimeout(function() {
+                $("#txt_employee_number_scanner").val('');
             }, 200);
         }
     });

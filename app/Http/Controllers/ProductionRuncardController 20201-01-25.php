@@ -93,10 +93,10 @@ class ProductionRuncardController extends Controller
         // if($request->runcard_status >= 2){
             // $runcard_status = $request->runcard_status;
             $lot_numbers = WBSKitIssuance::with([
-                        'kit_issuance', 
+                        'kit_issuance',
                         'kit_issuance.device_info',
-                        'kit_issuance.device_info.material_process', 
-                        'kit_issuance.device_info.material_process.station_sub_station', 
+                        'kit_issuance.device_info.material_process',
+                        'kit_issuance.device_info.material_process.station_sub_station',
                         'kit_issuance.device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 1);
@@ -130,7 +130,7 @@ class ProductionRuncardController extends Controller
         }
         else{
             $lot_numbers = WBSKitIssuance::with([
-                        'kit_issuance', 
+                        'kit_issuance',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 1);
                             $query->where('deleted_at', null);
@@ -157,7 +157,7 @@ class ProductionRuncardController extends Controller
                 $disabled = '';
                 $result = "";
                 $title = "";
-                
+
                 // $parts_preps = PartsPrep::where([
                 //         [
                 //             'wbs_kit_issuance_id','=',
@@ -184,7 +184,7 @@ class ProductionRuncardController extends Controller
                         }
                     }
                     else{
-                        $disabled = '';  
+                        $disabled = '';
                     }
                 }
                 else{
@@ -206,7 +206,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$lot_number['kit_issuance']->device_code.'">';
 
                 // if($disabled == ''){
-                //     $result.=' <input type="text" class="col_lot_id" value="'.$lot_number->id.'">';                
+                //     $result.=' <input type="text" class="col_lot_id" value="'.$lot_number->id.'">';
                 // }
 
                 return $result;
@@ -244,7 +244,7 @@ class ProductionRuncardController extends Controller
                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                 $parts_prep_done = true;
                                 break;
-                            
+
                             default:
                                 # code...
                                 break;
@@ -269,7 +269,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$lot_number->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$lot_number->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$lot_number->id.'">';
                 }
 
                 return $result;
@@ -292,7 +292,7 @@ class ProductionRuncardController extends Controller
             //     if(count($lot_number->prod_runcard_material_list) > 0){
             //         // for($index = 0; $index < count($lot_number->prod_runcard_material_list); $index++){
             //         //     if($lot_number->prod_runcard_material_list[$index]->prod_runcard_details != null){
-            //         //         
+            //         //
             //         //     }
             //         // }
             //         if($lot_number->prod_runcard_material_list[0]->prod_runcard_details != null){
@@ -378,7 +378,7 @@ class ProductionRuncardController extends Controller
         }
 
         $stations = MaterialProcess::with([
-            'station_sub_station' => 
+            'station_sub_station' =>
             function($query){
                 $query->where('status', 1);
             },
@@ -509,7 +509,7 @@ class ProductionRuncardController extends Controller
 
                             if($prod_runcard_status == 7 || $prod_runcard_status == 3 || $prod_runcard_status == 4){
                                 // Add Validation for Emboss
-                                
+
                                 // $disabled = '';
                                 // if($prod_runcardstation->require_oqc_before_emboss == 1){
                                 //     $oqc_lot_app = oqcLotApp::with([
@@ -543,8 +543,8 @@ class ProductionRuncardController extends Controller
                                 // }
                             }
                             else{
-                                $disabled = 'disabled';   
-                            }   
+                                $disabled = 'disabled';
+                            }
                                 // return $prod_runcard_no;
                                 // return $oqc_lot_app;
 
@@ -705,7 +705,7 @@ class ProductionRuncardController extends Controller
 
                 //         if($prod_runcard_status == 7){
                 //             // Add Validation for Emboss
-                            
+
                 //             // $disabled = '';
                 //             if($prod_runcardstation->require_oqc_before_emboss == 1){
                 //                 $oqc_lot_app = oqcLotApp::with([
@@ -739,8 +739,8 @@ class ProductionRuncardController extends Controller
                 //             }
                 //         }
                 //         else{
-                //             $disabled = 'disabled';   
-                //         }   
+                //             $disabled = 'disabled';
+                //         }
                 //             // return $prod_runcard_no;
                 //             // return $oqc_lot_app;
 
@@ -854,9 +854,9 @@ class ProductionRuncardController extends Controller
         }
         else{
             $lot_number = WBSSakidashiIssuance::with([
-                        'tbl_wbs_sakidashi_issuance_item', 
-                        'device_info', 'prod_runcards', 
-                        'prod_runcards.supervisor_prod_info', 
+                        'tbl_wbs_sakidashi_issuance_item',
+                        'device_info', 'prod_runcards',
+                        'prod_runcards.supervisor_prod_info',
                         'prod_runcards.supervisor_qc_info'
                     ])
                     ->where('id','=',$request['material_id'])
@@ -973,7 +973,7 @@ class ProductionRuncardController extends Controller
                                 $prod_runcard_id = $request->txt_prod_runcard_id_query;
                                 ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
                                     ->update(
-                                        [   
+                                        [
                                             // 'lot_qty' => $request->txt_lot_qty,
                                             // 'assessment_no'=> $request->txt_assessment_no,
                                             // 'a_drawing_no'=> $request->txt_a_drawing_no,
@@ -988,7 +988,7 @@ class ProductionRuncardController extends Controller
                                     );
                                 DB::commit();
                                 $result = true;
-                                
+
                             } catch (Exception $e) {
                                 DB::rollback();
                                 $result = false;
@@ -1162,7 +1162,7 @@ class ProductionRuncardController extends Controller
                                             'created_by'=> Auth::user()->id,
                                             'last_updated_by'=> Auth::user()->id
                                         ]);
-                                        
+
                                         // if($material_process[$index]->has_emboss == 1){
                                         //     $has_emboss = 1;
                                         // }
@@ -1228,7 +1228,7 @@ class ProductionRuncardController extends Controller
                 $return = array('title'=>$return_title,'body'=>$return_body);
                 return $return;
             }
-            
+
         }
         else{
             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
@@ -1302,7 +1302,7 @@ class ProductionRuncardController extends Controller
                             );
                         DB::commit();
                         $result = true;
-                        
+
                     } catch (Exception $e) {
                         DB::rollback();
                         $result = false;
@@ -1830,7 +1830,7 @@ class ProductionRuncardController extends Controller
 
                                 DB::commit();
                                 $result = true;
-                                
+
                                 // $status = 3;
 
                                 // $prod_runcard_details = ProductionRuncardStation::where('production_runcard_id', $request->txt_prod_runcard_id_query)
@@ -1852,9 +1852,9 @@ class ProductionRuncardController extends Controller
                                 //             'updated_at' => date('Y-m-d H:i:s')
                                 //         ]
                                 //     );
-                                    
+
                                 // $result = true;
-                                
+
                             } catch (Exception $e) {
                                 DB::rollback();
                                 $result = false;
@@ -1965,7 +1965,7 @@ class ProductionRuncardController extends Controller
     // public function fn_fn_get_warehouse_view_batches_by_id(Request $request){
     // date_default_timezone_set('Asia/Manila');
     //     $tbl_wbs_material_kitting = MaterialIssuanceSubSystem::where('id', $request->material_issuance_id)->get();
-        
+
     //     $po_qrcode = "";
 
     //     if($tbl_wbs_material_kitting->count() > 0){
@@ -1990,7 +1990,7 @@ class ProductionRuncardController extends Controller
     // public function fn_get_warehouse_sakidashi_view_batches_by_id(Request $request){
     // date_default_timezone_set('Asia/Manila');
     //     $tbl_sakidashi_kitting = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')->where('id', $request->sakidashi_issuance_id)->get();
-        
+
     //     $po_qrcode = "";
 
     //     if($tbl_sakidashi_kitting->count() > 0){
@@ -2007,7 +2007,7 @@ class ProductionRuncardController extends Controller
     public function fn_fn_get_warehouse_view_batches_by_id(Request $request){
         date_default_timezone_set('Asia/Manila');
         $tbl_wbs_material_kitting = MaterialIssuanceSubSystem::where('id', $request->material_issuance_id)->get();
-        
+
         $po_qrcode = "";
         $whs_slip_qrcode = "";
 
@@ -2015,7 +2015,7 @@ class ProductionRuncardController extends Controller
                 $po_qrcode = QrCode::format('png')
                             ->size(200)->errorCorrection('H')
                             ->generate($tbl_wbs_material_kitting[0]->po_no);
-                
+
                 $whs_slip_qrcode = QrCode::format('png')
                             ->size(200)->errorCorrection('H')
                             ->generate($tbl_wbs_material_kitting[0]->issuance_no);
@@ -2031,7 +2031,7 @@ class ProductionRuncardController extends Controller
     public function fn_get_warehouse_sakidashi_view_batches_by_id(Request $request){
         date_default_timezone_set('Asia/Manila');
         $tbl_sakidashi_kitting = WBSSakidashiIssuance::with('tbl_wbs_sakidashi_issuance_item')->where('id', $request->sakidashi_issuance_id)->get();
-        
+
         $po_qrcode = "";
         $ctrl_no_qrcode = "";
 
@@ -2146,7 +2146,7 @@ class ProductionRuncardController extends Controller
                         case 7:
                             $result = '<i title="Done verification" class="fa fa-check text-success px-2"></i>';
                             break;
-                        
+
                         default:
                             # code...
                             break;
@@ -2193,7 +2193,7 @@ class ProductionRuncardController extends Controller
                         $disabled = '';
                     }
                 }
-                
+
 
                 //-----
                 $hidden = ' hidden ';
@@ -2211,7 +2211,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
                 $result.=' <input type="hidden" class="col_material_po" value="'.$tbl_wbs_sakidashi_issuance->po_no.'">';
                 $result.=' <input type="hidden" class="col_parts_preps_id" value="'.$parts_preps_id.'">';
-                
+
                 $result.='<button style="width:30px;" title="Print" po_no="' . $tbl_wbs_sakidashi_issuance->po_no . '" sakidashi-issuance-id="' . $tbl_wbs_sakidashi_issuance->id . '" class="btnPrintWHSakIssu btn btn-info btn-sm  py-0"><i class="fa fa-print"></i></button>';
 
                 return $result;
@@ -2260,10 +2260,10 @@ class ProductionRuncardController extends Controller
         if(count($prod_runcard_sak_list) > 0){
             // $runcard_status = $request->runcard_status;
             $tbl_wbs_sakidashi_issuance = WBSSakidashiIssuance::with([
-                    'tbl_wbs_sakidashi_issuance_item', 
-                    'device_info', 
-                    'device_info.material_process', 
-                    'device_info.material_process.station_sub_station', 
+                    'tbl_wbs_sakidashi_issuance_item',
+                    'device_info',
+                    'device_info.material_process',
+                    'device_info.material_process.station_sub_station',
                     'device_info.material_process.station_sub_station.station',
                     'parts_prep_info' => function($query){
                         $query->where('wbs_table', 2);
@@ -2301,7 +2301,7 @@ class ProductionRuncardController extends Controller
                     'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
                         // Removed temporarily
                         $query->where('lot_no', $request->lot_no);
-                    }, 
+                    },
                     'parts_prep_info' => function($query){
                         $query->where('wbs_table', 2);
                         $query->where('deleted_at', null);
@@ -2338,7 +2338,7 @@ class ProductionRuncardController extends Controller
                 $title = "";
                 $parts_prep_done = false;
 
-                
+
 
                                 if ( $tbl_wbs_sakidashi_issuance->parts_prep_info != null ) {
                                     if( $tbl_wbs_sakidashi_issuance->parts_prep_info->with_partsprep == 1){
@@ -2367,7 +2367,7 @@ class ProductionRuncardController extends Controller
                                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                                 $parts_prep_done = true;
                                                 break;
-                                            
+
                                             default:
                                                 # code...
                                                 break;
@@ -2384,7 +2384,7 @@ class ProductionRuncardController extends Controller
                                 }
                                 else{
                                     $result = '<i title="To Receive" class="far fa-clock text-secondary px-2"></i>';
-                                }                            
+                                }
 
                 // if($disabled == ''){
                 //     if(!$has_prod_process){
@@ -2407,7 +2407,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
                 }
 
                 return $result;
@@ -2446,7 +2446,7 @@ class ProductionRuncardController extends Controller
                         }
                     }
                     else{
-                        $disabled = '';  
+                        $disabled = '';
                     }
                 }
                 else{
@@ -2535,7 +2535,7 @@ class ProductionRuncardController extends Controller
                 if(count($tbl_wbs_sakidashi_issuance->prod_runcard_material_list) > 0){
                     // for($index = 0; $index < count($tbl_wbs_sakidashi_issuance->prod_runcard_material_list); $index++){
                     //     if($tbl_wbs_sakidashi_issuance->prod_runcard_material_list[$index]->prod_runcard_details != null){
-                    //         
+                    //
                     //     }
                     // }
                     if($tbl_wbs_sakidashi_issuance->prod_runcard_material_list[0]->prod_runcard_details != null){
@@ -2580,10 +2580,10 @@ class ProductionRuncardController extends Controller
     //     if(count($prod_runcard_sak_list) > 0){
     //         // $runcard_status = $request->runcard_status;
     //         $tbl_wbs_sakidashi_issuance = WBSSakidashiIssuance::with([
-    //                 'tbl_wbs_sakidashi_issuance_item', 
-    //                 'device_info', 
-    //                 'device_info.material_process', 
-    //                 'device_info.material_process.station_sub_station', 
+    //                 'tbl_wbs_sakidashi_issuance_item',
+    //                 'device_info',
+    //                 'device_info.material_process',
+    //                 'device_info.material_process.station_sub_station',
     //                 'device_info.material_process.station_sub_station.station',
     //                 'parts_prep_info' => function($query){
     //                     $query->where('wbs_table', 2);
@@ -2620,7 +2620,7 @@ class ProductionRuncardController extends Controller
     //         $result = WBSSakidashiIssuance::with([
     //                 'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
     //                     $query->where('lot_no', $request->lot_no);
-    //                 }, 
+    //                 },
     //                 'parts_prep_info' => function($query){
     //                     $query->where('wbs_table', 2);
     //                     $query->where('deleted_at', null);
@@ -2649,7 +2649,7 @@ class ProductionRuncardController extends Controller
     //             $title = "";
     //             $parts_prep_done = false;
 
-                
+
 
     //                             if ( $tbl_wbs_sakidashi_issuance->parts_prep_info != null ) {
     //                                 if( $tbl_wbs_sakidashi_issuance->parts_prep_info->with_partsprep == 1){
@@ -2677,7 +2677,7 @@ class ProductionRuncardController extends Controller
     //                                             $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
     //                                             $parts_prep_done = true;
     //                                             break;
-                                            
+
     //                                         default:
     //                                             # code...
     //                                             break;
@@ -2696,7 +2696,7 @@ class ProductionRuncardController extends Controller
     //             $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
     //             if($parts_prep_done == true){
-    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
     //             }
 
     //             return $result;
@@ -2718,7 +2718,7 @@ class ProductionRuncardController extends Controller
     //                     }
     //                 }
     //                 else{
-    //                     $disabled = '';  
+    //                     $disabled = '';
     //                 }
     //             }
     //             else{
@@ -2801,7 +2801,7 @@ class ProductionRuncardController extends Controller
                         ])
                         ->where('po_no', $request->po_number)
                         ->get();
-        
+
         return DataTables::of($prod_runcards)
             ->addColumn('raw_action', function($prod_runcard){
 
@@ -2853,7 +2853,7 @@ class ProductionRuncardController extends Controller
                     $total_no_of_ng = 0;
                     for($index = 0; $index < count($prod_runcard->prod_runcard_station_many_details); $index++){
                         // if($prod_runcard->prod_runcard_station_many_details[$index]->has_emboss == 0){
-                            $total_no_of_ng += $prod_runcard->prod_runcard_station_many_details[$index]->qty_ng;   
+                            $total_no_of_ng += $prod_runcard->prod_runcard_station_many_details[$index]->qty_ng;
                         // }
                     }
                 }
@@ -2867,7 +2867,7 @@ class ProductionRuncardController extends Controller
             //         $total_no_of_emboss_ng = 0;
             //         for($index = 0; $index < count($prod_runcard->prod_runcard_station_many_details); $index++){
             //             if($prod_runcard->prod_runcard_station_many_details[$index]->has_emboss == 1){
-            //                 $total_no_of_emboss_ng += $prod_runcard->prod_runcard_station_many_details[$index]->qty_ng;   
+            //                 $total_no_of_emboss_ng += $prod_runcard->prod_runcard_station_many_details[$index]->qty_ng;
             //             }
             //         }
             //     }
@@ -2880,7 +2880,7 @@ class ProductionRuncardController extends Controller
                 // if($prod_runcard->require_oqc_before_emboss == 1){
                 //     if(count($prod_runcard->prod_runcard_station_many_details) > 0){
                 //         $total_no_of_emboss_ng = 0;
-                        
+
                 //         $col_prod_runcard = collect($prod_runcard->prod_runcard_station_many_details)->where('has_emboss', 0)->sortByDesc('step_num')->slice(0, 1)->flatten(1);
                 //     }
                 // }
@@ -2888,7 +2888,7 @@ class ProductionRuncardController extends Controller
                 $qty_output = 0;
                     if(count($prod_runcard->prod_runcard_station_many_details) > 0){
                         $total_no_of_emboss_ng = 0;
-                        
+
                         $col_prod_runcard = collect($prod_runcard->prod_runcard_station_many_details)->sortByDesc('step_num')->slice(0, 1)->flatten(1);
                         $qty_output = $col_prod_runcard->pluck('qty_output')[0];
                     }
@@ -2953,7 +2953,7 @@ class ProductionRuncardController extends Controller
 
                     DB::commit();
                     $result = true;
-                    
+
                 } catch (Exception $e) {
                     DB::rollback();
                     $result = false;
@@ -3018,7 +3018,7 @@ class ProductionRuncardController extends Controller
 
     //                 DB::commit();
     //                 $result = true;
-                    
+
     //             } catch (Exception $e) {
     //                 DB::rollback();
     //                 $result = false;
@@ -3054,7 +3054,7 @@ class ProductionRuncardController extends Controller
     //                                     ])
     //                                     ->where('po_no', $request->po_number)
     //                                     ->first();
-                                        
+
     //     $doc_details_query = [];
     //     $doc_a_drawing_query = [];
     //     $doc_g_drawing_query = [];
@@ -3079,7 +3079,7 @@ class ProductionRuncardController extends Controller
                                             },
                                         ])
                                         ->where('po_no', $request->po_number)
-                                        ->first();                              
+                                        ->first();
         $doc_details_query = [];
         $doc_a_drawing_query = [];
         $doc_g_drawing_query = [];
@@ -3098,7 +3098,7 @@ class ProductionRuncardController extends Controller
         date_default_timezone_set('Asia/Manila');
         $sakidashi_issuance = WBSSakidashiIssuance::where('po_no', $request->po_number)
                                         ->first();
-        
+
         return response()->json(['sakidashi_issuance' => $sakidashi_issuance]);
     }
 
@@ -3113,7 +3113,7 @@ class ProductionRuncardController extends Controller
                             ])
                             ->where('id', $request->prod_runcard_id)
                             ->first();
-        
+
         return response()->json(['prod_runcard' => $prod_runcard]);
     }
 
@@ -3292,8 +3292,8 @@ class ProductionRuncardController extends Controller
                 $material_lists = WBSKitIssuance::with([
                         'kit_issuance',
                         'kit_issuance.device_info',
-                        'kit_issuance.device_info.material_process', 
-                        'kit_issuance.device_info.material_process.station_sub_station', 
+                        'kit_issuance.device_info.material_process',
+                        'kit_issuance.device_info.material_process.station_sub_station',
                         'kit_issuance.device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 1);
@@ -3307,7 +3307,7 @@ class ProductionRuncardController extends Controller
         }
 
 
-        return DataTables::of($material_lists)      
+        return DataTables::of($material_lists)
             ->addColumn('raw_status', function($material_list){
                 $disabled = 'disabled';
                 $result = '<i title="Pending" class="far fa-clock text-secondary px-2"></i>';
@@ -3340,7 +3340,7 @@ class ProductionRuncardController extends Controller
                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                 $parts_prep_done = true;
                                 break;
-                            
+
                             default:
                                 # code...
                                 break;
@@ -3358,11 +3358,11 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$material_list->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$material_list->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$material_list->id.'">';
                 }
 
                 return $result;
-            })     
+            })
             ->rawColumns(['raw_action', 'raw_status'])
             ->make(true);
     }
@@ -3381,11 +3381,11 @@ class ProductionRuncardController extends Controller
             $arr_issuance_id = $prod_runcard_sak_list->pluck('issuance_id');
 
             if(count($prod_runcard_sak_list) > 0){
-                $sakidashi_list = WBSSakidashiIssuance::with([                    
+                $sakidashi_list = WBSSakidashiIssuance::with([
                         'tbl_wbs_sakidashi_issuance_item',
-                        'device_info', 
-                        'device_info.material_process', 
-                        'device_info.material_process.station_sub_station', 
+                        'device_info',
+                        'device_info.material_process',
+                        'device_info.material_process.station_sub_station',
                         'device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 2);
@@ -3431,7 +3431,7 @@ class ProductionRuncardController extends Controller
                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                 $parts_prep_done = true;
                                 break;
-                            
+
                             default:
                                 # code...
                                 break;
@@ -3449,7 +3449,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
                 }
 
                 return $result;
@@ -3471,7 +3471,7 @@ class ProductionRuncardController extends Controller
             //             }
             //         }
             //         else{
-            //             $disabled = '';  
+            //             $disabled = '';
             //         }
             //     }
             //     else{
@@ -3533,11 +3533,11 @@ class ProductionRuncardController extends Controller
     //         $arr_issuance_id = $prod_runcard_sak_list->pluck('issuance_id');
 
     //         if(count($prod_runcard_sak_list) > 0){
-    //             $sakidashi_list = WBSSakidashiIssuance::with([                    
+    //             $sakidashi_list = WBSSakidashiIssuance::with([
     //                     'tbl_wbs_sakidashi_issuance_item',
-    //                     'device_info', 
-    //                     'device_info.material_process', 
-    //                     'device_info.material_process.station_sub_station', 
+    //                     'device_info',
+    //                     'device_info.material_process',
+    //                     'device_info.material_process.station_sub_station',
     //                     'device_info.material_process.station_sub_station.station',
     //                     'parts_prep_info' => function($query){
     //                         $query->where('wbs_table', 2);
@@ -3583,7 +3583,7 @@ class ProductionRuncardController extends Controller
     //                             $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
     //                             $parts_prep_done = true;
     //                             break;
-                            
+
     //                         default:
     //                             # code...
     //                             break;
@@ -3601,7 +3601,7 @@ class ProductionRuncardController extends Controller
     //             $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
     //             if($parts_prep_done == true){
-    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
     //             }
 
     //             return $result;
@@ -3966,7 +3966,7 @@ class ProductionRuncardController extends Controller
                                                         }
                                                     }
                                                 }
-                                                
+
 
                                                 // if($material_process[$index]->has_emboss == 1){
                                                 //     $has_emboss = 1;
@@ -4296,7 +4296,7 @@ class ProductionRuncardController extends Controller
                                 $item = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item;
                                 $item_desc = $col_parts_prep_kit_issuance[$index]->tbl_wbs_sakidashi_issuance_item->item_desc;
 
-                                $mat_proc_materials = Device::with([
+                                $mat_proc_materials = ([
                                             'material_process' => function($query){
                                                 $query->where('status', 1);
                                             },
@@ -4322,7 +4322,7 @@ class ProductionRuncardController extends Controller
                                 ->get();
 
                             $prod_runcard_station_detail_ids = $prod_runcard_station_details->pluck('id');
-                            
+
                             // return count($col_parts_prep_kit_issuance);
                             // return $col_parts_prep_kit_issuance[0]->tbl_wbs_sakidashi_issuance_item->item;
 
@@ -4645,7 +4645,7 @@ class ProductionRuncardController extends Controller
                 'material_process' => $material_process,
             ]);
         }
-            
+
     }
 
     public function edit_prod_runcard_station1(Request $request){
@@ -4810,7 +4810,7 @@ class ProductionRuncardController extends Controller
 
                                 DB::commit();
                                 $result = true;
-                                
+
                             } catch (Exception $e) {
                                 DB::rollback();
                                 $result = false;
@@ -4973,7 +4973,7 @@ class ProductionRuncardController extends Controller
 
                                     DB::commit();
                                     $result = true;
-                                    
+
                                 } catch (Exception $e) {
                                     DB::rollback();
                                     $result = false;
@@ -5112,7 +5112,7 @@ class ProductionRuncardController extends Controller
 
                                     DB::commit();
                                     $result = true;
-                                    
+
                                 } catch (Exception $e) {
                                     DB::rollback();
                                     $result = false;
@@ -5193,7 +5193,7 @@ class ProductionRuncardController extends Controller
 
                         ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
                             ->update(
-                                [   
+                                [
                                     // 'lot_qty' => $request->txt_lot_qty,
                                     // 'assessment_no'=> $request->txt_assessment_no,
                                     'setup_qualification'=> $request->setup_qualification,
@@ -5210,7 +5210,7 @@ class ProductionRuncardController extends Controller
                             );
                         DB::commit();
                         $result = true;
-                        
+
                     } catch (Exception $e) {
                         DB::rollback();
                         $result = false;
@@ -5360,7 +5360,7 @@ class ProductionRuncardController extends Controller
                         $prod_runcard_id = $request->txt_prod_runcard_id_query;
                         ProductionRuncard::where('id',$request->txt_prod_runcard_id_query)
                             ->update(
-                                [   
+                                [
                                     // 'lot_qty' => $request->txt_lot_qty,
                                     // 'assessment_no'=> $request->txt_assessment_no,
                                     'status'=> 3,
@@ -5370,7 +5370,7 @@ class ProductionRuncardController extends Controller
                             );
                         DB::commit();
                         $result = true;
-                        
+
                     } catch (Exception $e) {
                         DB::rollback();
                         $result = false;
@@ -5384,7 +5384,7 @@ class ProductionRuncardController extends Controller
                 $return = array('title'=>$return_title,'body'=>$return_body, 'prod_runcard_id' => $prod_runcard_id, 'result' => $result);
                 return $return;
             }
-            
+
         }
         else{
             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
@@ -5439,7 +5439,7 @@ class ProductionRuncardController extends Controller
                         ]);
                         DB::commit();
                         $result = true;
-                        
+
                     } catch (Exception $e) {
                         DB::rollback();
                         $result = false;
@@ -5453,7 +5453,7 @@ class ProductionRuncardController extends Controller
                 $return = array('title'=>$return_title,'body'=>$return_body, 'prod_runcard_id' => $prod_runcard_id, 'result' => $result);
                 return $return;
             }
-            
+
         }
         else{
             $return_title = '<i class="fa fa-exclamation-triangle text-warning"></i> Not saved';
@@ -5467,7 +5467,7 @@ class ProductionRuncardController extends Controller
         $materials = ProductionRuncardMaterial::where('runcard_id', $request->runcard_id)->with(['material_info'])
         ->get();
 
-        return DataTables::of($materials) 
+        return DataTables::of($materials)
         ->addColumn('raw_type', function($row){
             if($row->type == 1){
                 return 'Material Issuance';
@@ -5498,8 +5498,8 @@ class ProductionRuncardController extends Controller
                     $material_lists = WBSKitIssuance::with([
                             'kit_issuance',
                             'kit_issuance.device_info',
-                            'kit_issuance.device_info.material_process', 
-                            'kit_issuance.device_info.material_process.station_sub_station', 
+                            'kit_issuance.device_info.material_process',
+                            'kit_issuance.device_info.material_process.station_sub_station',
                             'kit_issuance.device_info.material_process.station_sub_station.station',
                             'parts_prep_info' => function($query){
                                 $query->where('wbs_table', 1);
@@ -5515,8 +5515,8 @@ class ProductionRuncardController extends Controller
                 $material_lists = WBSKitIssuance::with([
                         'kit_issuance',
                         'kit_issuance.device_info',
-                        'kit_issuance.device_info.material_process', 
-                        'kit_issuance.device_info.material_process.station_sub_station', 
+                        'kit_issuance.device_info.material_process',
+                        'kit_issuance.device_info.material_process.station_sub_station',
                         'kit_issuance.device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 1);
@@ -5534,8 +5534,8 @@ class ProductionRuncardController extends Controller
                             $material_lists = WBSKitIssuance::with([
                         'kit_issuance',
                         'kit_issuance.device_info',
-                        'kit_issuance.device_info.material_process', 
-                        'kit_issuance.device_info.material_process.station_sub_station', 
+                        'kit_issuance.device_info.material_process',
+                        'kit_issuance.device_info.material_process.station_sub_station',
                         'kit_issuance.device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 1);
@@ -5549,7 +5549,7 @@ class ProductionRuncardController extends Controller
         }
 
 
-        return DataTables::of($material_lists)      
+        return DataTables::of($material_lists)
             ->addColumn('raw_status', function($material_list){
                 $disabled = 'disabled';
                 $result = '<i title="Pending" class="far fa-clock text-secondary px-2"></i>';
@@ -5582,7 +5582,7 @@ class ProductionRuncardController extends Controller
                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                 $parts_prep_done = true;
                                 break;
-                            
+
                             default:
                                 # code...
                                 break;
@@ -5600,11 +5600,11 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$material_list->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$material_list->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$material_list->id.'">';
                 }
 
                 return $result;
-            })     
+            })
             ->rawColumns(['raw_action', 'raw_status'])
             ->make(true);
     }
@@ -5622,14 +5622,14 @@ class ProductionRuncardController extends Controller
                     ->get();
 
             $arr_issuance_id = $prod_runcard_sak_list->pluck('issuance_id');
-            
+
             if($request->action == 1){
                 if(count($prod_runcard_sak_list) > 0){
-                    $sakidashi_list = WBSSakidashiIssuance::with([                    
+                    $sakidashi_list = WBSSakidashiIssuance::with([
                             'tbl_wbs_sakidashi_issuance_item',
-                            'device_info', 
-                            'device_info.material_process', 
-                            'device_info.material_process.station_sub_station', 
+                            'device_info',
+                            'device_info.material_process',
+                            'device_info.material_process.station_sub_station',
                             'device_info.material_process.station_sub_station.station',
                             'parts_prep_info' => function($query){
                                 $query->where('wbs_table', 2);
@@ -5642,13 +5642,13 @@ class ProductionRuncardController extends Controller
                 }
             }
             else{
-                $sakidashi_list = WBSSakidashiIssuance::with([                    
+                $sakidashi_list = WBSSakidashiIssuance::with([
                             'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
                                 $query->where('lot_no', $request->lot_no);
                             },
-                            'device_info', 
-                            'device_info.material_process', 
-                            'device_info.material_process.station_sub_station', 
+                            'device_info',
+                            'device_info.material_process',
+                            'device_info.material_process.station_sub_station',
                             'device_info.material_process.station_sub_station.station',
                             'parts_prep_info' => function($query){
                                 $query->where('wbs_table', 2);
@@ -5664,13 +5664,13 @@ class ProductionRuncardController extends Controller
             }
         }
         else{
-            $sakidashi_list = WBSSakidashiIssuance::with([                    
+            $sakidashi_list = WBSSakidashiIssuance::with([
                         'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
                             $query->where('lot_no', $request->lot_no);
                         },
-                        'device_info', 
-                        'device_info.material_process', 
-                        'device_info.material_process.station_sub_station', 
+                        'device_info',
+                        'device_info.material_process',
+                        'device_info.material_process.station_sub_station',
                         'device_info.material_process.station_sub_station.station',
                         'parts_prep_info' => function($query){
                             $query->where('wbs_table', 2);
@@ -5718,7 +5718,7 @@ class ProductionRuncardController extends Controller
                                 $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
                                 $parts_prep_done = true;
                                 break;
-                            
+
                             default:
                                 # code...
                                 break;
@@ -5736,7 +5736,7 @@ class ProductionRuncardController extends Controller
                 $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
                 if($parts_prep_done == true){
-                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+                    $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
                 }
 
                 return $result;
@@ -5758,7 +5758,7 @@ class ProductionRuncardController extends Controller
             //             }
             //         }
             //         else{
-            //             $disabled = '';  
+            //             $disabled = '';
             //         }
             //     }
             //     else{
@@ -5797,7 +5797,7 @@ class ProductionRuncardController extends Controller
                         }
                     }
                     else{
-                        $disabled = '';  
+                        $disabled = '';
                     }
                 }
                 else{
@@ -5865,14 +5865,14 @@ class ProductionRuncardController extends Controller
     //                 ->get();
 
     //         $arr_issuance_id = $prod_runcard_sak_list->pluck('issuance_id');
-            
+
     //         if($request->action == 1){
     //             if(count($prod_runcard_sak_list) > 0){
-    //                 $emboss_list = WBSSakidashiIssuance::with([                    
+    //                 $emboss_list = WBSSakidashiIssuance::with([
     //                         'tbl_wbs_sakidashi_issuance_item',
-    //                         'device_info', 
-    //                         'device_info.material_process', 
-    //                         'device_info.material_process.station_sub_station', 
+    //                         'device_info',
+    //                         'device_info.material_process',
+    //                         'device_info.material_process.station_sub_station',
     //                         'device_info.material_process.station_sub_station.station',
     //                         'parts_prep_info' => function($query){
     //                             $query->where('wbs_table', 2);
@@ -5885,13 +5885,13 @@ class ProductionRuncardController extends Controller
     //             }
     //         }
     //         else{
-    //             $emboss_list = WBSSakidashiIssuance::with([                    
+    //             $emboss_list = WBSSakidashiIssuance::with([
     //                         'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
     //                             $query->where('lot_no', $request->lot_no);
     //                         },
-    //                         'device_info', 
-    //                         'device_info.material_process', 
-    //                         'device_info.material_process.station_sub_station', 
+    //                         'device_info',
+    //                         'device_info.material_process',
+    //                         'device_info.material_process.station_sub_station',
     //                         'device_info.material_process.station_sub_station.station',
     //                         'parts_prep_info' => function($query){
     //                             $query->where('wbs_table', 2);
@@ -5907,13 +5907,13 @@ class ProductionRuncardController extends Controller
     //         }
     //     }
     //     else{
-    //         $emboss_list = WBSSakidashiIssuance::with([                    
+    //         $emboss_list = WBSSakidashiIssuance::with([
     //                     'tbl_wbs_sakidashi_issuance_item' => function($query) use($request){
     //                         $query->where('lot_no', $request->lot_no);
     //                     },
-    //                     'device_info', 
-    //                     'device_info.material_process', 
-    //                     'device_info.material_process.station_sub_station', 
+    //                     'device_info',
+    //                     'device_info.material_process',
+    //                     'device_info.material_process.station_sub_station',
     //                     'device_info.material_process.station_sub_station.station',
     //                     'parts_prep_info' => function($query){
     //                         $query->where('wbs_table', 2);
@@ -5961,7 +5961,7 @@ class ProductionRuncardController extends Controller
     //                             $result = '<i title="Parts Prep. Done verification" class="fas fa-cogs text-success px-2"></i>';
     //                             $parts_prep_done = true;
     //                             break;
-                            
+
     //                         default:
     //                             # code...
     //                             break;
@@ -5979,7 +5979,7 @@ class ProductionRuncardController extends Controller
     //             $result.=' <input type="hidden" class="col_device_code" value="'.$tbl_wbs_sakidashi_issuance->device_code.'">';
 
     //             if($parts_prep_done == true){
-    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';                
+    //                 $result.=' <input type="hidden" class="col_lot_id" value="'.$tbl_wbs_sakidashi_issuance->id.'">';
     //             }
 
     //             return $result;
@@ -6001,7 +6001,7 @@ class ProductionRuncardController extends Controller
     //                     }
     //                 }
     //                 else{
-    //                     $disabled = '';  
+    //                     $disabled = '';
     //                 }
     //             }
     //             else{
@@ -6162,20 +6162,20 @@ class ProductionRuncardController extends Controller
 
                             }
                             else{
-                                $final_result = 0; //Not Certified  
-                                $remarks = "Not Certified";                            
+                                $final_result = 0; //Not Certified
+                                $remarks = "Not Certified";
                             }
 
-                            $final_result = 1; //Material Saved  
+                            $final_result = 1; //Material Saved
                             $remarks = "Material Saved";
                         }
                         else{
-                            $final_result = 0; //No device  
+                            $final_result = 0; //No device
                             $remarks = "No Device Found.";
                         }
                     }
                     else{
-                        $final_result = 3; //No device  
+                        $final_result = 3; //No device
                         $remarks = "No Device Found.";
                     }
                 }
@@ -6190,7 +6190,7 @@ class ProductionRuncardController extends Controller
                 $final_result = 0; //Invalid Operator
                 $remarks = "Invalid Operator.";
             }
-        
+
             // return response()->json(['final_result' => $final_result, 'mat_proc_materials' => $mat_proc_materials]);
         }
         else{
@@ -6307,20 +6307,20 @@ class ProductionRuncardController extends Controller
 
     //                         }
     //                         else{
-    //                             $final_result = 0; //Not Certified  
-    //                             $remarks = "Not Certified";                            
+    //                             $final_result = 0; //Not Certified
+    //                             $remarks = "Not Certified";
     //                         }
 
-    //                         $final_result = 1; //Material Saved  
+    //                         $final_result = 1; //Material Saved
     //                         $remarks = "Material Saved";
     //                     }
     //                     else{
-    //                         $final_result = 0; //No device  
+    //                         $final_result = 0; //No device
     //                         $remarks = "No Device Found.";
     //                     }
     //                 }
     //                 else{
-    //                     $final_result = 3; //No device  
+    //                     $final_result = 3; //No device
     //                     $remarks = "No Device Found.";
     //                 }
     //             }
@@ -6335,7 +6335,7 @@ class ProductionRuncardController extends Controller
     //             $final_result = 0; //Invalid Operator
     //             $remarks = "Invalid Operator.";
     //         }
-        
+
     //         // return response()->json(['final_result' => $final_result, 'mat_proc_materials' => $mat_proc_materials]);
     //     }
     //     else{
@@ -6515,11 +6515,11 @@ class ProductionRuncardController extends Controller
                     $query->where('lot_no', $request->txt_scan_sakidashi_lot);
                 },
             )
-            ->get();    
+            ->get();
 
             if(count($data) > 0){
                 $type = 2;
-            }        
+            }
         }
 
         return response()->json(['data' => $data, 'type' => $type]);
@@ -6528,7 +6528,7 @@ class ProductionRuncardController extends Controller
     public function generate_prod_runcard_qrcode(Request $request){
         date_default_timezone_set('Asia/Manila');
         $data = ProductionRuncard::where('id', $request->runcard_id)->first();
-        
+
         $po_qrcode = "";
         $whs_slip_qrcode = "";
 
@@ -6536,7 +6536,7 @@ class ProductionRuncardController extends Controller
                 $po_qrcode = QrCode::format('png')
                             ->size(200)->errorCorrection('H')
                             ->generate($data->po_no);
-                
+
                 $runcard_qrcode = QrCode::format('png')
                             ->size(200)->errorCorrection('H')
                             ->generate($data->runcard_no);

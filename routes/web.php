@@ -772,10 +772,6 @@ Route::get('/generate_auto_sticker', 'ProductionRuncardController@generate_auto_
 
 Route::get('/generate_defect_escalation_qrcode', 'DefectEscalationController@generate_defect_escalation_qrcode');
 
-
-
-
-
 // AUTOMATIC PRODUCTION RUNCARD CONTROLLER
 Route::get('/view_material_kitting_by_runcard', 'ProductionRuncardController@view_material_kitting_by_runcard');
 Route::get('/view_sakidashi_by_runcard', 'ProductionRuncardController@view_sakidashi_by_runcard');
